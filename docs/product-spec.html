@@ -1,0 +1,1838 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>claude-config-manager -- Product Specification</title>
+<style>
+  /* ===== RESET & BASE ===== */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:       #0f0f14;
+    --sidebar:  #16161d;
+    --card:     #1e1e28;
+    --border:   #2a2a35;
+    --text:     #ffffff;
+    --muted:    #b2bec3;
+    --dim:      #636e72;
+    --purple:   #6c5ce7;
+    --purple-l: #a29bfe;
+    --green:    #00b894;
+    --blue:     #0984e3;
+    --orange:   #e17055;
+    --yellow:   #fdcb6e;
+    --pink:     #fd79a8;
+    --radius:   8px;
+    --radius-lg:12px;
+    --mono:     'SF Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+    --sans:     'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    font-size: 15px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ===== LAYOUT ===== */
+  .page { display: flex; min-height: 100vh; }
+
+  /* -- Table of Contents sidebar -- */
+  .toc {
+    position: fixed; top: 0; left: 0;
+    width: 260px; height: 100vh;
+    background: var(--sidebar);
+    border-right: 1px solid var(--border);
+    padding: 28px 20px;
+    overflow-y: auto;
+    z-index: 100;
+  }
+  .toc h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 1.4px; color: var(--dim); margin-bottom: 18px; }
+  .toc a {
+    display: block; padding: 6px 10px; border-radius: 6px;
+    color: var(--muted); text-decoration: none; font-size: 13px;
+    transition: all .15s;
+  }
+  .toc a:hover { background: rgba(108,92,231,.12); color: var(--purple-l); }
+  .toc .sub { padding-left: 22px; font-size: 12px; color: var(--dim); }
+  .toc .logo { font-size: 16px; font-weight: 700; color: var(--purple-l); margin-bottom: 28px; letter-spacing: -.3px; }
+
+  .content { margin-left: 260px; flex: 1; padding: 48px 56px 80px; max-width: 1040px; }
+
+  /* ===== TYPOGRAPHY ===== */
+  h1 { font-size: 36px; font-weight: 800; letter-spacing: -.5px; margin-bottom: 8px; }
+  h2 { font-size: 26px; font-weight: 700; letter-spacing: -.3px; margin: 56px 0 20px; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
+  h3 { font-size: 20px; font-weight: 600; margin: 36px 0 14px; color: var(--purple-l); }
+  h4 { font-size: 16px; font-weight: 600; margin: 24px 0 10px; }
+  p  { margin-bottom: 14px; color: var(--muted); }
+  strong { color: var(--text); }
+  ul, ol { margin: 0 0 16px 24px; color: var(--muted); }
+  li { margin-bottom: 6px; }
+  code {
+    font-family: var(--mono); font-size: 13px;
+    background: rgba(108,92,231,.14); color: var(--purple-l);
+    padding: 2px 7px; border-radius: 4px;
+  }
+  pre {
+    background: var(--sidebar); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 18px 22px;
+    overflow-x: auto; margin: 14px 0 22px; line-height: 1.55;
+  }
+  pre code { background: none; padding: 0; color: var(--muted); }
+
+  .subtitle { font-size: 17px; color: var(--dim); margin-bottom: 32px; font-weight: 400; }
+  .badge {
+    display: inline-block; font-size: 11px; font-weight: 600;
+    padding: 3px 10px; border-radius: 20px; margin-right: 6px; text-transform: uppercase; letter-spacing: .5px;
+  }
+  .badge-purple { background: rgba(108,92,231,.2); color: var(--purple-l); }
+  .badge-green  { background: rgba(0,184,148,.2);  color: var(--green); }
+  .badge-blue   { background: rgba(9,132,227,.2);   color: var(--blue); }
+  .badge-orange { background: rgba(225,112,85,.18); color: var(--orange); }
+  .badge-pink   { background: rgba(253,121,168,.18);color: var(--pink); }
+  .badge-yellow { background: rgba(253,203,110,.18);color: var(--yellow); }
+
+  .meta-table { width: 100%; border-collapse: collapse; margin: 18px 0 28px; }
+  .meta-table td { padding: 10px 14px; border-bottom: 1px solid var(--border); }
+  .meta-table td:first-child { color: var(--dim); font-size: 13px; width: 160px; text-transform: uppercase; letter-spacing: .8px; }
+  .meta-table td:last-child { color: var(--muted); }
+
+  /* ===== CARDS ===== */
+  .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: 22px 26px; margin-bottom: 16px;
+  }
+  .card-grid { display: grid; gap: 16px; margin: 16px 0 24px; }
+  .card-grid.cols-2 { grid-template-columns: 1fr 1fr; }
+  .card-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .card-grid.cols-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+
+  .card h4 { margin-top: 0; }
+
+  /* ===== USER STORY CARDS ===== */
+  .story {
+    background: var(--card); border-left: 3px solid var(--purple);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 16px 20px; margin-bottom: 12px;
+  }
+  .story .persona { font-size: 12px; color: var(--purple-l); text-transform: uppercase; letter-spacing: .6px; margin-bottom: 4px; }
+  .story .body { color: var(--muted); font-size: 14px; }
+
+  /* ===== TOOL TABLE ===== */
+  .tool-table { width: 100%; border-collapse: collapse; margin: 14px 0 24px; font-size: 13px; }
+  .tool-table th {
+    text-align: left; padding: 10px 14px;
+    background: var(--sidebar); color: var(--dim);
+    font-size: 11px; text-transform: uppercase; letter-spacing: .8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .tool-table td { padding: 10px 14px; border-bottom: 1px solid var(--border); color: var(--muted); }
+  .tool-table td:first-child code { font-size: 12px; }
+  .tool-table tr:hover td { background: rgba(108,92,231,.04); }
+
+  /* ===== FLOW DIAGRAM (CSS) ===== */
+  .flow { display: flex; align-items: center; gap: 0; flex-wrap: wrap; margin: 18px 0 28px; }
+  .flow-step {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 10px 18px;
+    font-size: 13px; color: var(--muted); white-space: nowrap;
+  }
+  .flow-arrow { color: var(--dim); font-size: 18px; margin: 0 6px; }
+
+  /* ===== METRIC CARDS ===== */
+  .metric {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: 20px 24px; text-align: center;
+  }
+  .metric .val { font-size: 32px; font-weight: 800; letter-spacing: -1px; }
+  .metric .lbl { font-size: 12px; color: var(--dim); text-transform: uppercase; letter-spacing: .8px; margin-top: 4px; }
+
+  /* ====================================================================
+     WIREFRAME / MOCKUP STYLES
+     ==================================================================== */
+  .mockup-frame {
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); overflow: hidden; margin: 22px 0 30px;
+    box-shadow: 0 8px 32px rgba(0,0,0,.35);
+  }
+  .mockup-titlebar {
+    background: var(--sidebar); padding: 10px 16px; display: flex; align-items: center; gap: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .mockup-dot { width: 12px; height: 12px; border-radius: 50%; }
+  .mockup-dot.r { background: #e17055; }
+  .mockup-dot.y { background: #fdcb6e; }
+  .mockup-dot.g { background: #00b894; }
+  .mockup-url {
+    flex: 1; margin-left: 12px; background: rgba(255,255,255,.05);
+    border-radius: 6px; padding: 5px 14px; font-size: 12px; color: var(--dim);
+    font-family: var(--mono);
+  }
+
+  .mockup-body { display: flex; min-height: 420px; }
+
+  /* sidebar nav inside mockup */
+  .m-sidebar {
+    width: 200px; min-width: 200px;
+    background: var(--sidebar); border-right: 1px solid var(--border);
+    padding: 18px 0;
+  }
+  .m-sidebar .brand { padding: 0 16px 16px; font-weight: 700; font-size: 14px; color: var(--purple-l); }
+  .m-sidebar a {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 18px; font-size: 13px; color: var(--dim);
+    text-decoration: none; transition: .15s;
+  }
+  .m-sidebar a.active { background: rgba(108,92,231,.12); color: var(--purple-l); border-right: 2px solid var(--purple); }
+  .m-sidebar a:hover { color: var(--muted); }
+  .m-sidebar .icon { width: 18px; text-align: center; font-size: 14px; }
+
+  .m-main { flex: 1; padding: 24px 28px; overflow: hidden; }
+  .m-main .page-title { font-size: 20px; font-weight: 700; margin-bottom: 20px; color: var(--text); }
+
+  /* stat cards row */
+  .m-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+  .m-stat {
+    background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 14px 16px;
+  }
+  .m-stat .num { font-size: 24px; font-weight: 800; }
+  .m-stat .lbl { font-size: 11px; color: var(--dim); text-transform: uppercase; letter-spacing: .6px; margin-top: 2px; }
+
+  /* list rows */
+  .m-list-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 16px; border-bottom: 1px solid var(--border);
+    font-size: 13px; color: var(--muted);
+  }
+  .m-list-item .dot { width: 8px; height: 8px; border-radius: 50%; }
+  .m-list-item .name { flex: 1; font-weight: 500; color: var(--text); }
+  .m-list-item .meta { font-size: 12px; color: var(--dim); }
+
+  /* toggle switch */
+  .m-toggle {
+    width: 34px; height: 18px; background: var(--border); border-radius: 10px;
+    position: relative; display: inline-block;
+  }
+  .m-toggle.on { background: var(--green); }
+  .m-toggle::after {
+    content: ''; position: absolute; top: 2px; left: 2px;
+    width: 14px; height: 14px; background: #fff; border-radius: 50%;
+    transition: .15s;
+  }
+  .m-toggle.on::after { left: 18px; }
+
+  /* buttons */
+  .m-btn {
+    display: inline-block; padding: 7px 16px;
+    border-radius: 6px; font-size: 12px; font-weight: 600;
+    text-decoration: none; cursor: default;
+  }
+  .m-btn-primary { background: var(--purple); color: #fff; }
+  .m-btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--muted); }
+
+  /* detail slide-in panel */
+  .m-detail-panel {
+    width: 320px; min-width: 320px;
+    background: var(--sidebar); border-left: 1px solid var(--border);
+    padding: 22px 20px; font-size: 13px;
+  }
+  .m-detail-panel .dp-title { font-size: 16px; font-weight: 700; margin-bottom: 6px; color: var(--text); }
+  .m-detail-panel .dp-sub { font-size: 12px; color: var(--dim); margin-bottom: 16px; }
+  .m-detail-panel .dp-section { font-size: 11px; color: var(--dim); text-transform: uppercase; letter-spacing: .8px; margin: 16px 0 8px; }
+  .m-detail-panel .dp-row { padding: 6px 0; color: var(--muted); border-bottom: 1px solid var(--border); }
+
+  /* search bar */
+  .m-search {
+    background: rgba(255,255,255,.04); border: 1px solid var(--border);
+    border-radius: 6px; padding: 8px 14px; color: var(--muted);
+    font-size: 13px; width: 100%; margin-bottom: 16px;
+    font-family: var(--sans);
+  }
+
+  /* tabs */
+  .m-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 18px; }
+  .m-tab {
+    padding: 8px 18px; font-size: 13px; color: var(--dim);
+    border-bottom: 2px solid transparent; cursor: default;
+  }
+  .m-tab.active { color: var(--purple-l); border-bottom-color: var(--purple); }
+
+  /* profile card */
+  .m-profile-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 16px 18px; margin-bottom: 12px;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .m-profile-card.active-profile { border-color: var(--purple); box-shadow: 0 0 0 1px var(--purple); }
+  .m-profile-card .pf-icon {
+    width: 38px; height: 38px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 700;
+  }
+  .m-profile-card .pf-info { flex: 1; }
+  .m-profile-card .pf-name { font-weight: 600; font-size: 14px; color: var(--text); }
+  .m-profile-card .pf-desc { font-size: 12px; color: var(--dim); }
+
+  /* import preview diff */
+  .m-diff { font-family: var(--mono); font-size: 12px; line-height: 1.6; margin: 12px 0; }
+  .m-diff .added { color: var(--green); }
+  .m-diff .removed { color: var(--orange); }
+  .m-diff .unchanged { color: var(--dim); }
+
+  /* settings form */
+  .m-form-row {
+    display: flex; align-items: center; gap: 14px;
+    padding: 12px 0; border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+  .m-form-row .label { width: 140px; color: var(--dim); font-size: 12px; text-transform: uppercase; letter-spacing: .6px; }
+  .m-form-row .value {
+    flex: 1; background: rgba(255,255,255,.04); border: 1px solid var(--border);
+    border-radius: 6px; padding: 7px 12px; color: var(--muted); font-family: var(--mono); font-size: 12px;
+  }
+
+  /* responsive */
+  @media (max-width: 900px) {
+    .toc { display: none; }
+    .content { margin-left: 0; padding: 28px 20px; }
+    .m-stats { grid-template-columns: 1fr 1fr; }
+    .card-grid.cols-3, .card-grid.cols-4 { grid-template-columns: 1fr 1fr; }
+    .mockup-body { flex-direction: column; }
+    .m-sidebar { width: 100%; min-width: auto; }
+    .m-detail-panel { width: 100%; min-width: auto; }
+  }
+
+  /* Section divider */
+  .divider { border: 0; border-top: 1px solid var(--border); margin: 48px 0; }
+
+  /* Architecture diagram */
+  .arch-box {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 14px 18px;
+    text-align: center; font-size: 13px; color: var(--muted);
+  }
+  .arch-box .pkg { font-weight: 700; color: var(--text); font-size: 14px; margin-bottom: 4px; }
+  .arch-connector { text-align: center; color: var(--dim); font-size: 20px; padding: 6px 0; }
+
+  /* Schema block */
+  .schema-block {
+    background: var(--sidebar); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: 24px 28px; margin: 16px 0 24px;
+    font-family: var(--mono); font-size: 12.5px; line-height: 1.65; color: var(--muted);
+    overflow-x: auto;
+  }
+  .schema-block .key { color: var(--purple-l); }
+  .schema-block .str { color: var(--green); }
+  .schema-block .cmt { color: var(--dim); font-style: italic; }
+
+  /* Numbered list with accent */
+  .numbered-steps { counter-reset: step; list-style: none; margin-left: 0; padding-left: 0; }
+  .numbered-steps li {
+    counter-increment: step; position: relative;
+    padding-left: 48px; margin-bottom: 20px;
+  }
+  .numbered-steps li::before {
+    content: counter(step);
+    position: absolute; left: 0; top: 0;
+    width: 32px; height: 32px; border-radius: 8px;
+    background: rgba(108,92,231,.15); color: var(--purple-l);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 700;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- ====== TABLE OF CONTENTS ====== -->
+<nav class="toc">
+  <div class="logo">claude-config-manager</div>
+  <h2>Contents</h2>
+  <a href="#overview">Product Overview</a>
+  <a href="#meta" class="sub">Document Metadata</a>
+  <a href="#problem" class="sub">Problem Statement</a>
+  <a href="#audience" class="sub">Target Audience</a>
+  <a href="#architecture">Architecture</a>
+  <a href="#packages" class="sub">Packages</a>
+  <a href="#dual-mode" class="sub">Dual-Mode</a>
+  <a href="#user-stories">User Stories</a>
+  <a href="#features">Core Features</a>
+  <a href="#dashboard">Dashboard (Web UI)</a>
+  <a href="#mock-overview" class="sub">Overview Page</a>
+  <a href="#mock-plugins" class="sub">Plugins Page</a>
+  <a href="#mock-mcps" class="sub">MCP Servers Page</a>
+  <a href="#mock-skills" class="sub">Skills Page</a>
+  <a href="#mock-commands" class="sub">Commands Page</a>
+  <a href="#mock-settings" class="sub">Settings Page</a>
+  <a href="#mock-profiles" class="sub">Profiles Page</a>
+  <a href="#mock-export" class="sub">Export / Import</a>
+  <a href="#mock-detail" class="sub">Detail Panel</a>
+  <a href="#mcp-tools">MCP Tools</a>
+  <a href="#cli">CLI Commands</a>
+  <a href="#profiles">Profiles</a>
+  <a href="#user-flows">User Flows</a>
+  <a href="#metrics">Success Metrics</a>
+  <a href="#milestones">Milestones</a>
+  <a href="#risks">Risks &amp; Mitigations</a>
+  <a href="#appendix">Appendix</a>
+  <a href="#schema" class="sub">Profile Schema</a>
+  <a href="#api-ref" class="sub">API Reference</a>
+</nav>
+
+<!-- ====== MAIN CONTENT ====== -->
+<main class="content">
+
+<!-- ============================================================ -->
+<!-- HEADER                                                       -->
+<!-- ============================================================ -->
+<span class="badge badge-purple">Product Spec</span>
+<span class="badge badge-green">v1.0.0-draft</span>
+<span class="badge badge-blue">2026-03-25</span>
+
+<h1 id="overview">claude-config-manager</h1>
+<p class="subtitle">A Claude Code plugin + npm package for managing Claude Code configurations through a web dashboard.</p>
+
+<table class="meta-table" id="meta">
+  <tr><td>Document</td><td>Product Specification</td></tr>
+  <tr><td>Version</td><td>1.0.0-draft</td></tr>
+  <tr><td>Date</td><td>2026-03-25</td></tr>
+  <tr><td>Status</td><td><span class="badge badge-yellow">Draft</span></td></tr>
+  <tr><td>Package</td><td><code>claude-config</code> (npm)</td></tr>
+  <tr><td>Monorepo</td><td>Turborepo with 5 packages</td></tr>
+  <tr><td>License</td><td>MIT</td></tr>
+</table>
+
+<!-- ============================================================ -->
+<!-- PROBLEM STATEMENT                                            -->
+<!-- ============================================================ -->
+<h3 id="problem">Problem Statement</h3>
+<p>
+  Claude Code power users manage complex configurations across multiple machines: plugins, MCP servers,
+  custom slash commands, hooks, model settings, and environment variables. Today, this configuration lives
+  in scattered JSON files with no visual tooling, no portability between machines, and no way to
+  quickly switch contexts (e.g., "Work" vs. "Personal" vs. "Open Source").
+</p>
+<p>
+  <strong>claude-config-manager</strong> solves this by providing a unified web dashboard, a set of MCP tools
+  for AI-assisted config management, a CLI for scripting, and a profile system for portable,
+  switchable configuration snapshots.
+</p>
+
+<!-- ============================================================ -->
+<!-- TARGET AUDIENCE                                              -->
+<!-- ============================================================ -->
+<h3 id="audience">Target Audience</h3>
+<div class="card-grid cols-3">
+  <div class="card">
+    <h4 style="color:var(--purple-l)">Power Users</h4>
+    <p>Developers who use Claude Code daily with 5+ plugins and multiple MCP servers. They need visibility and control.</p>
+  </div>
+  <div class="card">
+    <h4 style="color:var(--blue)">Multi-Machine Users</h4>
+    <p>Users who work across laptop, desktop, and CI environments. They want portable configs that follow them.</p>
+  </div>
+  <div class="card">
+    <h4 style="color:var(--green)">Team Leads</h4>
+    <p>Engineering leads who want to share standardized Claude Code setups with their teams.</p>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ============================================================ -->
+<!-- ARCHITECTURE                                                 -->
+<!-- ============================================================ -->
+<h2 id="architecture">Architecture</h2>
+
+<h3 id="packages">Monorepo Packages</h3>
+<p>The project is structured as a Turborepo monorepo with five packages:</p>
+
+<div class="card-grid cols-3" style="margin-bottom:24px">
+  <div class="arch-box">
+    <div class="pkg">@ccm/core</div>
+    Configuration read/write engine, file watchers, validation
+  </div>
+  <div class="arch-box">
+    <div class="pkg">@ccm/dashboard</div>
+    Next.js web UI (Notion/Linear style, dark theme)
+  </div>
+  <div class="arch-box">
+    <div class="pkg">@ccm/mcp</div>
+    MCP server exposing 19 tools to Claude
+  </div>
+</div>
+<div class="card-grid cols-2" style="max-width:66%">
+  <div class="arch-box">
+    <div class="pkg">@ccm/cli</div>
+    CLI binary (<code>claude-config</code>)
+  </div>
+  <div class="arch-box">
+    <div class="pkg">@ccm/types</div>
+    Shared TypeScript types &amp; Zod schemas
+  </div>
+</div>
+
+<div class="arch-connector">|</div>
+<div class="arch-box" style="max-width:300px;margin:0 auto">
+  <div class="pkg">Claude Code Config Files</div>
+  <code>~/.claude/</code> &mdash; settings.json, plugins/installed_plugins.json, plugins/profiles/
+</div>
+
+<h3 id="dual-mode">Dual-Mode Operation</h3>
+<div class="card-grid cols-2">
+  <div class="card">
+    <h4 style="color:var(--green)">Global npm Package</h4>
+    <pre><code>npm install -g claude-config
+claude-config start</code></pre>
+    <p>Install globally, launch the dashboard from any terminal. Useful for users who want a standalone GUI.</p>
+  </div>
+  <div class="card">
+    <h4 style="color:var(--purple-l)">Claude Code Plugin</h4>
+    <pre><code>claude plugin install claude-config-manager</code></pre>
+    <p>Registers as an MCP server within Claude Code. All 19 tools become available to the AI assistant directly.</p>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ============================================================ -->
+<!-- USER STORIES                                                 -->
+<!-- ============================================================ -->
+<h2 id="user-stories">User Stories</h2>
+
+<div class="story">
+  <div class="persona">Power User</div>
+  <div class="body">As a developer using 8 plugins and 3 MCP servers, I want a visual dashboard so I can see everything at a glance instead of editing JSON files.</div>
+</div>
+<div class="story">
+  <div class="persona">Multi-Machine User</div>
+  <div class="body">As someone who works on both a laptop and a desktop, I want to export my configuration to a file and import it on the other machine so I have the same setup everywhere.</div>
+</div>
+<div class="story">
+  <div class="persona">Team Lead</div>
+  <div class="body">As a team lead, I want to create a "Team Standard" profile and share it with my team so everyone has the same MCP servers and recommended plugins.</div>
+</div>
+<div class="story">
+  <div class="persona">Context Switcher</div>
+  <div class="body">As a developer who consults for multiple clients, I want named profiles (e.g., "Client A", "Client B") so I can switch configurations instantly without manual editing.</div>
+</div>
+<div class="story">
+  <div class="persona">AI-First User</div>
+  <div class="body">As someone who prefers working through Claude, I want MCP tools so I can ask Claude to "add the GitHub MCP server" or "switch to my Work profile" without leaving the conversation.</div>
+</div>
+<div class="story">
+  <div class="persona">Automation Engineer</div>
+  <div class="body">As a CI/CD engineer, I want CLI commands so I can script profile activation in my setup scripts and dotfile repos.</div>
+</div>
+<div class="story">
+  <div class="persona">Security-Conscious User</div>
+  <div class="body">As a security-minded developer, I want credentials excluded from profile exports by default so I do not accidentally share API keys.</div>
+</div>
+<div class="story">
+  <div class="persona">Plugin Explorer</div>
+  <div class="body">As a user discovering new plugins, I want to browse a marketplace-style list and see each plugin's skills and agents before installing.</div>
+</div>
+
+<hr class="divider">
+
+<!-- ============================================================ -->
+<!-- CORE FEATURES                                                -->
+<!-- ============================================================ -->
+<h2 id="features">Core Features</h2>
+
+<!-- ============================================================ -->
+<!-- DASHBOARD                                                    -->
+<!-- ============================================================ -->
+<h2 id="dashboard">1. Dashboard (Web UI)</h2>
+<p>
+  The dashboard is a self-contained Next.js application served locally. It follows a Notion/Linear design language:
+  dark theme, clean typography, colorful tags, and a persistent left sidebar for navigation. A right-side
+  detail panel slides in when any component is selected.
+</p>
+
+<!-- ---- OVERVIEW PAGE MOCKUP ---- -->
+<h3 id="mock-overview">Overview Page</h3>
+<p>The landing page provides a high-level summary of the current Claude Code configuration.</p>
+
+<div class="mockup-frame">
+  <div class="mockup-titlebar">
+    <span class="mockup-dot r"></span>
+    <span class="mockup-dot y"></span>
+    <span class="mockup-dot g"></span>
+    <span class="mockup-url">localhost:3399/overview</span>
+  </div>
+  <div class="mockup-body">
+    <!-- Sidebar -->
+    <div class="m-sidebar">
+      <div class="brand">CCM</div>
+      <a class="active"><span class="icon">&#9673;</span> Overview</a>
+      <a><span class="icon">&#9881;</span> Plugins</a>
+      <a><span class="icon">&#9741;</span> MCP Servers</a>
+      <a><span class="icon">&#9733;</span> Skills</a>
+      <a><span class="icon">&#8260;</span> Commands</a>
+      <a><span class="icon">&#9998;</span> Settings</a>
+      <a><span class="icon">&#9638;</span> Profiles</a>
+      <a><span class="icon">&#8644;</span> Export / Import</a>
+    </div>
+    <!-- Main -->
+    <div class="m-main">
+      <div class="page-title">Overview</div>
+
+      <!-- Stats -->
+      <div class="m-stats">
+        <div class="m-stat">
+          <div class="num" style="color:var(--purple-l)">8</div>
+          <div class="lbl">Plugins</div>
+        </div>
+        <div class="m-stat">
+          <div class="num" style="color:var(--green)">3</div>
+          <div class="lbl">MCP Servers</div>
+        </div>
+        <div class="m-stat">
+          <div class="num" style="color:var(--blue)">24</div>
+          <div class="lbl">Skills</div>
+        </div>
+        <div class="m-stat">
+          <div class="num" style="color:var(--orange)">3</div>
+          <div class="lbl">Profiles</div>
+        </div>
+      </div>
+
+      <!-- Quick sections -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div>
+          <div style="font-size:13px;color:var(--dim);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px">Installed Plugins</div>
+          <div class="m-list-item"><span class="dot" style="background:var(--green)"></span><span class="name">todoist-plugin</span><span class="meta">v1.2.0</span><span class="m-toggle on"></span></div>
+          <div class="m-list-item"><span class="dot" style="background:var(--green)"></span><span class="name">git-assistant</span><span class="meta">v2.0.1</span><span class="m-toggle on"></span></div>
+          <div class="m-list-item"><span class="dot" style="background:var(--dim)"></span><span class="name">code-review</span><span class="meta">v0.9.3</span><span class="m-toggle"></span></div>
+          <div class="m-list-item"><span class="dot" style="background:var(--green)"></span><span class="name">jira-bridge</span><span class="meta">v1.0.0</span><span class="m-toggle on"></span></div>
+        </div>
+        <div>
+          <div style="font-size:13px;color:var(--dim);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px">MCP Servers</div>
+          <div class="m-list-item"><span class="dot" style="background:var(--green)"></span><span class="name">filesystem</span><span class="meta">Connected</span></div>
+          <div class="m-list-item"><span class="dot" style="background:var(--green)"></span><span class="name">github</span><span class="meta">Connected</span></div>
+          <div class="m-list-item"><span class="dot" style="background:var(--orange)"></span><span class="name">postgres</span><span class="meta">Disconnected</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ---- PLUGINS PAGE MOCKUP ---- -->
+<h3 id="mock-plugins">Plugins Page</h3>
+<p>Browse, install, update, remove, and toggle plugins. A search/filter bar at the top, with a grid or list view toggle.</p>
+
+<div class="mockup-frame">
+  <div class="mockup-titlebar">
+    <span class="mockup-dot r"></span>
+    <span class="mockup-dot y"></span>
+    <span class="mockup-dot g"></span>
+    <span class="mockup-url">localhost:3399/plugins</span>
+  </div>
+  <div class="mockup-body">
+    <div class="m-sidebar">
+      <div class="brand">CCM</div>
+      <a><span class="icon">&#9673;</span> Overview</a>
+      <a class="active"><span class="icon">&#9881;</span> Plugins</a>
+      <a><span class="icon">&#9741;</span> MCP Servers</a>
+      <a><span class="icon">&#9733;</span> Skills</a>
+      <a><span class="icon">&#8260;</span> Commands</a>
+      <a><span class="icon">&#9998;</span> Settings</a>
+      <a><span class="icon">&#9638;</span> Profiles</a>
+      <a><span class="icon">&#8644;</span> Export / Import</a>
+    </div>
+    <div class="m-main">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+        <div class="page-title" style="margin:0">Plugins</div>
+        <span class="m-btn m-btn-primary">+ Install Plugin</span>
+      </div>
+
+      <div class="m-search" style="display:block">Search plugins...</div>
+
+      <div class="m-tabs">
+        <div class="m-tab active">Installed (8)</div>
+        <div class="m-tab">Marketplace</div>
+        <div class="m-tab">Updates (2)</div>
+      </div>
+
+      <div class="m-list-item">
+        <span class="dot" style="background:var(--green)"></span>
+        <span class="name">todoist-plugin</span>
+        <span class="badge badge-green" style="font-size:10px">v1.2.0</span>
+        <span class="badge badge-purple" style="font-size:10px">3 skills</span>
+        <span class="meta" style="margin-left:auto">Updated 2d ago</span>
+        <span class="m-toggle on"></span>
+        <span class="m-btn m-btn-ghost" style="margin-left:8px;padding:4px 10px">...</span>
+      </div>
+      <div class="m-list-item">
+        <span class="dot" style="background:var(--green)"></span>
+        <span class="name">git-assistant</span>
+        <span class="badge badge-blue" style="font-size:10px">v2.0.1</span>
+        <span class="badge badge-purple" style="font-size:10px">5 skills</span>
+        <span class="meta" style="margin-left:auto">Updated 1w ago</span>
+        <span class="m-toggle on"></span>
+        <span class="m-btn m-btn-ghost" style="margin-left:8px;padding:4px 10px">...</span>
+      </div>
+      <div class="m-list-item">
+        <span class="dot" style="background:var(--dim)"></span>
+        <span class="name" style="color:var(--dim)">code-review</span>
+        <span class="badge badge-orange" style="font-size:10px">v0.9.3</span>
+        <span class="badge badge-purple" style="font-size:10px">2 skills</span>
+        <span class="meta" style="margin-left:auto;color:var(--orange)">Update available</span>
+        <span class="m-toggle"></span>
+        <span class="m-btn m-btn-ghost" style="margin-left:8px;padding:4px 10px">...</span>
+      </div>
+      <div class="m-list-item">
+        <span class="dot" style="background:var(--green)"></span>
+        <span class="name">jira-bridge</span>
+        <span class="badge badge-green" style="font-size:10px">v1.0.0</span>
+        <span class="badge badge-purple" style="font-size:10px">4 skills</span>
+        <span class="meta" style="margin-left:auto">Updated 3d ago</span>
+        <span class="m-toggle on"></span>
+        <span class="m-btn m-btn-ghost" style="margin-left:8px;padding:4px 10px">...</span>
+      </div>
+      <div class="m-list-item">
+        <span class="dot" style="background:var(--green)"></span>
+        <span class="name">docker-helper</span>
+        <span class="badge badge-green" style="font-size:10px">v0.5.2</span>
+        <span class="badge badge-purple" style="font-size:10px">2 skills</span>
+        <span class="meta" style="margin-left:auto">Updated 5d ago</span>
+        <span class="m-toggle on"></span>
+        <span class="m-btn m-btn-ghost" style="margin-left:8px;padding:4px 10px">...</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ---- MCP SERVERS PAGE MOCKUP ---- -->
+<h3 id="mock-mcps">MCP Servers Page</h3>
+<p>Manage configured MCP servers. Each row shows connection status, transport type, and tool count.</p>
+
+<div class="mockup-frame">
+  <div class="mockup-titlebar">
+    <span class="mockup-dot r"></span>
+    <span class="mockup-dot y"></span>
+    <span class="mockup-dot g"></span>
+    <span class="mockup-url">localhost:3399/mcp-servers</span>
+  </div>
+  <div class="mockup-body">
+    <div class="m-sidebar">
+      <div class="brand">CCM</div>
+      <a><span class="icon">&#9673;</span> Overview</a>
+      <a><span class="icon">&#9881;</span> Plugins</a>
+      <a class="active"><span class="icon">&#9741;</span> MCP Servers</a>
+      <a><span class="icon">&#9733;</span> Skills</a>
+      <a><span class="icon">&#8260;</span> Commands</a>
+      <a><span class="icon">&#9998;</span> Settings</a>
+      <a><span class="icon">&#9638;</span> Profiles</a>
+      <a><span class="icon">&#8644;</span> Export / Import</a>
+    </div>
+    <div class="m-main">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+        <div class="page-title" style="margin:0">MCP Servers</div>
+        <span class="m-btn m-btn-primary">+ Add Server</span>
+      </div>
+
+      <div class="m-search" style="display:block">Search servers...</div>
+
+      <!-- Server cards -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="card" style="padding:16px 18px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+            <span class="dot" style="width:10px;height:10px;border-radius:50%;background:var(--green);display:inline-block"></span>
+            <strong style="font-size:14px">filesystem</strong>
+            <span class="badge badge-green" style="font-size:10px;margin-left:auto">Connected</span>
+          </div>
+          <div style="font-size:12px;color:var(--dim);margin-bottom:6px">Transport: <span style="color:var(--muted)">stdio</span></div>
+          <div style="font-size:12px;color:var(--dim)">Tools: <span style="color:var(--muted)">11</span></div>
+          <div style="margin-top:12px;display:flex;gap:8px">
+            <span class="m-btn m-btn-ghost" style="padding:4px 12px;font-size:11px">Edit</span>
+            <span class="m-btn m-btn-ghost" style="padding:4px 12px;font-size:11px;color:var(--orange)">Remove</span>
+          </div>
+        </div>
+        <div class="card" style="padding:16px 18px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+            <span class="dot" style="width:10px;height:10px;border-radius:50%;background:var(--green);display:inline-block"></span>
+            <strong style="font-size:14px">github</strong>
+            <span class="badge badge-green" style="font-size:10px;margin-left:auto">Connected</span>
+          </div>
+          <div style="font-size:12px;color:var(--dim);margin-bottom:6px">Transport: <span style="color:var(--muted)">stdio</span></div>
+          <div style="font-size:12px;color:var(--dim)">Tools: <span style="color:var(--muted)">18</span></div>
+          <div style="margin-top:12px;display:flex;gap:8px">
+            <span class="m-btn m-btn-ghost" style="padding:4px 12px;font-size:11px">Edit</span>
+            <span class="m-btn m-btn-ghost" style="padding:4px 12px;font-size:11px;color:var(--orange)">Remove</span>
+          </div>
+        </div>
+        <div class="card" style="padding:16px 18px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+            <span class="dot" style="width:10px;height:10px;border-radius:50%;background:var(--orange);display:inline-block"></span>
+            <strong style="font-size:14px">postgres</strong>
+            <span class="badge badge-orange" style="font-size:10px;margin-left:auto">Disconnected</span>
+          </div>
+          <div style="font-size:12px;color:var(--dim);margin-bottom:6px">Transport: <span style="color:var(--muted)">stdio</span></div>
+          <div style="font-size:12px;color:var(--dim)">Tools: <span style="color:var(--muted)">5</span></div>
+          <div style="margin-top:12px;display:flex;gap:8px">
+            <span class="m-btn m-btn-ghost" style="padding:4px 12px;font-size:11px">Edit</span>
+            <span class="m-btn m-btn-ghost" style="padding:4px 12px;font-size:11px">Reconnect</span>
+            <span class="m-btn m-btn-ghost" style="padding:4px 12px;font-size:11px;color:var(--orange)">Remove</span>
+          </div>
+        </div>
+        <div class="card" style="padding:16px 18px;border-style:dashed;display:flex;align-items:center;justify-content:center;min-height:140px">
+          <div style="text-align:center;color:var(--dim)">
+            <div style="font-size:28px;margin-bottom:6px">+</div>
+            <div style="font-size:13px">Add MCP Server</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ---- SKILLS PAGE MOCKUP ---- -->
+<h3 id="mock-skills">Skills Page</h3>
+<p>All skills from all installed plugins, grouped by source plugin. Searchable and filterable.</p>
+
+<div class="mockup-frame">
+  <div class="mockup-titlebar">
+    <span class="mockup-dot r"></span>
+    <span class="mockup-dot y"></span>
+    <span class="mockup-dot g"></span>
+    <span class="mockup-url">localhost:3399/skills</span>
+  </div>
+  <div class="mockup-body">
+    <div class="m-sidebar">
+      <div class="brand">CCM</div>
+      <a><span class="icon">&#9673;</span> Overview</a>
+      <a><span class="icon">&#9881;</span> Plugins</a>
+      <a><span class="icon">&#9741;</span> MCP Servers</a>
+      <a class="active"><span class="icon">&#9733;</span> Skills</a>
+      <a><span class="icon">&#8260;</span> Commands</a>
+      <a><span class="icon">&#9998;</span> Settings</a>
+      <a><span class="icon">&#9638;</span> Profiles</a>
+      <a><span class="icon">&#8644;</span> Export / Import</a>
+    </div>
+    <div class="m-main">
+      <div class="page-title">Skills <span style="font-size:14px;color:var(--dim);font-weight:400">24 total</span></div>
+      <div class="m-search" style="display:block">Search skills...</div>
+
+      <!-- Group: todoist-plugin -->
+      <div style="font-size:12px;color:var(--dim);text-transform:uppercase;letter-spacing:.6px;margin:16px 0 8px;display:flex;align-items:center;gap:8px">
+        <span class="dot" style="width:6px;height:6px;border-radius:50%;background:var(--purple);display:inline-block"></span>
+        todoist-plugin <span style="color:var(--purple-l);font-size:11px">(3 skills)</span>
+      </div>
+      <div class="m-list-item"><span class="name">create-task</span><span class="badge badge-purple" style="font-size:10px">skill</span><span class="meta">Create a new Todoist task</span></div>
+      <div class="m-list-item"><span class="name">list-tasks</span><span class="badge badge-purple" style="font-size:10px">skill</span><span class="meta">List tasks with filters</span></div>
+      <div class="m-list-item"><span class="name">sync-project</span><span class="badge badge-pink" style="font-size:10px">agent</span><span class="meta">Sync a full project to Todoist</span></div>
+
+      <!-- Group: git-assistant -->
+      <div style="font-size:12px;color:var(--dim);text-transform:uppercase;letter-spacing:.6px;margin:20px 0 8px;display:flex;align-items:center;gap:8px">
+        <span class="dot" style="width:6px;height:6px;border-radius:50%;background:var(--blue);display:inline-block"></span>
+        git-assistant <span style="color:var(--blue);font-size:11px">(5 skills)</span>
+      </div>
+      <div class="m-list-item"><span class="name">commit-message</span><span class="badge badge-purple" style="font-size:10px">skill</span><span class="meta">Generate commit messages</span></div>
+      <div class="m-list-item"><span class="name">review-pr</span><span class="badge badge-pink" style="font-size:10px">agent</span><span class="meta">Review a pull request</span></div>
+      <div class="m-list-item"><span class="name">changelog</span><span class="badge badge-purple" style="font-size:10px">skill</span><span class="meta">Generate changelog from commits</span></div>
+      <div class="m-list-item"><span class="name">branch-cleanup</span><span class="badge badge-purple" style="font-size:10px">skill</span><span class="meta">Clean up merged branches</span></div>
+      <div class="m-list-item"><span class="name">rebase-helper</span><span class="badge badge-purple" style="font-size:10px">skill</span><span class="meta">Interactive rebase guidance</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ---- COMMANDS PAGE MOCKUP ---- -->
+<h3 id="mock-commands">Commands Page</h3>
+<p>List of all registered custom slash commands, showing origin (plugin or user-defined), description, and associated skill.</p>
+
+<div class="mockup-frame">
+  <div class="mockup-titlebar">
+    <span class="mockup-dot r"></span>
+    <span class="mockup-dot y"></span>
+    <span class="mockup-dot g"></span>
+    <span class="mockup-url">localhost:3399/commands</span>
+  </div>
+  <div class="mockup-body">
+    <div class="m-sidebar">
+      <div class="brand">CCM</div>
+      <a><span class="icon">&#9673;</span> Overview</a>
+      <a><span class="icon">&#9881;</span> Plugins</a>
+      <a><span class="icon">&#9741;</span> MCP Servers</a>
+      <a><span class="icon">&#9733;</span> Skills</a>
+      <a class="active"><span class="icon">&#8260;</span> Commands</a>
+      <a><span class="icon">&#9998;</span> Settings</a>
+      <a><span class="icon">&#9638;</span> Profiles</a>
+      <a><span class="icon">&#8644;</span> Export / Import</a>
+    </div>
+    <div class="m-main">
+      <div class="page-title">Slash Commands <span style="font-size:14px;color:var(--dim);font-weight:400">12 commands</span></div>
+      <div class="m-search" style="display:block">Search commands...</div>
+
+      <div class="m-list-item">
+        <code style="font-size:13px;min-width:160px">/todo</code>
+        <span class="badge badge-green" style="font-size:10px">plugin</span>
+        <span class="meta" style="flex:1">Create a new Todoist task quickly</span>
+        <span style="font-size:11px;color:var(--dim)">todoist-plugin</span>
+      </div>
+      <div class="m-list-item">
+        <code style="font-size:13px;min-width:160px">/commit</code>
+        <span class="badge badge-green" style="font-size:10px">plugin</span>
+        <span class="meta" style="flex:1">Generate and create a git commit</span>
+        <span style="font-size:11px;color:var(--dim)">git-assistant</span>
+      </div>
+      <div class="m-list-item">
+        <code style="font-size:13px;min-width:160px">/review</code>
+        <span class="badge badge-green" style="font-size:10px">plugin</span>
+        <span class="meta" style="flex:1">Start a PR review</span>
+        <span style="font-size:11px;color:var(--dim)">git-assistant</span>
+      </div>
+      <div class="m-list-item">
+        <code style="font-size:13px;min-width:160px">/jira</code>
+        <span class="badge badge-green" style="font-size:10px">plugin</span>
+        <span class="meta" style="flex:1">Create or update JIRA tickets</span>
+        <span style="font-size:11px;color:var(--dim)">jira-bridge</span>
+      </div>
+      <div class="m-list-item">
+        <code style="font-size:13px;min-width:160px">/deploy</code>
+        <span class="badge badge-blue" style="font-size:10px">custom</span>
+        <span class="meta" style="flex:1">Run deployment workflow</span>
+        <span style="font-size:11px;color:var(--dim)">user-defined</span>
+      </div>
+      <div class="m-list-item">
+        <code style="font-size:13px;min-width:160px">/standup</code>
+        <span class="badge badge-blue" style="font-size:10px">custom</span>
+        <span class="meta" style="flex:1">Generate daily standup summary</span>
+        <span style="font-size:11px;color:var(--dim)">user-defined</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ---- SETTINGS PAGE MOCKUP ---- -->
+<h3 id="mock-settings">Settings Page</h3>
+<p>Edit model preferences, environment variables, hooks, and permissions in a form-based UI.</p>
+
+<div class="mockup-frame">
+  <div class="mockup-titlebar">
+    <span class="mockup-dot r"></span>
+    <span class="mockup-dot y"></span>
+    <span class="mockup-dot g"></span>
+    <span class="mockup-url">localhost:3399/settings</span>
+  </div>
+  <div class="mockup-body">
+    <div class="m-sidebar">
+      <div class="brand">CCM</div>
+      <a><span class="icon">&#9673;</span> Overview</a>
+      <a><span class="icon">&#9881;</span> Plugins</a>
+      <a><span class="icon">&#9741;</span> MCP Servers</a>
+      <a><span class="icon">&#9733;</span> Skills</a>
+      <a><span class="icon">&#8260;</span> Commands</a>
+      <a class="active"><span class="icon">&#9998;</span> Settings</a>
+      <a><span class="icon">&#9638;</span> Profiles</a>
+      <a><span class="icon">&#8644;</span> Export / Import</a>
+    </div>
+    <div class="m-main">
+      <div class="page-title">Settings</div>
+      <div class="m-tabs">
+        <div class="m-tab active">General</div>
+        <div class="m-tab">Environment</div>
+        <div class="m-tab">Hooks</div>
+        <div class="m-tab">Permissions</div>
+      </div>
+
+      <div class="m-form-row">
+        <div class="label">Model</div>
+        <div class="value">claude-sonnet-4-20250514</div>
+      </div>
+      <div class="m-form-row">
+        <div class="label">Max Tokens</div>
+        <div class="value">16384</div>
+      </div>
+      <div class="m-form-row">
+        <div class="label">Temperature</div>
+        <div class="value">0.7</div>
+      </div>
+      <div class="m-form-row">
+        <div class="label">System Prompt</div>
+        <div class="value" style="min-height:60px">You are a helpful assistant specializing in TypeScript and React development...</div>
+      </div>
+      <div class="m-form-row">
+        <div class="label">Active Profile</div>
+        <div class="value">
+          <span class="badge badge-purple" style="font-size:11px">Work</span>
+        </div>
+      </div>
+      <div class="m-form-row">
+        <div class="label">Auto-Save</div>
+        <div class="value"><span class="m-toggle on"></span></div>
+      </div>
+
+      <div style="margin-top:20px;display:flex;gap:10px">
+        <span class="m-btn m-btn-primary">Save Changes</span>
+        <span class="m-btn m-btn-ghost">Reset to Defaults</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ---- PROFILES PAGE MOCKUP ---- -->
+<h3 id="mock-profiles">Profiles Page</h3>
+<p>Create, edit, activate, and delete named configuration profiles. The active profile is highlighted.</p>
+
+<div class="mockup-frame">
+  <div class="mockup-titlebar">
+    <span class="mockup-dot r"></span>
+    <span class="mockup-dot y"></span>
+    <span class="mockup-dot g"></span>
+    <span class="mockup-url">localhost:3399/profiles</span>
+  </div>
+  <div class="mockup-body">
+    <div class="m-sidebar">
+      <div class="brand">CCM</div>
+      <a><span class="icon">&#9673;</span> Overview</a>
+      <a><span class="icon">&#9881;</span> Plugins</a>
+      <a><span class="icon">&#9741;</span> MCP Servers</a>
+      <a><span class="icon">&#9733;</span> Skills</a>
+      <a><span class="icon">&#8260;</span> Commands</a>
+      <a><span class="icon">&#9998;</span> Settings</a>
+      <a class="active"><span class="icon">&#9638;</span> Profiles</a>
+      <a><span class="icon">&#8644;</span> Export / Import</a>
+    </div>
+    <div class="m-main">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+        <div class="page-title" style="margin:0">Profiles</div>
+        <span class="m-btn m-btn-primary">+ New Profile</span>
+      </div>
+
+      <div class="m-profile-card active-profile">
+        <div class="pf-icon" style="background:rgba(108,92,231,.2);color:var(--purple-l)">W</div>
+        <div class="pf-info">
+          <div class="pf-name">Work <span class="badge badge-green" style="font-size:9px;vertical-align:middle;margin-left:6px">Active</span></div>
+          <div class="pf-desc">6 plugins, 3 MCP servers, custom hooks</div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <span class="m-btn m-btn-ghost" style="padding:4px 12px;font-size:11px">Edit</span>
+          <span class="m-btn m-btn-ghost" style="padding:4px 12px;font-size:11px">Export</span>
+        </div>
+      </div>
+
+      <div class="m-profile-card">
+        <div class="pf-icon" style="background:rgba(0,184,148,.2);color:var(--green)">P</div>
+        <div class="pf-info">
+          <div class="pf-name">Personal</div>
+          <div class="pf-desc">4 plugins, 1 MCP server, no hooks</div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <span class="m-btn m-btn-primary" style="padding:4px 12px;font-size:11px">Activate</span>
+          <span class="m-btn m-btn-ghost" style="padding:4px 12px;font-size:11px">Edit</span>
+          <span class="m-btn m-btn-ghost" style="padding:4px 12px;font-size:11px">Export</span>
+        </div>
+      </div>
+
+      <div class="m-profile-card">
+        <div class="pf-icon" style="background:rgba(9,132,227,.2);color:var(--blue)">O</div>
+        <div class="pf-info">
+          <div class="pf-name">Open Source</div>
+          <div class="pf-desc">3 plugins, 2 MCP servers, permissive permissions</div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <span class="m-btn m-btn-primary" style="padding:4px 12px;font-size:11px">Activate</span>
+          <span class="m-btn m-btn-ghost" style="padding:4px 12px;font-size:11px">Edit</span>
+          <span class="m-btn m-btn-ghost" style="padding:4px 12px;font-size:11px">Export</span>
+        </div>
+      </div>
+
+      <!-- Profile editor area -->
+      <div style="margin-top:24px;padding-top:20px;border-top:1px solid var(--border)">
+        <div style="font-size:14px;font-weight:600;margin-bottom:14px;color:var(--text)">Profile Contents: Work</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:13px">
+          <div class="card" style="padding:14px">
+            <div style="font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Selected Plugins</div>
+            <div style="color:var(--muted);line-height:1.8">
+              <div>todoist-plugin</div>
+              <div>git-assistant</div>
+              <div>jira-bridge</div>
+              <div>docker-helper</div>
+              <div>code-review</div>
+              <div>db-query</div>
+            </div>
+          </div>
+          <div class="card" style="padding:14px">
+            <div style="font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">MCP Servers</div>
+            <div style="color:var(--muted);line-height:1.8">
+              <div>filesystem</div>
+              <div>github</div>
+              <div>postgres</div>
+            </div>
+          </div>
+          <div class="card" style="padding:14px">
+            <div style="font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Settings</div>
+            <div style="color:var(--muted);line-height:1.8">
+              <div>Model: claude-sonnet-4-20250514</div>
+              <div>Max tokens: 16384</div>
+            </div>
+          </div>
+          <div class="card" style="padding:14px">
+            <div style="font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Hooks</div>
+            <div style="color:var(--muted);line-height:1.8">
+              <div>pre-commit: lint + format</div>
+              <div>post-response: log</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ---- EXPORT / IMPORT PAGE MOCKUP ---- -->
+<h3 id="mock-export">Export / Import Page</h3>
+<p>Export profiles to portable JSON or YAML files. Import with merge or replace strategy, with a preview showing conflicts and diffs before applying.</p>
+
+<div class="mockup-frame">
+  <div class="mockup-titlebar">
+    <span class="mockup-dot r"></span>
+    <span class="mockup-dot y"></span>
+    <span class="mockup-dot g"></span>
+    <span class="mockup-url">localhost:3399/export-import</span>
+  </div>
+  <div class="mockup-body">
+    <div class="m-sidebar">
+      <div class="brand">CCM</div>
+      <a><span class="icon">&#9673;</span> Overview</a>
+      <a><span class="icon">&#9881;</span> Plugins</a>
+      <a><span class="icon">&#9741;</span> MCP Servers</a>
+      <a><span class="icon">&#9733;</span> Skills</a>
+      <a><span class="icon">&#8260;</span> Commands</a>
+      <a><span class="icon">&#9998;</span> Settings</a>
+      <a><span class="icon">&#9638;</span> Profiles</a>
+      <a class="active"><span class="icon">&#8644;</span> Export / Import</a>
+    </div>
+    <div class="m-main" style="display:grid;grid-template-columns:1fr 1fr;gap:24px;align-content:start">
+      <!-- Export side -->
+      <div>
+        <div class="page-title" style="font-size:16px">Export</div>
+        <div class="card" style="padding:18px">
+          <div class="m-form-row" style="border:0;padding:8px 0">
+            <div class="label">Profile</div>
+            <div class="value">Work</div>
+          </div>
+          <div class="m-form-row" style="border:0;padding:8px 0">
+            <div class="label">Format</div>
+            <div style="display:flex;gap:8px">
+              <span class="m-btn m-btn-primary" style="padding:4px 14px;font-size:11px">JSON</span>
+              <span class="m-btn m-btn-ghost" style="padding:4px 14px;font-size:11px">YAML</span>
+            </div>
+          </div>
+          <div class="m-form-row" style="border:0;padding:8px 0">
+            <div class="label">Include</div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.8">
+              <div><span class="m-toggle on" style="vertical-align:middle;margin-right:8px"></span> Plugins</div>
+              <div><span class="m-toggle on" style="vertical-align:middle;margin-right:8px"></span> MCP Servers</div>
+              <div><span class="m-toggle on" style="vertical-align:middle;margin-right:8px"></span> Settings</div>
+              <div><span class="m-toggle on" style="vertical-align:middle;margin-right:8px"></span> Hooks</div>
+              <div><span class="m-toggle" style="vertical-align:middle;margin-right:8px"></span> <span style="color:var(--orange)">Credentials</span></div>
+            </div>
+          </div>
+          <div style="margin-top:14px">
+            <span class="m-btn m-btn-primary">Export Profile</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Import side -->
+      <div>
+        <div class="page-title" style="font-size:16px">Import</div>
+        <div class="card" style="padding:18px">
+          <div style="border:2px dashed var(--border);border-radius:var(--radius);padding:28px;text-align:center;margin-bottom:14px">
+            <div style="font-size:13px;color:var(--dim)">Drop a profile file here or click to browse</div>
+            <div style="font-size:11px;color:var(--dim);margin-top:4px">.json or .yaml</div>
+          </div>
+          <div class="m-form-row" style="border:0;padding:8px 0">
+            <div class="label">Strategy</div>
+            <div style="display:flex;gap:8px">
+              <span class="m-btn m-btn-primary" style="padding:4px 14px;font-size:11px">Merge</span>
+              <span class="m-btn m-btn-ghost" style="padding:4px 14px;font-size:11px">Replace</span>
+            </div>
+          </div>
+
+          <!-- Import preview diff -->
+          <div style="font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.6px;margin:14px 0 8px">Import Preview</div>
+          <div class="m-diff" style="background:var(--bg);padding:12px;border-radius:6px;border:1px solid var(--border)">
+            <div class="unchanged">&nbsp; plugins.installed:</div>
+            <div class="unchanged">&nbsp;&nbsp;&nbsp; todoist-plugin (no change)</div>
+            <div class="unchanged">&nbsp;&nbsp;&nbsp; git-assistant (no change)</div>
+            <div class="added">&nbsp; + eslint-helper v1.0.0 (new)</div>
+            <div class="removed">&nbsp; - code-review (removed)</div>
+            <div class="unchanged">&nbsp; mcpServers:</div>
+            <div class="added">&nbsp; + slack-mcp (new)</div>
+            <div class="unchanged">&nbsp; settings.model:</div>
+            <div class="removed">&nbsp; - claude-sonnet-4-20250514</div>
+            <div class="added">&nbsp; + claude-opus-4-20250514</div>
+          </div>
+
+          <div style="margin-top:14px;display:flex;gap:8px">
+            <span class="m-btn m-btn-primary">Apply Import</span>
+            <span class="m-btn m-btn-ghost">Dry Run</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ---- DETAIL PANEL MOCKUP ---- -->
+<h3 id="mock-detail">Detail Panel (Slide-In)</h3>
+<p>Clicking any plugin, MCP server, or skill opens a right-side detail panel. Here is the plugin detail variant with the panel open.</p>
+
+<div class="mockup-frame">
+  <div class="mockup-titlebar">
+    <span class="mockup-dot r"></span>
+    <span class="mockup-dot y"></span>
+    <span class="mockup-dot g"></span>
+    <span class="mockup-url">localhost:3399/plugins</span>
+  </div>
+  <div class="mockup-body">
+    <div class="m-sidebar">
+      <div class="brand">CCM</div>
+      <a><span class="icon">&#9673;</span> Overview</a>
+      <a class="active"><span class="icon">&#9881;</span> Plugins</a>
+      <a><span class="icon">&#9741;</span> MCP Servers</a>
+      <a><span class="icon">&#9733;</span> Skills</a>
+      <a><span class="icon">&#8260;</span> Commands</a>
+      <a><span class="icon">&#9998;</span> Settings</a>
+      <a><span class="icon">&#9638;</span> Profiles</a>
+      <a><span class="icon">&#8644;</span> Export / Import</a>
+    </div>
+    <div class="m-main" style="flex:1;min-width:0">
+      <div class="page-title">Plugins</div>
+      <div class="m-list-item" style="background:rgba(108,92,231,.06);border-radius:6px">
+        <span class="dot" style="width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block"></span>
+        <span class="name">git-assistant</span>
+        <span class="badge badge-blue" style="font-size:10px">v2.0.1</span>
+        <span class="meta" style="margin-left:auto">Selected</span>
+      </div>
+      <div class="m-list-item">
+        <span class="dot" style="width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block"></span>
+        <span class="name">todoist-plugin</span>
+        <span class="badge badge-green" style="font-size:10px">v1.2.0</span>
+      </div>
+      <div class="m-list-item">
+        <span class="dot" style="width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block"></span>
+        <span class="name">jira-bridge</span>
+        <span class="badge badge-green" style="font-size:10px">v1.0.0</span>
+      </div>
+    </div>
+    <!-- Detail Panel -->
+    <div class="m-detail-panel">
+      <div style="display:flex;justify-content:space-between;align-items:start">
+        <div class="dp-title">git-assistant</div>
+        <span style="cursor:pointer;color:var(--dim);font-size:18px">&#10005;</span>
+      </div>
+      <div class="dp-sub">v2.0.1 &middot; by @devtools &middot; MIT License</div>
+      <p style="font-size:12px;color:var(--dim);margin-bottom:16px">AI-powered Git workflow assistant for Claude Code. Generates commit messages, reviews PRs, manages branches.</p>
+
+      <div style="display:flex;gap:8px;margin-bottom:18px">
+        <span class="m-btn m-btn-ghost" style="padding:5px 14px;font-size:11px">Update</span>
+        <span class="m-btn m-btn-ghost" style="padding:5px 14px;font-size:11px;color:var(--orange)">Remove</span>
+        <span class="m-toggle on" style="margin-left:auto;margin-top:4px"></span>
+      </div>
+
+      <div class="dp-section">Skills (5)</div>
+      <div class="dp-row">commit-message <span class="badge badge-purple" style="font-size:9px">skill</span></div>
+      <div class="dp-row">review-pr <span class="badge badge-pink" style="font-size:9px">agent</span></div>
+      <div class="dp-row">changelog <span class="badge badge-purple" style="font-size:9px">skill</span></div>
+      <div class="dp-row">branch-cleanup <span class="badge badge-purple" style="font-size:9px">skill</span></div>
+      <div class="dp-row">rebase-helper <span class="badge badge-purple" style="font-size:9px">skill</span></div>
+
+      <div class="dp-section">Commands (2)</div>
+      <div class="dp-row"><code>/commit</code></div>
+      <div class="dp-row"><code>/review</code></div>
+
+      <div class="dp-section">Dependencies</div>
+      <div class="dp-row" style="font-size:12px;color:var(--dim)">simple-git ^3.0.0</div>
+      <div class="dp-row" style="font-size:12px;color:var(--dim)">@octokit/rest ^20.0.0</div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ============================================================ -->
+<!-- MCP TOOLS                                                    -->
+<!-- ============================================================ -->
+<h2 id="mcp-tools">2. MCP Tools (19 total)</h2>
+<p>
+  The <code>@ccm/mcp</code> package exposes these tools when registered as an MCP server within Claude Code.
+  This allows Claude to manage configurations conversationally.
+</p>
+
+<h4>Query Tools</h4>
+<table class="tool-table">
+  <thead><tr><th>Tool</th><th>Description</th><th>Returns</th></tr></thead>
+  <tbody>
+    <tr><td><code>ccm_list_plugins</code></td><td>List all installed plugins with version and status</td><td>Plugin[]</td></tr>
+    <tr><td><code>ccm_list_mcp_servers</code></td><td>List configured MCP servers with connection status</td><td>McpServer[]</td></tr>
+    <tr><td><code>ccm_list_skills</code></td><td>List all skills from all plugins, grouped by source</td><td>Skill[]</td></tr>
+    <tr><td><code>ccm_list_commands</code></td><td>List all custom slash commands</td><td>Command[]</td></tr>
+    <tr><td><code>ccm_get_config</code></td><td>Get current configuration (model, env, hooks, permissions)</td><td>Config</td></tr>
+    <tr><td><code>ccm_get_component_detail</code></td><td>Get detailed info for a specific plugin, server, or skill</td><td>ComponentDetail</td></tr>
+  </tbody>
+</table>
+
+<h4>Mutation Tools</h4>
+<table class="tool-table">
+  <thead><tr><th>Tool</th><th>Description</th><th>Parameters</th></tr></thead>
+  <tbody>
+    <tr><td><code>ccm_install_plugin</code></td><td>Install a plugin by name or URL</td><td><code>name: string</code></td></tr>
+    <tr><td><code>ccm_update_plugin</code></td><td>Update a plugin to latest version</td><td><code>name: string, version?: string</code></td></tr>
+    <tr><td><code>ccm_remove_plugin</code></td><td>Remove an installed plugin</td><td><code>name: string</code></td></tr>
+    <tr><td><code>ccm_toggle_plugin</code></td><td>Enable or disable a plugin</td><td><code>name: string, enabled: boolean</code></td></tr>
+    <tr><td><code>ccm_add_mcp_server</code></td><td>Add a new MCP server configuration</td><td><code>name, command, args, env?</code></td></tr>
+    <tr><td><code>ccm_remove_mcp_server</code></td><td>Remove an MCP server</td><td><code>name: string</code></td></tr>
+    <tr><td><code>ccm_update_config</code></td><td>Update configuration settings</td><td><code>path: string, value: any</code></td></tr>
+  </tbody>
+</table>
+
+<h4>Profile Tools</h4>
+<table class="tool-table">
+  <thead><tr><th>Tool</th><th>Description</th><th>Parameters</th></tr></thead>
+  <tbody>
+    <tr><td><code>ccm_list_profiles</code></td><td>List all saved profiles with active indicator</td><td>&mdash;</td></tr>
+    <tr><td><code>ccm_create_profile</code></td><td>Create a new profile from current config</td><td><code>name: string, description?: string</code></td></tr>
+    <tr><td><code>ccm_activate_profile</code></td><td>Switch to a named profile</td><td><code>name: string</code></td></tr>
+    <tr><td><code>ccm_export_profile</code></td><td>Export profile to a JSON/YAML string</td><td><code>name: string, format?: 'json'|'yaml'</code></td></tr>
+    <tr><td><code>ccm_import_profile</code></td><td>Import a profile from data</td><td><code>data: string, strategy?: 'merge'|'replace'</code></td></tr>
+    <tr><td><code>ccm_delete_profile</code></td><td>Delete a saved profile</td><td><code>name: string</code></td></tr>
+  </tbody>
+</table>
+
+<h4>Dashboard Tools</h4>
+<table class="tool-table">
+  <thead><tr><th>Tool</th><th>Description</th><th>Parameters</th></tr></thead>
+  <tbody>
+    <tr><td><code>ccm_open_dashboard</code></td><td>Launch or focus the web dashboard</td><td><code>page?: string</code></td></tr>
+    <tr><td><code>ccm_dashboard_status</code></td><td>Check if the dashboard is running</td><td>&mdash;</td></tr>
+  </tbody>
+</table>
+
+<hr class="divider">
+
+<!-- ============================================================ -->
+<!-- CLI COMMANDS                                                 -->
+<!-- ============================================================ -->
+<h2 id="cli">3. CLI Commands</h2>
+<p>The <code>claude-config</code> CLI provides scriptable access to all features.</p>
+
+<table class="tool-table">
+  <thead><tr><th>Command</th><th>Description</th><th>Flags</th></tr></thead>
+  <tbody>
+    <tr><td><code>claude-config start</code></td><td>Launch the dashboard web UI</td><td><code>--port, --open</code></td></tr>
+    <tr><td><code>claude-config list</code></td><td>List installed components</td><td><code>--plugins, --mcps, --skills, --json</code></td></tr>
+    <tr><td><code>claude-config profile list</code></td><td>List all profiles</td><td><code>--json</code></td></tr>
+    <tr><td><code>claude-config profile create &lt;name&gt;</code></td><td>Create profile from current config</td><td><code>--description</code></td></tr>
+    <tr><td><code>claude-config profile activate &lt;name&gt;</code></td><td>Switch to a profile</td><td>&mdash;</td></tr>
+    <tr><td><code>claude-config profile delete &lt;name&gt;</code></td><td>Delete a profile</td><td><code>--force</code></td></tr>
+    <tr><td><code>claude-config export &lt;profile&gt;</code></td><td>Export a profile to file</td><td><code>--format json|yaml, --output</code></td></tr>
+    <tr><td><code>claude-config import &lt;file&gt;</code></td><td>Import a profile from file</td><td><code>--dry-run, --replace, --format</code></td></tr>
+    <tr><td><code>claude-config mcp-server</code></td><td>Run as an MCP server (stdio)</td><td><code>--verbose</code></td></tr>
+  </tbody>
+</table>
+
+<h4>CLI Examples</h4>
+<pre><code># Launch dashboard on custom port
+claude-config start --port 4200
+
+# List all plugins as JSON
+claude-config list --plugins --json
+
+# Create a profile from current state
+claude-config profile create "Work" --description "Daily work config"
+
+# Switch profiles
+claude-config profile activate "Personal"
+
+# Export for sharing
+claude-config export "Work" --format yaml --output ./work-profile.yaml
+
+# Dry-run import to see what would change
+claude-config import ./teammate-profile.json --dry-run
+
+# Full import with replace strategy
+claude-config import ./teammate-profile.json --replace</code></pre>
+
+<hr class="divider">
+
+<!-- ============================================================ -->
+<!-- PROFILES                                                     -->
+<!-- ============================================================ -->
+<h2 id="profiles">4. Profiles System</h2>
+
+<h3>Overview</h3>
+<p>
+  Profiles are named configuration snapshots that capture the complete state of a Claude Code setup.
+  They enable instant context-switching and portable configuration sharing.
+</p>
+
+<h4>What a Profile Contains</h4>
+<div class="card-grid cols-3">
+  <div class="card">
+    <h4 style="color:var(--purple-l)">Plugins</h4>
+    <ul><li>Installed plugin list</li><li>Enable/disable state for each</li><li>Version pinning (optional)</li></ul>
+  </div>
+  <div class="card">
+    <h4 style="color:var(--green)">MCP Servers</h4>
+    <ul><li>Server name and command</li><li>Arguments and env vars</li><li>Credentials excluded by default</li></ul>
+  </div>
+  <div class="card">
+    <h4 style="color:var(--blue)">Settings</h4>
+    <ul><li>Model preference</li><li>Environment variables</li><li>System prompt overrides</li></ul>
+  </div>
+  <div class="card">
+    <h4 style="color:var(--orange)">Hooks</h4>
+    <ul><li>Pre/post hooks for events</li><li>Custom scripts</li><li>Lifecycle callbacks</li></ul>
+  </div>
+  <div class="card">
+    <h4 style="color:var(--pink)">Commands</h4>
+    <ul><li>Custom slash commands</li><li>Command arguments schema</li><li>Linked skills</li></ul>
+  </div>
+  <div class="card">
+    <h4 style="color:var(--yellow)">Permissions</h4>
+    <ul><li>Allowed file paths</li><li>Network permissions</li><li>Tool restrictions</li></ul>
+  </div>
+</div>
+
+<h3>Import Strategies</h3>
+<div class="card-grid cols-2">
+  <div class="card">
+    <h4 style="color:var(--green)">Merge (Default)</h4>
+    <p>Keep existing configuration and add new items from the imported profile. Conflicts are resolved by keeping the local value. Best for: adding a teammate's plugins to your existing setup.</p>
+  </div>
+  <div class="card">
+    <h4 style="color:var(--orange)">Replace</h4>
+    <p>Completely replace the current configuration with the imported profile. Existing items not in the import are removed. Best for: setting up a fresh machine to match another exactly.</p>
+  </div>
+</div>
+
+<h3>Security</h3>
+<div class="card" style="border-left:3px solid var(--orange)">
+  <h4 style="color:var(--orange)">Credential Handling</h4>
+  <p>
+    By default, profile exports <strong>exclude all credentials and secrets</strong>. This includes API keys in environment variables,
+    authentication tokens in MCP server configs, and any value matching common secret patterns (keys containing
+    <code>SECRET</code>, <code>TOKEN</code>, <code>KEY</code>, <code>PASSWORD</code>, <code>CREDENTIAL</code>).
+  </p>
+  <p>
+    Users can opt-in to include credentials via a dashboard toggle or the <code>--include-secrets</code> CLI flag,
+    but will see a warning confirming the security implications.
+  </p>
+</div>
+
+<hr class="divider">
+
+<!-- ============================================================ -->
+<!-- USER FLOWS                                                   -->
+<!-- ============================================================ -->
+<h2 id="user-flows">User Flows</h2>
+
+<h3>Flow 1: First-Time Setup</h3>
+<div class="flow">
+  <span class="flow-step">Install package</span>
+  <span class="flow-arrow">&#8594;</span>
+  <span class="flow-step">Run <code>claude-config start</code></span>
+  <span class="flow-arrow">&#8594;</span>
+  <span class="flow-step">Dashboard opens</span>
+  <span class="flow-arrow">&#8594;</span>
+  <span class="flow-step">Auto-detects existing config</span>
+  <span class="flow-arrow">&#8594;</span>
+  <span class="flow-step">Overview page</span>
+</div>
+
+<h3>Flow 2: Profile Export &amp; Import</h3>
+<div class="flow">
+  <span class="flow-step">Open Profiles page</span>
+  <span class="flow-arrow">&#8594;</span>
+  <span class="flow-step">Click Export</span>
+  <span class="flow-arrow">&#8594;</span>
+  <span class="flow-step">Choose format (JSON/YAML)</span>
+  <span class="flow-arrow">&#8594;</span>
+  <span class="flow-step">Download file</span>
+</div>
+<div class="flow" style="margin-top:8px">
+  <span class="flow-step">Open Import page</span>
+  <span class="flow-arrow">&#8594;</span>
+  <span class="flow-step">Drop file</span>
+  <span class="flow-arrow">&#8594;</span>
+  <span class="flow-step">Preview diff</span>
+  <span class="flow-arrow">&#8594;</span>
+  <span class="flow-step">Choose strategy</span>
+  <span class="flow-arrow">&#8594;</span>
+  <span class="flow-step">Apply</span>
+</div>
+
+<h3>Flow 3: AI-Assisted Config via MCP</h3>
+<div class="flow">
+  <span class="flow-step">User: "Add the GitHub MCP server"</span>
+  <span class="flow-arrow">&#8594;</span>
+  <span class="flow-step">Claude calls <code>ccm_add_mcp_server</code></span>
+  <span class="flow-arrow">&#8594;</span>
+  <span class="flow-step">Config updated</span>
+  <span class="flow-arrow">&#8594;</span>
+  <span class="flow-step">Dashboard reflects change</span>
+</div>
+
+<h3>Flow 4: Context Switching</h3>
+<div class="flow">
+  <span class="flow-step">User: "Switch to Personal profile"</span>
+  <span class="flow-arrow">&#8594;</span>
+  <span class="flow-step">Claude calls <code>ccm_activate_profile</code></span>
+  <span class="flow-arrow">&#8594;</span>
+  <span class="flow-step">Plugins toggled</span>
+  <span class="flow-arrow">&#8594;</span>
+  <span class="flow-step">MCP servers reconfigured</span>
+  <span class="flow-arrow">&#8594;</span>
+  <span class="flow-step">Settings applied</span>
+</div>
+
+<h3>Flow 5: Plugin Discovery &amp; Install</h3>
+<div class="flow">
+  <span class="flow-step">Open Plugins page</span>
+  <span class="flow-arrow">&#8594;</span>
+  <span class="flow-step">Click Marketplace tab</span>
+  <span class="flow-arrow">&#8594;</span>
+  <span class="flow-step">Search / browse</span>
+  <span class="flow-arrow">&#8594;</span>
+  <span class="flow-step">Click Install</span>
+  <span class="flow-arrow">&#8594;</span>
+  <span class="flow-step">Review skills in detail panel</span>
+  <span class="flow-arrow">&#8594;</span>
+  <span class="flow-step">Confirm</span>
+</div>
+
+<hr class="divider">
+
+<!-- ============================================================ -->
+<!-- SUCCESS METRICS                                              -->
+<!-- ============================================================ -->
+<h2 id="metrics">Success Metrics</h2>
+
+<div class="card-grid cols-4">
+  <div class="metric">
+    <div class="val" style="color:var(--purple-l)">5k</div>
+    <div class="lbl">Weekly Active Users (6mo)</div>
+  </div>
+  <div class="metric">
+    <div class="val" style="color:var(--green)">70%</div>
+    <div class="lbl">Profile Feature Adoption</div>
+  </div>
+  <div class="metric">
+    <div class="val" style="color:var(--blue)">&lt;3s</div>
+    <div class="lbl">Dashboard Load Time</div>
+  </div>
+  <div class="metric">
+    <div class="val" style="color:var(--orange)">4.5</div>
+    <div class="lbl">User Satisfaction (1-5)</div>
+  </div>
+</div>
+
+<h4>Key Performance Indicators</h4>
+<table class="tool-table">
+  <thead><tr><th>Metric</th><th>Target (6 months)</th><th>Measurement</th></tr></thead>
+  <tbody>
+    <tr><td>npm weekly downloads</td><td>5,000+</td><td>npm registry stats</td></tr>
+    <tr><td>Profile exports per user per month</td><td>2+</td><td>Anonymous telemetry (opt-in)</td></tr>
+    <tr><td>MCP tool invocations per session</td><td>3+</td><td>Anonymous telemetry (opt-in)</td></tr>
+    <tr><td>Dashboard session duration</td><td>4+ minutes</td><td>Client-side analytics</td></tr>
+    <tr><td>Multi-machine profile sync users</td><td>30% of active users</td><td>Export/import event pairs</td></tr>
+    <tr><td>Plugin marketplace installs via dashboard</td><td>40% of new installs</td><td>Install source tracking</td></tr>
+    <tr><td>Bug reports per release</td><td>&lt;5 critical</td><td>GitHub issues</td></tr>
+    <tr><td>Time to first meaningful interaction</td><td>&lt;60 seconds</td><td>Onboarding funnel</td></tr>
+  </tbody>
+</table>
+
+<hr class="divider">
+
+<!-- ============================================================ -->
+<!-- MILESTONES                                                   -->
+<!-- ============================================================ -->
+<h2 id="milestones">Milestones &amp; Timeline</h2>
+
+<div class="card-grid cols-2">
+  <div class="card" style="border-left:3px solid var(--purple)">
+    <h4>Phase 1: Foundation <span class="badge badge-purple">Weeks 1-4</span></h4>
+    <ul>
+      <li>Turborepo setup with all 5 packages</li>
+      <li><code>@ccm/types</code>: Zod schemas, TypeScript types</li>
+      <li><code>@ccm/core</code>: Config read/write, file watchers, validation</li>
+      <li>Unit tests for core (90%+ coverage)</li>
+    </ul>
+  </div>
+  <div class="card" style="border-left:3px solid var(--blue)">
+    <h4>Phase 2: CLI + MCP <span class="badge badge-blue">Weeks 5-8</span></h4>
+    <ul>
+      <li><code>@ccm/cli</code>: All CLI commands implemented</li>
+      <li><code>@ccm/mcp</code>: All 19 MCP tools implemented</li>
+      <li>Profile create, activate, export, import</li>
+      <li>Integration tests with Claude Code</li>
+    </ul>
+  </div>
+  <div class="card" style="border-left:3px solid var(--green)">
+    <h4>Phase 3: Dashboard <span class="badge badge-green">Weeks 9-14</span></h4>
+    <ul>
+      <li><code>@ccm/dashboard</code>: All pages implemented</li>
+      <li>Detail panel with search and preview</li>
+      <li>Import/export with diff preview</li>
+      <li>Responsive design, accessibility audit</li>
+    </ul>
+  </div>
+  <div class="card" style="border-left:3px solid var(--orange)">
+    <h4>Phase 4: Polish + Launch <span class="badge badge-orange">Weeks 15-18</span></h4>
+    <ul>
+      <li>End-to-end testing</li>
+      <li>Documentation and tutorials</li>
+      <li>npm publish, GitHub release</li>
+      <li>Launch blog post and community outreach</li>
+    </ul>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ============================================================ -->
+<!-- RISKS                                                        -->
+<!-- ============================================================ -->
+<h2 id="risks">Risks &amp; Mitigations</h2>
+
+<table class="tool-table">
+  <thead><tr><th>Risk</th><th>Impact</th><th>Likelihood</th><th>Mitigation</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>Claude Code config format changes</td>
+      <td><span class="badge badge-orange">High</span></td>
+      <td><span class="badge badge-yellow">Medium</span></td>
+      <td>Abstract config access behind versioned adapters in <code>@ccm/core</code>. Add schema migration system.</td>
+    </tr>
+    <tr>
+      <td>Credential leakage in profile exports</td>
+      <td><span class="badge badge-orange">High</span></td>
+      <td><span class="badge badge-green">Low</span></td>
+      <td>Credentials excluded by default. Pattern-based detection. Explicit opt-in with warning.</td>
+    </tr>
+    <tr>
+      <td>Profile import corrupts config</td>
+      <td><span class="badge badge-orange">High</span></td>
+      <td><span class="badge badge-green">Low</span></td>
+      <td>Automatic backup before import. Dry-run mode. Zod validation on all inputs.</td>
+    </tr>
+    <tr>
+      <td>Dashboard performance with many plugins</td>
+      <td><span class="badge badge-yellow">Medium</span></td>
+      <td><span class="badge badge-yellow">Medium</span></td>
+      <td>Virtual scrolling for lists. Lazy-load detail panel content. Cache config reads.</td>
+    </tr>
+    <tr>
+      <td>MCP protocol breaking changes</td>
+      <td><span class="badge badge-yellow">Medium</span></td>
+      <td><span class="badge badge-yellow">Medium</span></td>
+      <td>Pin MCP SDK version. Add protocol version negotiation. Maintain compatibility matrix.</td>
+    </tr>
+    <tr>
+      <td>Low adoption due to CLI-only alternatives</td>
+      <td><span class="badge badge-yellow">Medium</span></td>
+      <td><span class="badge badge-yellow">Medium</span></td>
+      <td>Focus on visual diff/preview features that CLI cannot match. Emphasize MCP integration as unique differentiator.</td>
+    </tr>
+  </tbody>
+</table>
+
+<hr class="divider">
+
+<!-- ============================================================ -->
+<!-- APPENDIX                                                     -->
+<!-- ============================================================ -->
+<h2 id="appendix">Appendix</h2>
+
+<h3 id="schema">A. Profile Export Schema (v1.0)</h3>
+<p>The complete JSON schema for exported profile files:</p>
+
+<div class="schema-block">
+<span class="key">{</span>
+  <span class="key">"version"</span>: <span class="str">"1.0"</span>,                          <span class="cmt">// Schema version for forward compat</span>
+  <span class="key">"name"</span>: <span class="str">"Work"</span>,                             <span class="cmt">// Human-readable profile name</span>
+  <span class="key">"description"</span>: <span class="str">"Daily work configuration"</span>,   <span class="cmt">// Optional description</span>
+  <span class="key">"createdAt"</span>: <span class="str">"2026-03-25T10:30:00Z"</span>,         <span class="cmt">// ISO 8601 timestamp</span>
+  <span class="key">"exportedAt"</span>: <span class="str">"2026-03-25T14:22:00Z"</span>,        <span class="cmt">// When this file was exported</span>
+  <span class="key">"machine"</span>: <span class="str">"MacBook-Pro.local"</span>,              <span class="cmt">// Source machine hostname</span>
+  <span class="key">"ccmVersion"</span>: <span class="str">"1.0.0-draft"</span>,                  <span class="cmt">// claude-config-manager version</span>
+
+  <span class="key">"plugins"</span>: {
+    <span class="key">"installed"</span>: [                              <span class="cmt">// List of installed plugins</span>
+      {
+        <span class="key">"name"</span>: <span class="str">"todoist-plugin"</span>,
+        <span class="key">"version"</span>: <span class="str">"1.2.0"</span>,
+        <span class="key">"source"</span>: <span class="str">"npm"</span>                       <span class="cmt">// "npm" | "github" | "local"</span>
+      },
+      {
+        <span class="key">"name"</span>: <span class="str">"git-assistant"</span>,
+        <span class="key">"version"</span>: <span class="str">"2.0.1"</span>,
+        <span class="key">"source"</span>: <span class="str">"npm"</span>
+      }
+    ],
+    <span class="key">"enabled"</span>: {                                <span class="cmt">// Enable/disable map</span>
+      <span class="key">"todoist-plugin"</span>: <span style="color:var(--green)">true</span>,
+      <span class="key">"git-assistant"</span>: <span style="color:var(--green)">true</span>,
+      <span class="key">"code-review"</span>: <span style="color:var(--orange)">false</span>
+    }
+  },
+
+  <span class="key">"mcpServers"</span>: {                               <span class="cmt">// MCP server configurations</span>
+    <span class="key">"filesystem"</span>: {
+      <span class="key">"command"</span>: <span class="str">"npx"</span>,
+      <span class="key">"args"</span>: [<span class="str">"-y"</span>, <span class="str">"@modelcontextprotocol/server-filesystem"</span>, <span class="str">"/home/user"</span>]
+    },
+    <span class="key">"github"</span>: {
+      <span class="key">"command"</span>: <span class="str">"npx"</span>,
+      <span class="key">"args"</span>: [<span class="str">"-y"</span>, <span class="str">"@modelcontextprotocol/server-github"</span>],
+      <span class="key">"env"</span>: {}                                  <span class="cmt">// Credentials stripped</span>
+    }
+  },
+
+  <span class="key">"settings"</span>: {
+    <span class="key">"model"</span>: <span class="str">"claude-sonnet-4-20250514"</span>,
+    <span class="key">"maxTokens"</span>: 16384,
+    <span class="key">"temperature"</span>: 0.7,
+    <span class="key">"systemPrompt"</span>: <span class="str">"You are a helpful assistant..."</span>,
+    <span class="key">"env"</span>: {                                    <span class="cmt">// Non-sensitive env vars only</span>
+      <span class="key">"NODE_ENV"</span>: <span class="str">"development"</span>,
+      <span class="key">"LOG_LEVEL"</span>: <span class="str">"info"</span>
+    }
+  },
+
+  <span class="key">"hooks"</span>: {
+    <span class="key">"preCommit"</span>: [<span class="str">"npm run lint"</span>, <span class="str">"npm run format"</span>],
+    <span class="key">"postResponse"</span>: [<span class="str">"node scripts/log-response.js"</span>]
+  },
+
+  <span class="key">"commands"</span>: [                                 <span class="cmt">// Custom slash commands</span>
+    {
+      <span class="key">"name"</span>: <span class="str">"deploy"</span>,
+      <span class="key">"description"</span>: <span class="str">"Run deployment workflow"</span>,
+      <span class="key">"script"</span>: <span class="str">"./scripts/deploy.sh"</span>,
+      <span class="key">"args"</span>: [
+        { <span class="key">"name"</span>: <span class="str">"env"</span>, <span class="key">"type"</span>: <span class="str">"string"</span>, <span class="key">"required"</span>: <span style="color:var(--green)">true</span> }
+      ]
+    }
+  ],
+
+  <span class="key">"permissions"</span>: {                              <span class="cmt">// Optional permissions</span>
+    <span class="key">"allowedPaths"</span>: [<span class="str">"/home/user/projects"</span>],
+    <span class="key">"networkAccess"</span>: <span style="color:var(--green)">true</span>,
+    <span class="key">"shellExecution"</span>: <span style="color:var(--green)">true</span>
+  }
+<span class="key">}</span>
+</div>
+
+<h3 id="api-ref">B. Internal API Reference</h3>
+<p>
+  See the <strong>Architecture Spec</strong> for the full <code>@ccm/core</code> Manager API, which is organized into
+  <strong>5 classes</strong>:
+</p>
+<div class="card-grid cols-3" style="margin-bottom:24px">
+  <div class="card" style="padding:14px">
+    <h4 style="color:var(--purple-l);margin:0 0 6px">PluginManager</h4>
+    <p style="font-size:12px;margin:0">Install, update, remove, toggle plugins</p>
+  </div>
+  <div class="card" style="padding:14px">
+    <h4 style="color:var(--green);margin:0 0 6px">McpManager</h4>
+    <p style="font-size:12px;margin:0">Add, remove, list MCP servers</p>
+  </div>
+  <div class="card" style="padding:14px">
+    <h4 style="color:var(--blue);margin:0 0 6px">ProfileManager</h4>
+    <p style="font-size:12px;margin:0">Create, activate, export, import, delete profiles</p>
+  </div>
+  <div class="card" style="padding:14px">
+    <h4 style="color:var(--orange);margin:0 0 6px">ConfigManager</h4>
+    <p style="font-size:12px;margin:0">Read/write settings, env vars, hooks, permissions</p>
+  </div>
+  <div class="card" style="padding:14px">
+    <h4 style="color:var(--pink);margin:0 0 6px">SkillScanner</h4>
+    <p style="font-size:12px;margin:0">Discover and list skills and commands from plugins</p>
+  </div>
+</div>
+
+<h3>C. File Locations</h3>
+<table class="tool-table">
+  <thead><tr><th>File</th><th>Purpose</th><th>Managed By</th></tr></thead>
+  <tbody>
+    <tr><td><code>~/.claude/settings.json</code></td><td>Global Claude Code settings</td><td>Claude Code / CCM</td></tr>
+    <tr><td><code>~/.claude/plugins/installed_plugins.json</code></td><td>Installed plugins registry</td><td>Claude Code / CCM</td></tr>
+    <tr><td><code>~/.claude/plugins/profiles/</code></td><td>Saved profile snapshots</td><td>CCM</td></tr>
+    <tr><td><code>~/.claude/ccm/backups/</code></td><td>Automatic backups before destructive operations</td><td>CCM</td></tr>
+  </tbody>
+</table>
+
+<h3>D. Design Tokens Reference</h3>
+<div class="card-grid cols-4" style="font-size:12px">
+  <div class="card" style="padding:14px;text-align:center">
+    <div style="width:40px;height:40px;border-radius:8px;background:#0f0f14;border:1px solid var(--border);margin:0 auto 8px"></div>
+    <code>#0f0f14</code><br>Background
+  </div>
+  <div class="card" style="padding:14px;text-align:center">
+    <div style="width:40px;height:40px;border-radius:8px;background:#16161d;border:1px solid var(--border);margin:0 auto 8px"></div>
+    <code>#16161d</code><br>Sidebar
+  </div>
+  <div class="card" style="padding:14px;text-align:center">
+    <div style="width:40px;height:40px;border-radius:8px;background:#1e1e28;border:1px solid var(--border);margin:0 auto 8px"></div>
+    <code>#1e1e28</code><br>Cards
+  </div>
+  <div class="card" style="padding:14px;text-align:center">
+    <div style="width:40px;height:40px;border-radius:8px;background:#2a2a35;margin:0 auto 8px"></div>
+    <code>#2a2a35</code><br>Borders
+  </div>
+  <div class="card" style="padding:14px;text-align:center">
+    <div style="width:40px;height:40px;border-radius:8px;background:#6c5ce7;margin:0 auto 8px"></div>
+    <code>#6c5ce7</code><br>Purple
+  </div>
+  <div class="card" style="padding:14px;text-align:center">
+    <div style="width:40px;height:40px;border-radius:8px;background:#00b894;margin:0 auto 8px"></div>
+    <code>#00b894</code><br>Green
+  </div>
+  <div class="card" style="padding:14px;text-align:center">
+    <div style="width:40px;height:40px;border-radius:8px;background:#0984e3;margin:0 auto 8px"></div>
+    <code>#0984e3</code><br>Blue
+  </div>
+  <div class="card" style="padding:14px;text-align:center">
+    <div style="width:40px;height:40px;border-radius:8px;background:#e17055;margin:0 auto 8px"></div>
+    <code>#e17055</code><br>Orange
+  </div>
+  <div class="card" style="padding:14px;text-align:center">
+    <div style="width:40px;height:40px;border-radius:8px;background:#fdcb6e;margin:0 auto 8px"></div>
+    <code>#fdcb6e</code><br>Yellow
+  </div>
+  <div class="card" style="padding:14px;text-align:center">
+    <div style="width:40px;height:40px;border-radius:8px;background:#fd79a8;margin:0 auto 8px"></div>
+    <code>#fd79a8</code><br>Pink
+  </div>
+  <div class="card" style="padding:14px;text-align:center">
+    <div style="width:40px;height:40px;border-radius:8px;background:#a29bfe;margin:0 auto 8px"></div>
+    <code>#a29bfe</code><br>Purple Light
+  </div>
+  <div class="card" style="padding:14px;text-align:center">
+    <div style="width:40px;height:40px;border-radius:8px;background:#b2bec3;margin:0 auto 8px"></div>
+    <code>#b2bec3</code><br>Muted Text
+  </div>
+</div>
+
+<!-- Footer -->
+<div style="margin-top:64px;padding-top:24px;border-top:1px solid var(--border);text-align:center;font-size:12px;color:var(--dim)">
+  claude-config-manager Product Spec v1.0.0-draft &middot; 2026-03-25 &middot; Confidential
+</div>
+
+</main>
+</div>
+</body>
+</html>

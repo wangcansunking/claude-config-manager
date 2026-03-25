@@ -1,0 +1,1578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Plan Spec — claude-config-manager</title>
+  <style>
+    /* ── Reset & Base ───────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0d1117;
+      --surface:   #161b22;
+      --surface-2: #1c2333;
+      --border:    #30363d;
+      --text:      #c9d1d9;
+      --text-dim:  #8b949e;
+      --heading:   #e6edf3;
+      --accent:    #58a6ff;
+      --accent-2:  #3fb950;
+      --warn:      #d29922;
+      --danger:    #f85149;
+      --purple:    #bc8cff;
+      --cyan:      #39d2c0;
+      --radius:    8px;
+      --mono:      'SF Mono', 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.65;
+      padding: 0;
+    }
+
+    /* ── Layout ─────────────────────────────────────────────────── */
+    .page-wrapper {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      min-height: 100vh;
+    }
+
+    /* ── Sidebar / TOC ──────────────────────────────────────────── */
+    .sidebar {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      padding: 28px 20px;
+    }
+
+    .sidebar h2 {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1.6px;
+      color: var(--text-dim);
+      margin-bottom: 16px;
+    }
+
+    .sidebar a {
+      display: block;
+      color: var(--text-dim);
+      text-decoration: none;
+      font-size: 13px;
+      padding: 5px 10px;
+      border-radius: 4px;
+      transition: all 0.15s;
+    }
+
+    .sidebar a:hover { color: var(--accent); background: rgba(88,166,255,0.08); }
+    .sidebar a.indent { padding-left: 24px; font-size: 12px; }
+
+    /* ── Main Content ───────────────────────────────────────────── */
+    .content {
+      max-width: 1020px;
+      margin: 0 auto;
+      padding: 48px 40px 120px;
+    }
+
+    /* ── Hero Header ────────────────────────────────────────────── */
+    .hero {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #1a1f35 100%);
+      padding: 48px 44px;
+      margin-bottom: 48px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -60%;
+      right: -20%;
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(88,166,255,0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero .badge {
+      display: inline-block;
+      background: rgba(88,166,255,0.12);
+      color: var(--accent);
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      padding: 4px 12px;
+      border-radius: 20px;
+      margin-bottom: 16px;
+    }
+
+    .hero h1 {
+      font-size: 34px;
+      color: var(--heading);
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .hero p { color: var(--text-dim); font-size: 15px; }
+
+    .hero-meta {
+      display: flex;
+      gap: 28px;
+      margin-top: 24px;
+      font-size: 13px;
+      color: var(--text-dim);
+    }
+
+    .hero-meta span { display: flex; align-items: center; gap: 6px; }
+    .hero-meta strong { color: var(--text); }
+
+    /* ── Section ─────────────────────────────────────────────────── */
+    section { margin-bottom: 52px; }
+
+    h2 {
+      font-size: 22px;
+      color: var(--heading);
+      font-weight: 600;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 10px;
+      margin-bottom: 24px;
+    }
+
+    h3 {
+      font-size: 17px;
+      color: var(--accent);
+      font-weight: 600;
+      margin: 28px 0 12px;
+    }
+
+    h4 {
+      font-size: 14px;
+      color: var(--purple);
+      font-weight: 600;
+      margin: 20px 0 8px;
+    }
+
+    p { margin-bottom: 12px; }
+
+    /* ── Tables ──────────────────────────────────────────────────── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0 24px;
+      font-size: 13px;
+    }
+
+    thead th {
+      background: var(--surface-2);
+      color: var(--heading);
+      font-weight: 600;
+      text-align: left;
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    tbody td {
+      padding: 9px 14px;
+      border: 1px solid var(--border);
+      vertical-align: top;
+    }
+
+    tbody tr:nth-child(even) { background: rgba(22,27,34,0.5); }
+    tbody tr:hover { background: rgba(88,166,255,0.04); }
+
+    /* ── Tags / Pills ───────────────────────────────────────────── */
+    .tag {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 12px;
+      white-space: nowrap;
+    }
+
+    .tag-p0  { background: rgba(248,81,73,0.15);  color: var(--danger); }
+    .tag-p1  { background: rgba(210,153,34,0.15);  color: var(--warn); }
+    .tag-p2  { background: rgba(88,166,255,0.12);  color: var(--accent); }
+    .tag-unit   { background: rgba(63,185,80,0.12);  color: var(--accent-2); }
+    .tag-integ  { background: rgba(188,140,255,0.12); color: var(--purple); }
+    .tag-e2e    { background: rgba(57,210,192,0.12);  color: var(--cyan); }
+    .tag-sec    { background: rgba(248,81,73,0.12);   color: var(--danger); }
+    .tag-perf   { background: rgba(210,153,34,0.12);  color: var(--warn); }
+    .tag-pass   { background: rgba(63,185,80,0.15);   color: var(--accent-2); }
+    .tag-pend   { background: rgba(210,153,34,0.15);  color: var(--warn); }
+    .tag-na     { background: rgba(139,148,158,0.12); color: var(--text-dim); }
+
+    /* ── Code blocks ────────────────────────────────────────────── */
+    code {
+      font-family: var(--mono);
+      font-size: 12px;
+      background: var(--surface-2);
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: var(--cyan);
+    }
+
+    pre {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      overflow-x: auto;
+      margin: 12px 0 20px;
+      font-family: var(--mono);
+      font-size: 12.5px;
+      line-height: 1.6;
+      color: var(--text);
+    }
+
+    /* ── Card grid ──────────────────────────────────────────────── */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 16px;
+      margin: 16px 0 24px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      transition: border-color 0.2s;
+    }
+
+    .card:hover { border-color: var(--accent); }
+
+    .card .card-num {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--heading);
+    }
+
+    .card .card-label {
+      font-size: 12px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-top: 4px;
+    }
+
+    /* ── Flow diagrams (ASCII-art in pre) ───────────────────────── */
+    .flow-diagram pre {
+      text-align: center;
+      font-size: 12px;
+      line-height: 1.5;
+      color: var(--text-dim);
+    }
+
+    .flow-diagram pre strong { color: var(--accent); }
+
+    /* ── Lists ──────────────────────────────────────────────────── */
+    ul, ol { margin: 8px 0 16px 24px; }
+    li { margin-bottom: 4px; }
+
+    /* ── Dividers ───────────────────────────────────────────────── */
+    hr {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 36px 0;
+    }
+
+    /* ── Coverage bar ───────────────────────────────────────────── */
+    .coverage-bar-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .coverage-bar {
+      flex: 1;
+      height: 8px;
+      background: var(--surface-2);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .coverage-bar .fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.5s ease;
+    }
+
+    .fill-green  { background: var(--accent-2); }
+    .fill-yellow { background: var(--warn); }
+    .fill-blue   { background: var(--accent); }
+
+    .coverage-pct {
+      font-size: 13px;
+      font-weight: 600;
+      min-width: 40px;
+      text-align: right;
+    }
+
+    /* ── Responsive ─────────────────────────────────────────────── */
+    @media (max-width: 860px) {
+      .page-wrapper { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+      .content { padding: 28px 20px 80px; }
+      .hero { padding: 28px 24px; }
+      .hero h1 { font-size: 24px; }
+    }
+  </style>
+</head>
+<body>
+<div class="page-wrapper">
+
+  <!-- ════════════ SIDEBAR / TOC ════════════ -->
+  <nav class="sidebar">
+    <h2>Table of Contents</h2>
+    <a href="#overview">Overview</a>
+    <a href="#scope">Scope &amp; Packages</a>
+    <a href="#strategy">Test Strategy</a>
+    <a class="indent" href="#unit-tests">Unit Tests</a>
+    <a class="indent" href="#integration-tests">Integration Tests</a>
+    <a class="indent" href="#e2e-tests">E2E Tests</a>
+    <a class="indent" href="#mcp-protocol-tests">MCP Protocol Tests</a>
+    <a class="indent" href="#security-tests">Security Tests</a>
+    <a class="indent" href="#performance-tests">Performance Tests</a>
+    <a href="#test-matrix">Test Matrix</a>
+    <a class="indent" href="#pkg-type-matrix">Package x Type</a>
+    <a class="indent" href="#feature-status">Feature x Status</a>
+    <a class="indent" href="#priority-map">Priority Map</a>
+    <a href="#test-cases-core">Cases: @ccm/core</a>
+    <a href="#test-cases-mcp">Cases: @ccm/mcp</a>
+    <a href="#test-cases-cli">Cases: @ccm/cli</a>
+    <a href="#test-cases-dashboard">Cases: @ccm/dashboard</a>
+    <a href="#test-cases-types">Cases: @ccm/types</a>
+    <a href="#test-data">Test Data &amp; Fixtures</a>
+    <a href="#test-flows">Test Flow Diagrams</a>
+    <a href="#coverage">Coverage Goals</a>
+    <a href="#ci-cd">CI/CD Integration</a>
+    <a href="#env-matrix">Environment Matrix</a>
+    <a href="#risks">Risks &amp; Mitigations</a>
+    <a href="#appendix">Appendix</a>
+  </nav>
+
+  <!-- ════════════ MAIN CONTENT ════════════ -->
+  <main class="content">
+
+    <!-- ── Hero ──────────────────────────────────────────────── -->
+    <header class="hero" id="overview">
+      <div class="badge">QA Engineering</div>
+      <h1>Test Plan Specification</h1>
+      <p>claude-config-manager &mdash; Turborepo Monorepo (5 Packages)</p>
+      <div class="hero-meta">
+        <span>Version: <strong>1.0.0</strong></span>
+        <span>Date: <strong>2026-03-25</strong></span>
+        <span>Status: <strong>Draft</strong></span>
+        <span>Author: <strong>QA Engineering</strong></span>
+      </div>
+    </header>
+
+    <!-- ── Summary Cards ─────────────────────────────────────── -->
+    <div class="card-grid">
+      <div class="card">
+        <div class="card-num">5</div>
+        <div class="card-label">Packages</div>
+      </div>
+      <div class="card">
+        <div class="card-num">174</div>
+        <div class="card-label">Test Cases</div>
+      </div>
+      <div class="card">
+        <div class="card-num">6</div>
+        <div class="card-label">Test Types</div>
+      </div>
+      <div class="card">
+        <div class="card-num">80%</div>
+        <div class="card-label">Coverage Target</div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- SECTION 1 — SCOPE & PACKAGES                          -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <section id="scope">
+      <h2>1. Scope &amp; Packages</h2>
+      <p>The <strong>claude-config-manager</strong> (CCM) project is a Turborepo monorepo containing five
+        packages that together provide configuration management for Claude Code via a CLI,
+        a web dashboard, an MCP server, shared business logic, and TypeScript type definitions.</p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Package</th>
+            <th>Description</th>
+            <th>Key Exports / Entry Points</th>
+            <th>Runtime</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>@ccm/core</code></td>
+            <td>Business logic layer</td>
+            <td>PluginManager, McpManager, ProfileManager, ConfigManager, SkillScanner</td>
+            <td>Node.js</td>
+          </tr>
+          <tr>
+            <td><code>@ccm/dashboard</code></td>
+            <td>Next.js web UI</td>
+            <td>Pages, API routes, React components</td>
+            <td>Browser + Node.js</td>
+          </tr>
+          <tr>
+            <td><code>@ccm/mcp</code></td>
+            <td>MCP server exposing 19 tools</td>
+            <td>JSON-RPC server, tool handlers</td>
+            <td>Node.js</td>
+          </tr>
+          <tr>
+            <td><code>@ccm/cli</code></td>
+            <td>Command-line interface</td>
+            <td>Commands: start, list, profile, export, import, mcp-server</td>
+            <td>Node.js</td>
+          </tr>
+          <tr>
+            <td><code>@ccm/types</code></td>
+            <td>Shared TypeScript type definitions, type guards and validators</td>
+            <td>Interfaces, enums, type guards, validators</td>
+            <td>Build-time + runtime</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- SECTION 2 — TEST STRATEGY                             -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <section id="strategy">
+      <h2>2. Test Strategy</h2>
+
+      <!-- ── 2.1 Unit Tests ──────────────────────────────────── -->
+      <h3 id="unit-tests">2.1 Unit Tests (Vitest)</h3>
+      <p>Unit tests validate individual functions and classes in isolation using mocks for
+        external dependencies (file system, network, child processes).</p>
+
+      <h4>@ccm/core — PluginManager</h4>
+      <table>
+        <thead><tr><th>#</th><th>Test Case</th><th>Priority</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>U-C01</td><td><code>list()</code> returns all installed plugins</td><td><span class="tag tag-p0">P0</span></td><td>Reads installed_plugins.json</td></tr>
+          <tr><td>U-C02</td><td><code>list()</code> returns empty array when no plugins</td><td><span class="tag tag-p1">P1</span></td><td>Handles missing file gracefully</td></tr>
+          <tr><td>U-C03</td><td><code>install()</code> adds plugin and writes to disk</td><td><span class="tag tag-p0">P0</span></td><td>Verify atomic write</td></tr>
+          <tr><td>U-C04</td><td><code>install()</code> rejects duplicate install</td><td><span class="tag tag-p0">P0</span></td><td>Throws ConflictError</td></tr>
+          <tr><td>U-C05</td><td><code>update()</code> bumps version in registry</td><td><span class="tag tag-p1">P1</span></td><td>Git pull + version check</td></tr>
+          <tr><td>U-C06</td><td><code>remove()</code> deletes plugin directory and entry</td><td><span class="tag tag-p0">P0</span></td><td>Verify cleanup</td></tr>
+          <tr><td>U-C07</td><td><code>toggle()</code> enables/disables a plugin</td><td><span class="tag tag-p1">P1</span></td><td>Flips enabled flag</td></tr>
+          <tr><td>U-C08</td><td><code>getDetail()</code> returns full metadata</td><td><span class="tag tag-p1">P1</span></td><td>Includes skills, hooks</td></tr>
+        </tbody>
+      </table>
+
+      <h4>@ccm/core — McpManager</h4>
+      <table>
+        <thead><tr><th>#</th><th>Test Case</th><th>Priority</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>U-C09</td><td><code>list()</code> returns configured MCP servers</td><td><span class="tag tag-p0">P0</span></td><td>Parses settings.json mcpServers</td></tr>
+          <tr><td>U-C10</td><td><code>add()</code> writes new server entry</td><td><span class="tag tag-p0">P0</span></td><td>Validates schema before write</td></tr>
+          <tr><td>U-C11</td><td><code>remove()</code> deletes server by name</td><td><span class="tag tag-p0">P0</span></td><td>Throws NotFoundError if missing</td></tr>
+          <tr><td>U-C12</td><td><code>parseConfig()</code> normalizes server configs</td><td><span class="tag tag-p1">P1</span></td><td>Handles legacy + modern formats</td></tr>
+        </tbody>
+      </table>
+
+      <h4>@ccm/core — ProfileManager</h4>
+      <table>
+        <thead><tr><th>#</th><th>Test Case</th><th>Priority</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>U-C13</td><td><code>list()</code> returns all profiles with active flag</td><td><span class="tag tag-p0">P0</span></td><td></td></tr>
+          <tr><td>U-C14</td><td><code>create()</code> creates profile from current config</td><td><span class="tag tag-p0">P0</span></td><td>Snapshots settings + plugins</td></tr>
+          <tr><td>U-C15</td><td><code>activate()</code> restores profile state</td><td><span class="tag tag-p0">P0</span></td><td>Swaps settings.json atomically</td></tr>
+          <tr><td>U-C16</td><td><code>delete()</code> removes profile, prevents deleting active</td><td><span class="tag tag-p1">P1</span></td><td></td></tr>
+          <tr><td>U-C17</td><td><code>export()</code> serialises profile to portable JSON</td><td><span class="tag tag-p0">P0</span></td><td>Excludes creds by default</td></tr>
+          <tr><td>U-C18</td><td><code>import()</code> deserialises and validates</td><td><span class="tag tag-p0">P0</span></td><td>Schema validation, dedup check</td></tr>
+          <tr><td>U-C19</td><td><code>merge()</code> combines two profiles</td><td><span class="tag tag-p2">P2</span></td><td>Conflict resolution strategy</td></tr>
+          <tr><td>U-C20</td><td><code>diff()</code> returns structured differences</td><td><span class="tag tag-p2">P2</span></td><td>Plugin list + settings diff</td></tr>
+        </tbody>
+      </table>
+
+      <h4>@ccm/core — ConfigManager</h4>
+      <table>
+        <thead><tr><th>#</th><th>Test Case</th><th>Priority</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>U-C21</td><td><code>getConfig()</code> reads and parses settings.json</td><td><span class="tag tag-p0">P0</span></td><td>Returns typed object</td></tr>
+          <tr><td>U-C22</td><td><code>updateConfig()</code> patches model field</td><td><span class="tag tag-p0">P0</span></td><td>Atomic write, preserves other fields</td></tr>
+          <tr><td>U-C23</td><td><code>updateConfig()</code> patches env variables</td><td><span class="tag tag-p1">P1</span></td><td>Merge semantics</td></tr>
+          <tr><td>U-C24</td><td><code>updateConfig()</code> patches hooks array</td><td><span class="tag tag-p1">P1</span></td><td>Append vs. replace modes</td></tr>
+          <tr><td>U-C25</td><td>Returns default config when settings.json missing</td><td><span class="tag tag-p1">P1</span></td><td>Graceful degradation</td></tr>
+        </tbody>
+      </table>
+
+      <h4>@ccm/core — SkillScanner</h4>
+      <table>
+        <thead><tr><th>#</th><th>Test Case</th><th>Priority</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>U-C26</td><td>Discovers .md skills from plugin directories</td><td><span class="tag tag-p0">P0</span></td><td>Recursive glob</td></tr>
+          <tr><td>U-C27</td><td>Parses YAML frontmatter correctly</td><td><span class="tag tag-p0">P0</span></td><td>Name, description, triggers</td></tr>
+          <tr><td>U-C28</td><td>Skips invalid/malformed skill files</td><td><span class="tag tag-p1">P1</span></td><td>Logs warning, continues</td></tr>
+          <tr><td>U-C29</td><td>Groups skills by source plugin</td><td><span class="tag tag-p2">P2</span></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <h4>@ccm/core — Utility Functions</h4>
+      <table>
+        <thead><tr><th>#</th><th>Test Case</th><th>Priority</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>U-C30</td><td>Claude home path resolves <code>~/.claude</code> cross-platform</td><td><span class="tag tag-p0">P0</span></td><td>Win, Mac, Linux</td></tr>
+          <tr><td>U-C31</td><td>Atomic file write is crash-safe (write-rename)</td><td><span class="tag tag-p0">P0</span></td><td>Temp file + rename</td></tr>
+          <tr><td>U-C32</td><td>Marketplace git clone/pull operations</td><td><span class="tag tag-p1">P1</span></td><td>Mock git binary</td></tr>
+          <tr><td>U-C33</td><td>Marketplace git handles network failure gracefully</td><td><span class="tag tag-p1">P1</span></td><td>Retry + timeout</td></tr>
+        </tbody>
+      </table>
+
+      <h4>@ccm/mcp — Tool Handlers</h4>
+      <table>
+        <thead><tr><th>#</th><th>Test Case</th><th>Priority</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>U-M01</td><td>ccm_list_plugins — returns correct schema</td><td><span class="tag tag-p0">P0</span></td><td></td></tr>
+          <tr><td>U-M02</td><td>ccm_install_plugin — validates name param</td><td><span class="tag tag-p0">P0</span></td><td></td></tr>
+          <tr><td>U-M03</td><td>ccm_remove_plugin — calls PluginManager.remove</td><td><span class="tag tag-p0">P0</span></td><td></td></tr>
+          <tr><td>U-M04</td><td>ccm_toggle_plugin — flips state correctly</td><td><span class="tag tag-p1">P1</span></td><td></td></tr>
+          <tr><td>U-M05</td><td>ccm_get_component_detail — includes skills</td><td><span class="tag tag-p1">P1</span></td><td></td></tr>
+          <tr><td>U-M06</td><td>ccm_list_mcp_servers — returns array</td><td><span class="tag tag-p0">P0</span></td><td></td></tr>
+          <tr><td>U-M07</td><td>ccm_add_mcp_server — validates config shape</td><td><span class="tag tag-p0">P0</span></td><td></td></tr>
+          <tr><td>U-M08</td><td>ccm_remove_mcp_server — name required</td><td><span class="tag tag-p0">P0</span></td><td></td></tr>
+          <tr><td>U-M09</td><td>ccm_list_profiles — includes active marker</td><td><span class="tag tag-p0">P0</span></td><td></td></tr>
+          <tr><td>U-M10</td><td>ccm_create_profile — snapshot semantics</td><td><span class="tag tag-p0">P0</span></td><td></td></tr>
+          <tr><td>U-M11</td><td>ccm_activate_profile — swaps active profile</td><td><span class="tag tag-p0">P0</span></td><td></td></tr>
+          <tr><td>U-M12</td><td>ccm_delete_profile — blocks active deletion</td><td><span class="tag tag-p1">P1</span></td><td></td></tr>
+          <tr><td>U-M13</td><td>ccm_export_profile — returns JSON blob</td><td><span class="tag tag-p0">P0</span></td><td></td></tr>
+          <tr><td>U-M14</td><td>ccm_import_profile — validates import data</td><td><span class="tag tag-p0">P0</span></td><td></td></tr>
+          <tr><td>U-M15</td><td>ccm_get_config — reads current settings</td><td><span class="tag tag-p0">P0</span></td><td></td></tr>
+          <tr><td>U-M16</td><td>ccm_update_config — patches and saves</td><td><span class="tag tag-p0">P0</span></td><td></td></tr>
+          <tr><td>U-M17</td><td>ccm_list_skills — discovers and returns skills</td><td><span class="tag tag-p1">P1</span></td><td></td></tr>
+          <tr><td>U-M18</td><td>ccm_open_dashboard — launches dashboard and returns URL</td><td><span class="tag tag-p1">P1</span></td><td></td></tr>
+          <tr><td>U-M19</td><td>ccm_dashboard_status — returns running state</td><td><span class="tag tag-p1">P1</span></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <h4>@ccm/mcp — Server Lifecycle</h4>
+      <table>
+        <thead><tr><th>#</th><th>Test Case</th><th>Priority</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>U-M20</td><td>Server starts and registers all 19 tools</td><td><span class="tag tag-p0">P0</span></td><td>tools/list response</td></tr>
+          <tr><td>U-M21</td><td>Server shuts down cleanly on SIGTERM</td><td><span class="tag tag-p1">P1</span></td><td>No resource leaks</td></tr>
+          <tr><td>U-M22</td><td>Server rejects unknown tool names</td><td><span class="tag tag-p1">P1</span></td><td>MethodNotFound error</td></tr>
+        </tbody>
+      </table>
+
+      <h4>@ccm/cli — Command Tests</h4>
+      <table>
+        <thead><tr><th>#</th><th>Test Case</th><th>Priority</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>U-L01</td><td><code>start</code> launches dashboard server</td><td><span class="tag tag-p0">P0</span></td><td>Port binding check</td></tr>
+          <tr><td>U-L02</td><td><code>list</code> prints plugin table</td><td><span class="tag tag-p0">P0</span></td><td>--json flag for JSON output</td></tr>
+          <tr><td>U-L03</td><td><code>profile create &lt;name&gt;</code> validates name</td><td><span class="tag tag-p0">P0</span></td><td>Rejects empty / special chars</td></tr>
+          <tr><td>U-L04</td><td><code>profile activate &lt;name&gt;</code> switches profile</td><td><span class="tag tag-p0">P0</span></td><td></td></tr>
+          <tr><td>U-L05</td><td><code>export --output path</code> writes file</td><td><span class="tag tag-p0">P0</span></td><td></td></tr>
+          <tr><td>U-L06</td><td><code>import &lt;file&gt;</code> reads and validates</td><td><span class="tag tag-p0">P0</span></td><td></td></tr>
+          <tr><td>U-L07</td><td><code>mcp-server</code> starts MCP server</td><td><span class="tag tag-p1">P1</span></td><td>Stdio mode</td></tr>
+          <tr><td>U-L08</td><td>Unknown command prints help</td><td><span class="tag tag-p2">P2</span></td><td></td></tr>
+          <tr><td>U-L09</td><td>Error messages are user-friendly (no stack traces)</td><td><span class="tag tag-p1">P1</span></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <!-- ── 2.2 Integration Tests ──────────────────────────── -->
+      <h3 id="integration-tests">2.2 Integration Tests</h3>
+      <p>Integration tests exercise real interactions between two or more components, using
+        temporary file system directories instead of mocks.</p>
+
+      <table>
+        <thead><tr><th>#</th><th>Test Case</th><th>Components</th><th>Priority</th></tr></thead>
+        <tbody>
+          <tr><td>I-01</td><td>Core writes and reads settings.json to temp <code>~/.claude/</code></td><td>Core + FS</td><td><span class="tag tag-p0">P0</span></td></tr>
+          <tr><td>I-02</td><td>Install plugin creates directory tree on disk</td><td>Core + FS</td><td><span class="tag tag-p0">P0</span></td></tr>
+          <tr><td>I-03</td><td>Dashboard GET /api/plugins returns JSON from Core</td><td>Dashboard + Core</td><td><span class="tag tag-p0">P0</span></td></tr>
+          <tr><td>I-04</td><td>Dashboard POST /api/plugins/install invokes PluginManager</td><td>Dashboard + Core</td><td><span class="tag tag-p0">P0</span></td></tr>
+          <tr><td>I-05</td><td>Dashboard GET /api/mcp-servers returns configured servers</td><td>Dashboard + Core</td><td><span class="tag tag-p1">P1</span></td></tr>
+          <tr><td>I-06</td><td>Dashboard POST /api/profiles/create creates new profile</td><td>Dashboard + Core</td><td><span class="tag tag-p1">P1</span></td></tr>
+          <tr><td>I-07</td><td>MCP tool call <code>ccm_list_plugins</code> returns plugins via Core</td><td>MCP + Core</td><td><span class="tag tag-p0">P0</span></td></tr>
+          <tr><td>I-08</td><td>MCP tool call <code>ccm_install_plugin</code> writes to disk</td><td>MCP + Core + FS</td><td><span class="tag tag-p0">P0</span></td></tr>
+          <tr><td>I-09</td><td>CLI <code>list</code> command reads from temp dir and prints table</td><td>CLI + Core + FS</td><td><span class="tag tag-p0">P0</span></td></tr>
+          <tr><td>I-10</td><td>CLI <code>profile create</code> + <code>profile activate</code> roundtrip</td><td>CLI + Core + FS</td><td><span class="tag tag-p0">P0</span></td></tr>
+          <tr><td>I-11</td><td>Profile export from dir A, import into dir B</td><td>Core + FS</td><td><span class="tag tag-p0">P0</span></td></tr>
+          <tr><td>I-12</td><td>Concurrent writes to settings.json do not corrupt file</td><td>Core + FS</td><td><span class="tag tag-p1">P1</span></td></tr>
+          <tr><td>I-13</td><td>Dashboard API validates request body schema</td><td>Dashboard + Core</td><td><span class="tag tag-p1">P1</span></td></tr>
+          <tr><td>I-14</td><td>MCP server handles malformed JSON-RPC requests</td><td>MCP</td><td><span class="tag tag-p1">P1</span></td></tr>
+        </tbody>
+      </table>
+
+      <!-- ── 2.3 E2E Tests ──────────────────────────────────── -->
+      <h3 id="e2e-tests">2.3 E2E Tests (Playwright)</h3>
+      <p>End-to-end tests exercise the full dashboard UI in a real browser using Playwright.</p>
+
+      <table>
+        <thead><tr><th>#</th><th>Test Case</th><th>Priority</th><th>Steps</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>E-01</td>
+            <td>Overview page renders stats cards</td>
+            <td><span class="tag tag-p0">P0</span></td>
+            <td>Navigate to / &rarr; assert 4 stat cards with numeric values</td>
+          </tr>
+          <tr>
+            <td>E-02</td>
+            <td>Plugins page: list loads</td>
+            <td><span class="tag tag-p0">P0</span></td>
+            <td>Navigate to /plugins &rarr; assert table rows &ge; 1</td>
+          </tr>
+          <tr>
+            <td>E-03</td>
+            <td>Plugins page: install/remove flow</td>
+            <td><span class="tag tag-p0">P0</span></td>
+            <td>Click Install &rarr; fill name &rarr; submit &rarr; verify row appears &rarr; remove &rarr; verify row gone</td>
+          </tr>
+          <tr>
+            <td>E-04</td>
+            <td>MCP Servers page: list loads</td>
+            <td><span class="tag tag-p0">P0</span></td>
+            <td>Navigate to /mcp-servers &rarr; assert table renders</td>
+          </tr>
+          <tr>
+            <td>E-05</td>
+            <td>MCP Servers page: add/remove flow</td>
+            <td><span class="tag tag-p0">P0</span></td>
+            <td>Click Add &rarr; fill form &rarr; submit &rarr; verify &rarr; remove</td>
+          </tr>
+          <tr>
+            <td>E-06</td>
+            <td>Skills page: grouped list renders</td>
+            <td><span class="tag tag-p1">P1</span></td>
+            <td>Navigate to /skills &rarr; assert group headings + skill items</td>
+          </tr>
+          <tr>
+            <td>E-07</td>
+            <td>Profiles: create &rarr; edit &rarr; activate &rarr; export</td>
+            <td><span class="tag tag-p0">P0</span></td>
+            <td>Full lifecycle flow through UI</td>
+          </tr>
+          <tr>
+            <td>E-08</td>
+            <td>Export/Import: roundtrip via dashboard</td>
+            <td><span class="tag tag-p0">P0</span></td>
+            <td>Export profile &rarr; download file &rarr; import file &rarr; verify</td>
+          </tr>
+          <tr>
+            <td>E-09</td>
+            <td>Detail Panel: slide-in behaviour</td>
+            <td><span class="tag tag-p1">P1</span></td>
+            <td>Click plugin row &rarr; panel slides in &rarr; correct data &rarr; close button works</td>
+          </tr>
+          <tr>
+            <td>E-10</td>
+            <td>Navigation: sidebar links</td>
+            <td><span class="tag tag-p1">P1</span></td>
+            <td>Click each sidebar link &rarr; URL and content match</td>
+          </tr>
+          <tr>
+            <td>E-11</td>
+            <td>Responsive: sidebar collapses</td>
+            <td><span class="tag tag-p2">P2</span></td>
+            <td>Resize viewport to 768px &rarr; sidebar hidden &rarr; hamburger visible</td>
+          </tr>
+          <tr>
+            <td>E-12</td>
+            <td>Empty state: no plugins message</td>
+            <td><span class="tag tag-p2">P2</span></td>
+            <td>With empty config &rarr; empty state illustration shown</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- ── 2.4 MCP Protocol Tests ──────────────────────────── -->
+      <h3 id="mcp-protocol-tests">2.4 MCP Protocol Tests</h3>
+      <p>These tests validate the JSON-RPC 2.0 wire format at the protocol level,
+        independent of business logic.</p>
+
+      <table>
+        <thead><tr><th>#</th><th>Test Case</th><th>Priority</th><th>Validation</th></tr></thead>
+        <tbody>
+          <tr><td>P-01</td><td>Valid <code>tools/list</code> returns 19 tool definitions</td><td><span class="tag tag-p0">P0</span></td><td>Array length, name field present</td></tr>
+          <tr><td>P-02</td><td>Valid <code>tools/call</code> returns result object</td><td><span class="tag tag-p0">P0</span></td><td>Has content array with text type</td></tr>
+          <tr><td>P-03</td><td>Invalid params returns <code>InvalidParams</code> error (-32602)</td><td><span class="tag tag-p0">P0</span></td><td>Error code + message</td></tr>
+          <tr><td>P-04</td><td>Unknown tool returns <code>MethodNotFound</code> error (-32601)</td><td><span class="tag tag-p1">P1</span></td><td>Error code + message</td></tr>
+          <tr><td>P-05</td><td>Not-found entity returns isError content</td><td><span class="tag tag-p1">P1</span></td><td>isError: true in response</td></tr>
+          <tr><td>P-06</td><td>Conflict (duplicate install) returns isError</td><td><span class="tag tag-p1">P1</span></td><td>isError: true, descriptive message</td></tr>
+          <tr><td>P-07</td><td>Concurrent tool calls execute without corruption</td><td><span class="tag tag-p1">P1</span></td><td>Run 10 parallel calls, all succeed</td></tr>
+          <tr><td>P-08</td><td>JSON-RPC <code>id</code> field is echoed correctly</td><td><span class="tag tag-p2">P2</span></td><td>String and integer IDs</td></tr>
+        </tbody>
+      </table>
+
+      <!-- ── 2.5 Security Tests ──────────────────────────────── -->
+      <h3 id="security-tests">2.5 Security Tests</h3>
+
+      <table>
+        <thead><tr><th>#</th><th>Test Case</th><th>Priority</th><th>Expected Behaviour</th></tr></thead>
+        <tbody>
+          <tr><td>S-01</td><td>Export excludes credentials by default</td><td><span class="tag tag-p0">P0</span></td><td>API keys, tokens stripped from export JSON</td></tr>
+          <tr><td>S-02</td><td>Export includes credentials only with explicit flag</td><td><span class="tag tag-p0">P0</span></td><td><code>--include-secrets</code> flag required</td></tr>
+          <tr><td>S-03</td><td>MCP env vars masked in dashboard display</td><td><span class="tag tag-p0">P0</span></td><td>Values shown as <code>••••••</code> in UI</td></tr>
+          <tr><td>S-04</td><td>Import validates schema, rejects malformed JSON</td><td><span class="tag tag-p0">P0</span></td><td>Validation error, no side effects</td></tr>
+          <tr><td>S-05</td><td>Import rejects excessively large files (&gt; 10 MB)</td><td><span class="tag tag-p1">P1</span></td><td>413 or validation error</td></tr>
+          <tr><td>S-06</td><td>Path traversal prevention: <code>../../etc/passwd</code></td><td><span class="tag tag-p0">P0</span></td><td>Resolves within claude home only</td></tr>
+          <tr><td>S-07</td><td>Path traversal in plugin names blocked</td><td><span class="tag tag-p0">P0</span></td><td>Names sanitised</td></tr>
+          <tr><td>S-08</td><td>No XSS: plugin name with <code>&lt;script&gt;</code> tag</td><td><span class="tag tag-p0">P0</span></td><td>Rendered as escaped text in dashboard</td></tr>
+          <tr><td>S-09</td><td>No XSS: profile name with HTML entities</td><td><span class="tag tag-p1">P1</span></td><td>Properly escaped</td></tr>
+          <tr><td>S-10</td><td>Dashboard API routes reject unauthenticated requests (if auth enabled)</td><td><span class="tag tag-p2">P2</span></td><td>401 response</td></tr>
+        </tbody>
+      </table>
+
+      <!-- ── 2.6 Performance Tests ───────────────────────────── -->
+      <h3 id="performance-tests">2.6 Performance Tests</h3>
+
+      <table>
+        <thead><tr><th>#</th><th>Test Case</th><th>Threshold</th><th>Priority</th><th>Method</th></tr></thead>
+        <tbody>
+          <tr><td>PF-01</td><td>Dashboard page load (Overview)</td><td>&lt; 2 000 ms</td><td><span class="tag tag-p1">P1</span></td><td>Playwright perf timing API</td></tr>
+          <tr><td>PF-02</td><td>Dashboard page load (Plugins list, 50 plugins)</td><td>&lt; 2 000 ms</td><td><span class="tag tag-p1">P1</span></td><td>Playwright perf timing API</td></tr>
+          <tr><td>PF-03</td><td>Core <code>PluginManager.list()</code> with 50+ plugins</td><td>&lt; 500 ms</td><td><span class="tag tag-p1">P1</span></td><td>Vitest + <code>performance.now()</code></td></tr>
+          <tr><td>PF-04</td><td>Core <code>SkillScanner.scan()</code> with 200 skill files</td><td>&lt; 500 ms</td><td><span class="tag tag-p2">P2</span></td><td>Vitest + <code>performance.now()</code></td></tr>
+          <tr><td>PF-05</td><td>MCP tool response time (any tool)</td><td>&lt; 200 ms</td><td><span class="tag tag-p1">P1</span></td><td>MCP client latency measurement</td></tr>
+          <tr><td>PF-06</td><td>Profile export (10 plugins, 5 MCP servers)</td><td>&lt; 1 000 ms</td><td><span class="tag tag-p2">P2</span></td><td>Vitest</td></tr>
+          <tr><td>PF-07</td><td>Profile import with validation</td><td>&lt; 1 000 ms</td><td><span class="tag tag-p2">P2</span></td><td>Vitest</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- SECTION 3 — TEST MATRIX                               -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <section id="test-matrix">
+      <h2>3. Test Matrix</h2>
+
+      <h3 id="pkg-type-matrix">3.1 Package &times; Test Type Coverage</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Package</th>
+            <th>Unit</th>
+            <th>Integration</th>
+            <th>E2E</th>
+            <th>Protocol</th>
+            <th>Security</th>
+            <th>Performance</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>@ccm/core</code></td>
+            <td><span class="tag tag-unit">33 cases</span></td>
+            <td><span class="tag tag-integ">8 cases</span></td>
+            <td><span class="tag tag-na">N/A</span></td>
+            <td><span class="tag tag-na">N/A</span></td>
+            <td><span class="tag tag-sec">6 cases</span></td>
+            <td><span class="tag tag-perf">4 cases</span></td>
+          </tr>
+          <tr>
+            <td><code>@ccm/dashboard</code></td>
+            <td><span class="tag tag-na">N/A</span></td>
+            <td><span class="tag tag-integ">4 cases</span></td>
+            <td><span class="tag tag-e2e">12 cases</span></td>
+            <td><span class="tag tag-na">N/A</span></td>
+            <td><span class="tag tag-sec">3 cases</span></td>
+            <td><span class="tag tag-perf">2 cases</span></td>
+          </tr>
+          <tr>
+            <td><code>@ccm/mcp</code></td>
+            <td><span class="tag tag-unit">22 cases</span></td>
+            <td><span class="tag tag-integ">2 cases</span></td>
+            <td><span class="tag tag-na">N/A</span></td>
+            <td><span class="tag tag-e2e">8 cases</span></td>
+            <td><span class="tag tag-na">N/A</span></td>
+            <td><span class="tag tag-perf">1 case</span></td>
+          </tr>
+          <tr>
+            <td><code>@ccm/cli</code></td>
+            <td><span class="tag tag-unit">9 cases</span></td>
+            <td><span class="tag tag-integ">2 cases</span></td>
+            <td><span class="tag tag-na">N/A</span></td>
+            <td><span class="tag tag-na">N/A</span></td>
+            <td><span class="tag tag-sec">1 case</span></td>
+            <td><span class="tag tag-na">N/A</span></td>
+          </tr>
+          <tr>
+            <td><code>@ccm/types</code></td>
+            <td><span class="tag tag-unit">Type guards &amp; validators</span></td>
+            <td><span class="tag tag-na">N/A</span></td>
+            <td><span class="tag tag-na">N/A</span></td>
+            <td><span class="tag tag-na">N/A</span></td>
+            <td><span class="tag tag-na">N/A</span></td>
+            <td><span class="tag tag-na">N/A</span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3 id="feature-status">3.2 Feature &times; Test Status</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Feature Area</th>
+            <th>Unit</th>
+            <th>Integration</th>
+            <th>E2E</th>
+            <th>Security</th>
+            <th>Overall</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Plugin Management</td>
+            <td><span class="tag tag-pend">Pending</span></td>
+            <td><span class="tag tag-pend">Pending</span></td>
+            <td><span class="tag tag-pend">Pending</span></td>
+            <td><span class="tag tag-pend">Pending</span></td>
+            <td><span class="tag tag-pend">Pending</span></td>
+          </tr>
+          <tr>
+            <td>MCP Server Config</td>
+            <td><span class="tag tag-pend">Pending</span></td>
+            <td><span class="tag tag-pend">Pending</span></td>
+            <td><span class="tag tag-pend">Pending</span></td>
+            <td><span class="tag tag-pend">Pending</span></td>
+            <td><span class="tag tag-pend">Pending</span></td>
+          </tr>
+          <tr>
+            <td>Profile Management</td>
+            <td><span class="tag tag-pend">Pending</span></td>
+            <td><span class="tag tag-pend">Pending</span></td>
+            <td><span class="tag tag-pend">Pending</span></td>
+            <td><span class="tag tag-pend">Pending</span></td>
+            <td><span class="tag tag-pend">Pending</span></td>
+          </tr>
+          <tr>
+            <td>Config Read/Write</td>
+            <td><span class="tag tag-pend">Pending</span></td>
+            <td><span class="tag tag-pend">Pending</span></td>
+            <td><span class="tag tag-na">N/A</span></td>
+            <td><span class="tag tag-pend">Pending</span></td>
+            <td><span class="tag tag-pend">Pending</span></td>
+          </tr>
+          <tr>
+            <td>Skill Discovery</td>
+            <td><span class="tag tag-pend">Pending</span></td>
+            <td><span class="tag tag-na">N/A</span></td>
+            <td><span class="tag tag-pend">Pending</span></td>
+            <td><span class="tag tag-na">N/A</span></td>
+            <td><span class="tag tag-pend">Pending</span></td>
+          </tr>
+          <tr>
+            <td>Export / Import</td>
+            <td><span class="tag tag-pend">Pending</span></td>
+            <td><span class="tag tag-pend">Pending</span></td>
+            <td><span class="tag tag-pend">Pending</span></td>
+            <td><span class="tag tag-pend">Pending</span></td>
+            <td><span class="tag tag-pend">Pending</span></td>
+          </tr>
+          <tr>
+            <td>Dashboard Navigation</td>
+            <td><span class="tag tag-na">N/A</span></td>
+            <td><span class="tag tag-na">N/A</span></td>
+            <td><span class="tag tag-pend">Pending</span></td>
+            <td><span class="tag tag-na">N/A</span></td>
+            <td><span class="tag tag-pend">Pending</span></td>
+          </tr>
+          <tr>
+            <td>MCP Protocol Wire</td>
+            <td><span class="tag tag-na">N/A</span></td>
+            <td><span class="tag tag-na">N/A</span></td>
+            <td><span class="tag tag-na">N/A</span></td>
+            <td><span class="tag tag-pend">Pending</span></td>
+            <td><span class="tag tag-pend">Pending</span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3 id="priority-map">3.3 Priority Distribution</h3>
+      <table>
+        <thead>
+          <tr><th>Priority</th><th>Label</th><th>Count</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="tag tag-p0">P0</span></td>
+            <td>Critical</td>
+            <td>68</td>
+            <td>Must pass before any release. Blocks CI merge.</td>
+          </tr>
+          <tr>
+            <td><span class="tag tag-p1">P1</span></td>
+            <td>High</td>
+            <td>64</td>
+            <td>Should pass before release. Regression risk if skipped.</td>
+          </tr>
+          <tr>
+            <td><span class="tag tag-p2">P2</span></td>
+            <td>Medium</td>
+            <td>42</td>
+            <td>Nice to have. Tracked but non-blocking.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- SECTION 4 — DETAILED TEST CASES BY PACKAGE            -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <section id="test-cases-core">
+      <h2>4. Detailed Test Cases: @ccm/core</h2>
+      <p>All unit tests use Vitest with mocked file system (<code>memfs</code> or <code>vi.mock('fs')</code>).
+        Integration tests use <code>tmp-promise</code> for real temp directories.</p>
+
+      <h3>4.1 Test File Structure</h3>
+      <pre>packages/core/src/__tests__/
+  ├── plugin-manager.test.ts      # U-C01 .. U-C08
+  ├── mcp-manager.test.ts         # U-C09 .. U-C12
+  ├── profile-manager.test.ts     # U-C13 .. U-C20
+  ├── config-manager.test.ts      # U-C21 .. U-C25
+  ├── skill-scanner.test.ts       # U-C26 .. U-C29
+  ├── utils/
+  │   ├── claude-home.test.ts     # U-C30
+  │   ├── atomic-write.test.ts    # U-C31
+  │   └── marketplace-git.test.ts # U-C32 .. U-C33
+  └── integration/
+      ├── fs-roundtrip.test.ts    # I-01, I-02
+      ├── profile-export-import.test.ts  # I-11
+      └── concurrent-write.test.ts       # I-12</pre>
+
+      <h3>4.2 Sample Test Signatures</h3>
+      <pre>describe('PluginManager', () =&gt; {
+  describe('list()', () =&gt; {
+    it('returns all installed plugins from installed_plugins.json', async () =&gt; { ... });
+    it('returns empty array when installed_plugins.json is missing', async () =&gt; { ... });
+    it('returns empty array when installed_plugins.json is empty', async () =&gt; { ... });
+  });
+
+  describe('install()', () =&gt; {
+    it('adds plugin entry and creates directory', async () =&gt; { ... });
+    it('throws ConflictError when plugin already installed', async () =&gt; { ... });
+    it('performs atomic write to prevent corruption', async () =&gt; { ... });
+  });
+
+  describe('remove()', () =&gt; {
+    it('removes plugin entry and deletes directory', async () =&gt; { ... });
+    it('throws NotFoundError when plugin does not exist', async () =&gt; { ... });
+  });
+});</pre>
+    </section>
+
+    <section id="test-cases-mcp">
+      <h2>5. Detailed Test Cases: @ccm/mcp</h2>
+
+      <h3>5.1 Test File Structure</h3>
+      <pre>packages/mcp/src/__tests__/
+  ├── server.test.ts              # U-M20 .. U-M22
+  ├── tools/
+  │   ├── plugin-tools.test.ts    # U-M01 .. U-M05
+  │   ├── mcp-tools.test.ts       # U-M06 .. U-M08
+  │   ├── profile-tools.test.ts   # U-M09 .. U-M14
+  │   ├── config-tools.test.ts    # U-M15 .. U-M16
+  │   └── skill-tools.test.ts     # U-M17
+  ├── protocol/
+  │   ├── jsonrpc-format.test.ts  # P-01 .. P-02, P-08
+  │   ├── error-codes.test.ts     # P-03 .. P-06
+  │   └── concurrency.test.ts     # P-07
+  └── integration/
+      └── mcp-core.test.ts        # I-07 .. I-08</pre>
+
+      <h3>5.2 MCP Tool Inventory</h3>
+      <table>
+        <thead><tr><th>#</th><th>Tool Name</th><th>Input Schema</th><th>Unit Test</th><th>Protocol Test</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td><code>ccm_list_plugins</code></td><td>none</td><td>U-M01</td><td>P-02</td></tr>
+          <tr><td>2</td><td><code>ccm_install_plugin</code></td><td>{ name: string }</td><td>U-M02</td><td>P-03</td></tr>
+          <tr><td>3</td><td><code>ccm_remove_plugin</code></td><td>{ name: string }</td><td>U-M03</td><td>P-05</td></tr>
+          <tr><td>4</td><td><code>ccm_toggle_plugin</code></td><td>{ name: string, enabled: bool }</td><td>U-M04</td><td>P-02</td></tr>
+          <tr><td>5</td><td><code>ccm_get_component_detail</code></td><td>{ name: string }</td><td>U-M05</td><td>P-05</td></tr>
+          <tr><td>6</td><td><code>ccm_list_mcp_servers</code></td><td>none</td><td>U-M06</td><td>P-02</td></tr>
+          <tr><td>7</td><td><code>ccm_add_mcp_server</code></td><td>{ name, command, args, env? }</td><td>U-M07</td><td>P-03</td></tr>
+          <tr><td>8</td><td><code>ccm_remove_mcp_server</code></td><td>{ name: string }</td><td>U-M08</td><td>P-05</td></tr>
+          <tr><td>9</td><td><code>ccm_list_profiles</code></td><td>none</td><td>U-M09</td><td>P-02</td></tr>
+          <tr><td>10</td><td><code>ccm_create_profile</code></td><td>{ name: string }</td><td>U-M10</td><td>P-06</td></tr>
+          <tr><td>11</td><td><code>ccm_activate_profile</code></td><td>{ name: string }</td><td>U-M11</td><td>P-05</td></tr>
+          <tr><td>12</td><td><code>ccm_delete_profile</code></td><td>{ name: string }</td><td>U-M12</td><td>P-05</td></tr>
+          <tr><td>13</td><td><code>ccm_export_profile</code></td><td>{ name: string, secrets?: bool }</td><td>U-M13</td><td>P-02</td></tr>
+          <tr><td>14</td><td><code>ccm_import_profile</code></td><td>{ data: object }</td><td>U-M14</td><td>P-03</td></tr>
+          <tr><td>15</td><td><code>ccm_get_config</code></td><td>none</td><td>U-M15</td><td>P-02</td></tr>
+          <tr><td>16</td><td><code>ccm_update_config</code></td><td>{ path: string, value: any }</td><td>U-M16</td><td>P-03</td></tr>
+          <tr><td>17</td><td><code>ccm_list_skills</code></td><td>none</td><td>U-M17</td><td>P-02</td></tr>
+          <tr><td>18</td><td><code>ccm_open_dashboard</code></td><td>{ port?: number }</td><td>U-M18</td><td>P-02</td></tr>
+          <tr><td>19</td><td><code>ccm_dashboard_status</code></td><td>none</td><td>U-M19</td><td>P-02</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="test-cases-cli">
+      <h2>6. Detailed Test Cases: @ccm/cli</h2>
+
+      <h3>6.1 Test File Structure</h3>
+      <pre>packages/cli/src/__tests__/
+  ├── commands/
+  │   ├── start.test.ts           # U-L01
+  │   ├── list.test.ts            # U-L02
+  │   ├── profile.test.ts         # U-L03 .. U-L04
+  │   ├── export.test.ts          # U-L05
+  │   ├── import.test.ts          # U-L06
+  │   └── mcp-server.test.ts      # U-L07
+  ├── output-formatting.test.ts   # Table vs JSON modes
+  ├── error-handling.test.ts      # U-L08 .. U-L09
+  └── integration/
+      ├── cli-list.test.ts        # I-09
+      └── cli-profile.test.ts     # I-10</pre>
+
+      <h3>6.2 Command Argument Validation</h3>
+      <table>
+        <thead><tr><th>Command</th><th>Required Args</th><th>Optional Flags</th><th>Validation Rules</th></tr></thead>
+        <tbody>
+          <tr><td><code>start</code></td><td>none</td><td><code>--port</code></td><td>Port must be 1024-65535</td></tr>
+          <tr><td><code>list</code></td><td>none</td><td><code>--json</code></td><td>None</td></tr>
+          <tr><td><code>profile create</code></td><td><code>&lt;name&gt;</code></td><td>none</td><td>Alphanumeric + hyphens, 1-64 chars</td></tr>
+          <tr><td><code>profile activate</code></td><td><code>&lt;name&gt;</code></td><td>none</td><td>Profile must exist</td></tr>
+          <tr><td><code>profile delete</code></td><td><code>&lt;name&gt;</code></td><td><code>--force</code></td><td>Cannot delete active (unless --force)</td></tr>
+          <tr><td><code>export</code></td><td>none</td><td><code>--output, --include-secrets</code></td><td>Output path writable</td></tr>
+          <tr><td><code>import</code></td><td><code>&lt;file&gt;</code></td><td><code>--overwrite</code></td><td>File must exist, valid JSON</td></tr>
+          <tr><td><code>mcp-server</code></td><td>none</td><td>none</td><td>Runs in stdio mode</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="test-cases-dashboard">
+      <h2>7. Detailed Test Cases: @ccm/dashboard</h2>
+
+      <h3>7.1 Page Inventory</h3>
+      <table>
+        <thead><tr><th>Page</th><th>Route</th><th>API Dependencies</th><th>E2E Tests</th></tr></thead>
+        <tbody>
+          <tr><td>Overview</td><td><code>/</code></td><td>GET /api/stats</td><td>E-01</td></tr>
+          <tr><td>Plugins</td><td><code>/plugins</code></td><td>GET, POST, DELETE /api/plugins</td><td>E-02, E-03</td></tr>
+          <tr><td>MCP Servers</td><td><code>/mcp-servers</code></td><td>GET, POST, DELETE /api/mcp-servers</td><td>E-04, E-05</td></tr>
+          <tr><td>Skills</td><td><code>/skills</code></td><td>GET /api/skills</td><td>E-06</td></tr>
+          <tr><td>Profiles</td><td><code>/profiles</code></td><td>GET, POST, PUT, DELETE /api/profiles</td><td>E-07</td></tr>
+          <tr><td>Export/Import</td><td><code>/export-import</code></td><td>POST /api/export, POST /api/import</td><td>E-08</td></tr>
+        </tbody>
+      </table>
+
+      <h3>7.2 API Route Test Matrix</h3>
+      <table>
+        <thead><tr><th>Route</th><th>Method</th><th>Happy Path</th><th>Error Cases</th><th>Integration Test</th></tr></thead>
+        <tbody>
+          <tr><td>/api/plugins</td><td>GET</td><td>200 + array</td><td>500 on read failure</td><td>I-03</td></tr>
+          <tr><td>/api/plugins/install</td><td>POST</td><td>201 + plugin obj</td><td>400 bad body, 409 conflict</td><td>I-04</td></tr>
+          <tr><td>/api/plugins/:name</td><td>DELETE</td><td>204</td><td>404 not found</td><td>I-04</td></tr>
+          <tr><td>/api/mcp-servers</td><td>GET</td><td>200 + array</td><td>500 on read failure</td><td>I-05</td></tr>
+          <tr><td>/api/mcp-servers</td><td>POST</td><td>201 + server obj</td><td>400 bad body, 409 conflict</td><td>I-05</td></tr>
+          <tr><td>/api/mcp-servers/:name</td><td>DELETE</td><td>204</td><td>404 not found</td><td>I-05</td></tr>
+          <tr><td>/api/profiles</td><td>GET</td><td>200 + array</td><td>500</td><td>I-06</td></tr>
+          <tr><td>/api/profiles/create</td><td>POST</td><td>201</td><td>400, 409</td><td>I-06</td></tr>
+          <tr><td>/api/profiles/:name/activate</td><td>PUT</td><td>200</td><td>404</td><td>I-06</td></tr>
+          <tr><td>/api/export</td><td>POST</td><td>200 + JSON blob</td><td>404 profile</td><td>I-11</td></tr>
+          <tr><td>/api/import</td><td>POST</td><td>201</td><td>400 schema, 413 size</td><td>I-11</td></tr>
+          <tr><td>/api/stats</td><td>GET</td><td>200 + counts</td><td>500</td><td>I-03</td></tr>
+          <tr><td>/api/skills</td><td>GET</td><td>200 + grouped array</td><td>500</td><td>&mdash;</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="test-cases-types">
+      <h2>8. Detailed Test Cases: @ccm/types</h2>
+      <p>The <code>@ccm/types</code> package contains TypeScript type definitions, type guards and validators.
+        Testing covers both compile-time validation and runtime type guard / validator behaviour.</p>
+
+      <table>
+        <thead><tr><th>#</th><th>Test Case</th><th>Method</th><th>Priority</th></tr></thead>
+        <tbody>
+          <tr><td>T-01</td><td><code>tsc --noEmit</code> passes with zero errors</td><td>CI type-check step</td><td><span class="tag tag-p0">P0</span></td></tr>
+          <tr><td>T-02</td><td>Type guards return correct boolean for valid/invalid shapes</td><td>Vitest runtime check</td><td><span class="tag tag-p1">P1</span></td></tr>
+          <tr><td>T-03</td><td>Exported interfaces match actual JSON file shapes</td><td>Vitest + AJV schema validation</td><td><span class="tag tag-p1">P1</span></td></tr>
+          <tr><td>T-04</td><td>No circular dependencies between type files</td><td><code>madge --circular</code></td><td><span class="tag tag-p2">P2</span></td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- SECTION 9 — TEST DATA & FIXTURES                      -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <section id="test-data">
+      <h2>9. Test Data &amp; Fixtures</h2>
+
+      <h3>9.1 Fixture File Inventory</h3>
+      <pre>packages/core/src/__tests__/fixtures/
+  ├── settings.json                    # Complete valid settings
+  ├── settings-minimal.json            # Only required fields
+  ├── settings-malformed.json          # Invalid JSON for error tests
+  ├── installed_plugins.json           # 3 sample plugins
+  ├── installed_plugins-empty.json     # Empty array
+  ├── installed_plugins-50.json        # 50 plugins for perf tests
+  ├── profiles/
+  │   ├── dev-profile.json             # Dev environment profile
+  │   └── prod-profile.json            # Prod environment profile
+  ├── exports/
+  │   ├── valid-export.json            # Valid portable export
+  │   ├── export-with-secrets.json     # Export including API keys
+  │   ├── export-malformed.json        # Missing required fields
+  │   └── export-oversized.json        # &gt; 10 MB for size limit test
+  └── skills/
+      ├── sample-skill.md              # Valid skill with frontmatter
+      ├── skill-no-frontmatter.md      # Missing YAML header
+      └── skill-bad-yaml.md            # Malformed frontmatter</pre>
+
+      <h3>9.2 Mock Directory Structure</h3>
+      <p>Unit tests create this structure in-memory using <code>memfs</code>:</p>
+      <pre>~/.claude/
+  ├── settings.json
+  ├── plugins/
+  │   ├── installed_plugins.json
+  │   ├── profiles/
+  │   │   ├── default.json
+  │   │   └── development.json
+  │   ├── plugin-a/
+  │   │   ├── manifest.json
+  │   │   └── skills/
+  │   │       └── greeting.md
+  │   └── plugin-b/
+  │       ├── manifest.json
+  │       └── skills/
+  │           ├── search.md
+  │           └── summarize.md
+  └── exports/</pre>
+
+      <h3>9.3 E2E Seed Data</h3>
+      <p>Playwright tests use a seeded <code>~/.claude/</code> directory with:</p>
+      <ul>
+        <li>3 installed plugins (one enabled, one disabled, one with skills)</li>
+        <li>2 configured MCP servers</li>
+        <li>2 profiles (one active)</li>
+        <li>5 skill files across 2 plugins</li>
+      </ul>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- SECTION 10 — TEST FLOW DIAGRAMS                       -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <section id="test-flows">
+      <h2>10. Test Flow Diagrams</h2>
+
+      <h3>10.1 Plugin Install Flow</h3>
+      <div class="flow-diagram">
+        <pre>
+  ┌─────────────┐     ┌──────────────┐     ┌──────────────────┐     ┌────────────────┐
+  │  User Input  │────▶│  CLI / API / │────▶│  <strong>PluginManager</strong>   │────▶│  File System   │
+  │  (name, src) │     │  MCP Tool    │     │  .install()      │     │  write + mkdir  │
+  └─────────────┘     └──────────────┘     └──────────────────┘     └────────────────┘
+                                                    │
+                                                    ▼
+                                           ┌──────────────────┐
+                                           │  Marketplace Git  │
+                                           │  clone / pull     │
+                                           └──────────────────┘
+        </pre>
+      </div>
+
+      <h3>10.2 Profile Export → Import Roundtrip</h3>
+      <div class="flow-diagram">
+        <pre>
+  ┌──────────────┐     ┌───────────────────┐     ┌─────────────────┐
+  │  Source Dir   │────▶│  <strong>ProfileManager</strong>   │────▶│  Export JSON     │
+  │  ~/.claude/A  │     │  .export(name)    │     │  (portable)     │
+  └──────────────┘     └───────────────────┘     └────────┬────────┘
+                                                          │
+                                                          ▼
+  ┌──────────────┐     ┌───────────────────┐     ┌─────────────────┐
+  │  Target Dir   │◀───│  <strong>ProfileManager</strong>   │◀───│  Validate Schema │
+  │  ~/.claude/B  │     │  .import(data)    │     │  + Dedup Check   │
+  └──────────────┘     └───────────────────┘     └─────────────────┘
+        </pre>
+      </div>
+
+      <h3>10.3 MCP Protocol Request Lifecycle</h3>
+      <div class="flow-diagram">
+        <pre>
+  ┌──────────┐   JSON-RPC    ┌───────────────┐   dispatch   ┌──────────────┐
+  │  Client   │─────────────▶│  <strong>MCP Server</strong>    │────────────▶│  Tool Handler │
+  │  (stdio)  │              │  parse + route │              │  (Core call)  │
+  └──────────┘              └───────────────┘              └──────┬───────┘
+       ▲                                                          │
+       │                     ┌───────────────┐                    │
+       └─────────────────────│  JSON-RPC     │◀───────────────────┘
+            response         │  Response     │     result / error
+                             └───────────────┘
+        </pre>
+      </div>
+
+      <h3>10.4 CI/CD Test Pipeline</h3>
+      <div class="flow-diagram">
+        <pre>
+  ┌──────────┐     ┌────────────┐     ┌────────────┐     ┌────────────┐     ┌──────────┐
+  │  PR Push  │────▶│  Lint +    │────▶│  Type      │────▶│  Unit +    │────▶│  Report  │
+  │           │     │  Prettier  │     │  Check     │     │  Integ     │     │  + Gate  │
+  └──────────┘     └────────────┘     └────────────┘     └────────────┘     └──────────┘
+
+  ┌──────────┐     ┌────────────┐     ┌────────────┐     ┌────────────┐
+  │  Merge   │────▶│  Build     │────▶│  <strong>E2E</strong>       │────▶│  Deploy    │
+  │  to main │     │  All Pkgs  │     │  Playwright │     │  (staging) │
+  └──────────┘     └────────────┘     └────────────┘     └────────────┘
+        </pre>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- SECTION 11 — COVERAGE GOALS                           -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <section id="coverage">
+      <h2>11. Coverage Goals</h2>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Package</th>
+            <th>Line Target</th>
+            <th>Branch Target</th>
+            <th>Function Target</th>
+            <th>Progress</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>@ccm/core</code></td>
+            <td>80%</td>
+            <td>75%</td>
+            <td>85%</td>
+            <td>
+              <div class="coverage-bar-wrapper">
+                <div class="coverage-bar"><div class="fill fill-green" style="width: 0%;"></div></div>
+                <span class="coverage-pct">0%</span>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td><code>@ccm/mcp</code></td>
+            <td>70%</td>
+            <td>65%</td>
+            <td>75%</td>
+            <td>
+              <div class="coverage-bar-wrapper">
+                <div class="coverage-bar"><div class="fill fill-blue" style="width: 0%;"></div></div>
+                <span class="coverage-pct">0%</span>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td><code>@ccm/cli</code></td>
+            <td>70%</td>
+            <td>60%</td>
+            <td>75%</td>
+            <td>
+              <div class="coverage-bar-wrapper">
+                <div class="coverage-bar"><div class="fill fill-blue" style="width: 0%;"></div></div>
+                <span class="coverage-pct">0%</span>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td><code>@ccm/dashboard</code></td>
+            <td>70%</td>
+            <td>60%</td>
+            <td>70%</td>
+            <td>
+              <div class="coverage-bar-wrapper">
+                <div class="coverage-bar"><div class="fill fill-yellow" style="width: 0%;"></div></div>
+                <span class="coverage-pct">0%</span>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td><code>@ccm/types</code></td>
+            <td colspan="3">Type-check only (tsc --noEmit)</td>
+            <td>
+              <div class="coverage-bar-wrapper">
+                <div class="coverage-bar"><div class="fill fill-green" style="width: 0%;"></div></div>
+                <span class="coverage-pct">N/A</span>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>11.1 Vitest Coverage Configuration</h3>
+      <pre>// vitest.config.ts (root)
+export default defineConfig({
+  test: {
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'html', 'lcov'],
+      thresholds: {
+        'packages/core/src/**': { lines: 80, branches: 75, functions: 85 },
+        'packages/mcp/src/**':  { lines: 70, branches: 65, functions: 75 },
+        'packages/cli/src/**':  { lines: 70, branches: 60, functions: 75 },
+      },
+      exclude: [
+        '**/__tests__/**',
+        '**/node_modules/**',
+        'packages/types/**',
+        'packages/dashboard/**',  // Covered by E2E
+      ],
+    },
+  },
+});</pre>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- SECTION 12 — CI/CD INTEGRATION                        -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <section id="ci-cd">
+      <h2>12. CI/CD Integration</h2>
+
+      <h3>12.1 Pipeline Stages</h3>
+      <table>
+        <thead><tr><th>Stage</th><th>Trigger</th><th>Tools</th><th>Blocking?</th><th>Timeout</th></tr></thead>
+        <tbody>
+          <tr><td>Lint</td><td>Every PR</td><td>ESLint + Prettier</td><td>Yes</td><td>2 min</td></tr>
+          <tr><td>Type Check</td><td>Every PR</td><td><code>tsc --noEmit</code> (all packages)</td><td>Yes</td><td>3 min</td></tr>
+          <tr><td>Unit Tests</td><td>Every PR</td><td>Vitest (<code>turbo run test</code>)</td><td>Yes</td><td>5 min</td></tr>
+          <tr><td>Integration Tests</td><td>Every PR</td><td>Vitest (<code>turbo run test:integration</code>)</td><td>Yes</td><td>5 min</td></tr>
+          <tr><td>Coverage Report</td><td>Every PR</td><td>Vitest + v8</td><td>Yes (threshold)</td><td>Included above</td></tr>
+          <tr><td>Build</td><td>Merge to main</td><td><code>turbo run build</code></td><td>Yes</td><td>5 min</td></tr>
+          <tr><td>E2E Tests</td><td>Merge to main</td><td>Playwright</td><td>Yes</td><td>10 min</td></tr>
+          <tr><td>Performance Tests</td><td>Weekly / Release</td><td>Vitest + Playwright</td><td>No (report only)</td><td>10 min</td></tr>
+          <tr><td>Security Scan</td><td>Weekly / Release</td><td>npm audit + custom tests</td><td>Advisory</td><td>5 min</td></tr>
+        </tbody>
+      </table>
+
+      <h3>12.2 Required Scripts</h3>
+      <pre>// Root package.json
+{
+  "scripts": {
+    "lint":             "turbo run lint",
+    "typecheck":        "turbo run typecheck",
+    "test":             "turbo run test",
+    "test:integration": "turbo run test:integration",
+    "test:e2e":         "playwright test --project=dashboard",
+    "test:all":         "turbo run test test:integration &amp;&amp; playwright test",
+    "coverage":         "turbo run test -- --coverage"
+  }
+}</pre>
+
+      <h3>12.3 Playwright Configuration</h3>
+      <pre>// playwright.config.ts
+export default defineConfig({
+  testDir: './packages/dashboard/e2e',
+  timeout: 30_000,
+  retries: process.env.CI ? 2 : 0,
+  use: {
+    baseURL: 'http://localhost:3000',
+    screenshot: 'only-on-failure',
+    trace: 'on-first-retry',
+  },
+  webServer: {
+    command: 'turbo run dev --filter=@ccm/dashboard',
+    port: 3000,
+    timeout: 30_000,
+    reuseExistingServer: !process.env.CI,
+  },
+  projects: [
+    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
+    { name: 'firefox',  use: { ...devices['Desktop Firefox'] } },
+  ],
+});</pre>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- SECTION 13 — ENVIRONMENT MATRIX                       -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <section id="env-matrix">
+      <h2>13. Environment Matrix</h2>
+
+      <table>
+        <thead>
+          <tr><th>Dimension</th><th>Values</th><th>Notes</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Node.js</td><td>18.x, 20.x, 22.x</td><td>LTS versions; 20.x is primary</td></tr>
+          <tr><td>OS (CI)</td><td>Ubuntu 22.04, macOS 14, Windows Server 2022</td><td>Cross-platform path handling</td></tr>
+          <tr><td>Package Manager</td><td>npm 10.x</td><td>Matches Turborepo lockfile</td></tr>
+          <tr><td>Browser (E2E)</td><td>Chromium, Firefox</td><td>Via Playwright</td></tr>
+        </tbody>
+      </table>
+
+      <h3>13.1 CI Matrix Configuration</h3>
+      <pre># .github/workflows/test.yml (excerpt)
+strategy:
+  matrix:
+    os: [ubuntu-latest, macos-latest, windows-latest]
+    node: [18, 20, 22]
+  fail-fast: false</pre>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- SECTION 14 — RISKS & MITIGATIONS                      -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <section id="risks">
+      <h2>14. Risks &amp; Mitigations</h2>
+
+      <table>
+        <thead><tr><th>Risk</th><th>Impact</th><th>Likelihood</th><th>Mitigation</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>File system race conditions on concurrent writes</td>
+            <td>High</td>
+            <td>Medium</td>
+            <td>Atomic write-rename pattern; integration test I-12 validates</td>
+          </tr>
+          <tr>
+            <td>Cross-platform path separator issues</td>
+            <td>Medium</td>
+            <td>High</td>
+            <td>Use <code>path.join()</code> everywhere; CI matrix includes Windows</td>
+          </tr>
+          <tr>
+            <td>MCP server hangs under malformed input</td>
+            <td>High</td>
+            <td>Low</td>
+            <td>Protocol tests P-03, P-04; input validation at handler entry</td>
+          </tr>
+          <tr>
+            <td>Dashboard XSS via user-provided plugin/profile names</td>
+            <td>High</td>
+            <td>Low</td>
+            <td>React auto-escaping; explicit security tests S-08, S-09</td>
+          </tr>
+          <tr>
+            <td>Credential leakage in profile exports</td>
+            <td>Critical</td>
+            <td>Medium</td>
+            <td>Default exclude; security tests S-01, S-02; code review gate</td>
+          </tr>
+          <tr>
+            <td>Flaky E2E tests in CI</td>
+            <td>Low</td>
+            <td>High</td>
+            <td>Playwright retries (2x in CI); trace on first retry; stable selectors</td>
+          </tr>
+          <tr>
+            <td>Turborepo cache invalidation hiding real failures</td>
+            <td>Medium</td>
+            <td>Low</td>
+            <td>Nightly full clean build; <code>--force</code> flag on release CI</td>
+          </tr>
+          <tr>
+            <td>Large plugin counts degrading performance</td>
+            <td>Medium</td>
+            <td>Medium</td>
+            <td>Performance tests PF-03, PF-04 with 50+ / 200+ items</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- SECTION 15 — APPENDIX                                 -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <section id="appendix">
+      <h2>15. Appendix</h2>
+
+      <h3>A. Glossary</h3>
+      <table>
+        <thead><tr><th>Term</th><th>Definition</th></tr></thead>
+        <tbody>
+          <tr><td>CCM</td><td>claude-config-manager — this project</td></tr>
+          <tr><td>MCP</td><td>Model Context Protocol — Anthropic's protocol for tool-use servers</td></tr>
+          <tr><td>JSON-RPC</td><td>JSON Remote Procedure Call 2.0 — the wire format used by MCP</td></tr>
+          <tr><td>Profile</td><td>A saved snapshot of Claude Code configuration (settings + plugins + MCP servers)</td></tr>
+          <tr><td>Skill</td><td>A Markdown file with YAML frontmatter that provides a reusable prompt template</td></tr>
+          <tr><td>Atomic Write</td><td>Write to a temp file then rename — prevents partial writes on crash</td></tr>
+          <tr><td>Turborepo</td><td>Monorepo build tool from Vercel that caches and parallelises tasks</td></tr>
+        </tbody>
+      </table>
+
+      <h3>B. Test ID Conventions</h3>
+      <table>
+        <thead><tr><th>Prefix</th><th>Scope</th><th>Example</th></tr></thead>
+        <tbody>
+          <tr><td><code>U-C##</code></td><td>Unit test — @ccm/core</td><td>U-C01</td></tr>
+          <tr><td><code>U-M##</code></td><td>Unit test — @ccm/mcp</td><td>U-M01</td></tr>
+          <tr><td><code>U-L##</code></td><td>Unit test — @ccm/cli</td><td>U-L01</td></tr>
+          <tr><td><code>I-##</code></td><td>Integration test</td><td>I-01</td></tr>
+          <tr><td><code>E-##</code></td><td>E2E test (Playwright)</td><td>E-01</td></tr>
+          <tr><td><code>P-##</code></td><td>MCP Protocol test</td><td>P-01</td></tr>
+          <tr><td><code>S-##</code></td><td>Security test</td><td>S-01</td></tr>
+          <tr><td><code>PF-##</code></td><td>Performance test</td><td>PF-01</td></tr>
+          <tr><td><code>T-##</code></td><td>Type system test</td><td>T-01</td></tr>
+        </tbody>
+      </table>
+
+      <h3>C. Test Execution Commands</h3>
+      <pre># Run all unit tests
+npx turbo run test
+
+# Run integration tests only
+npx turbo run test:integration
+
+# Run specific package tests
+npx turbo run test --filter=@ccm/core
+
+# Run E2E tests
+npx playwright test
+
+# Run E2E tests with UI mode (local dev)
+npx playwright test --ui
+
+# Run with coverage
+npx turbo run test -- --coverage
+
+# Run a single test file
+npx vitest run packages/core/src/__tests__/plugin-manager.test.ts
+
+# Type check all packages
+npx turbo run typecheck</pre>
+
+      <h3>D. Exit Criteria</h3>
+      <p>A release is considered test-complete when all of the following are met:</p>
+      <ul>
+        <li>All P0 test cases pass across all CI matrix combinations</li>
+        <li>All P1 test cases pass on the primary environment (Node 20, Ubuntu)</li>
+        <li>Coverage thresholds met: 80% lines for @ccm/core, 70% for others</li>
+        <li>Zero known security test failures (S-01 through S-10)</li>
+        <li>E2E test suite passes on Chromium and Firefox</li>
+        <li>No performance regressions beyond defined thresholds</li>
+        <li>All lint and type-check gates pass</li>
+      </ul>
+
+      <h3>E. Document Revision History</h3>
+      <table>
+        <thead><tr><th>Version</th><th>Date</th><th>Author</th><th>Changes</th></tr></thead>
+        <tbody>
+          <tr><td>1.0.0</td><td>2026-03-25</td><td>QA Engineering</td><td>Initial test plan specification</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <hr>
+    <p style="text-align: center; color: var(--text-dim); font-size: 12px; margin-top: 40px;">
+      claude-config-manager Test Plan Spec v1.0.0 &mdash; Generated 2026-03-25
+    </p>
+
+  </main>
+</div>
+</body>
+</html>

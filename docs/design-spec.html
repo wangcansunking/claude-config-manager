@@ -1,0 +1,2631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude Config Manager — Design Spec</title>
+<style>
+  /* ===== RESET & BASE ===== */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    background: #0a0a0f;
+    color: #fff;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  code, pre, .mono { font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace; }
+
+  /* ===== DOCUMENT LAYOUT ===== */
+  .doc-header {
+    background: linear-gradient(135deg, #0f0f14 0%, #1a1a2e 50%, #16213e 100%);
+    border-bottom: 1px solid #2a2a35;
+    padding: 60px 80px 50px;
+    margin-left: 260px;
+    position: relative;
+    overflow: hidden;
+  }
+  .doc-header::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -10%;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(108,92,231,0.15) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .doc-header .eyebrow {
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    font-size: 11px;
+    color: #6c5ce7;
+    font-weight: 600;
+    margin-bottom: 12px;
+  }
+  .doc-header h1 {
+    font-size: 42px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    margin-bottom: 10px;
+    background: linear-gradient(135deg, #fff 0%, #a29bfe 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .doc-header .subtitle {
+    font-size: 18px;
+    color: #b2bec3;
+    max-width: 600px;
+  }
+  .doc-header .meta {
+    margin-top: 24px;
+    display: flex;
+    gap: 24px;
+    font-size: 13px;
+    color: #636e72;
+  }
+  .doc-header .meta span { display: flex; align-items: center; gap: 6px; }
+
+  /* Table of contents sidebar */
+  .doc-toc {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 260px;
+    height: 100vh;
+    background: #0f0f14;
+    border-right: 1px solid #2a2a35;
+    padding: 24px 16px;
+    overflow-y: auto;
+    z-index: 100;
+  }
+  .doc-toc h3 { font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: #636e72; margin-bottom: 16px; }
+  .doc-toc a {
+    display: block;
+    padding: 6px 12px;
+    font-size: 13px;
+    color: #b2bec3;
+    text-decoration: none;
+    border-radius: 6px;
+    margin-bottom: 2px;
+    transition: all 0.15s;
+  }
+  .doc-toc a:hover { background: #1e1e28; color: #fff; }
+  .doc-toc a.active { background: rgba(108,92,231,0.15); color: #a29bfe; }
+
+  /* Main content */
+  .doc-body { max-width: 1200px; margin: 0 0 0 260px; padding: 60px 80px 120px; }
+
+  /* Section headings */
+  .section { margin-bottom: 80px; }
+  .section-label {
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .section-label.purple { color: #6c5ce7; }
+  .section-label.green { color: #00b894; }
+  .section-label.blue { color: #0984e3; }
+  .section-label.orange { color: #e17055; }
+  .section-label.pink { color: #fd79a8; }
+  .section-label.yellow { color: #fdcb6e; }
+  .section h2 {
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    margin-bottom: 10px;
+  }
+  .section .section-desc {
+    font-size: 15px;
+    color: #b2bec3;
+    max-width: 700px;
+    margin-bottom: 40px;
+  }
+
+  /* Subsection */
+  .subsection { margin-bottom: 48px; }
+  .subsection h3 {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .subsection p {
+    font-size: 14px;
+    color: #b2bec3;
+    margin-bottom: 20px;
+    max-width: 700px;
+  }
+
+  /* Color palette display */
+  .color-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+  .color-swatch {
+    border-radius: 10px;
+    overflow: hidden;
+    background: #1e1e28;
+    border: 1px solid #2a2a35;
+  }
+  .color-swatch .swatch-color {
+    height: 70px;
+    display: flex;
+    align-items: flex-end;
+    padding: 8px 12px;
+  }
+  .color-swatch .swatch-info {
+    padding: 10px 12px;
+  }
+  .color-swatch .swatch-info .name { font-size: 12px; font-weight: 600; margin-bottom: 2px; }
+  .color-swatch .swatch-info .hex { font-size: 11px; color: #636e72; font-family: monospace; }
+
+  /* ===== MOCKUP CONTAINER ===== */
+  .mockup-frame {
+    background: #0f0f14;
+    border: 1px solid #2a2a35;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 32px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+  .mockup-frame .frame-bar {
+    background: #16161d;
+    border-bottom: 1px solid #2a2a35;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .mockup-frame .frame-bar .dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #2a2a35;
+  }
+  .mockup-frame .frame-bar .dot.red { background: #ff4757; }
+  .mockup-frame .frame-bar .dot.yellow { background: #fdcb6e; }
+  .mockup-frame .frame-bar .dot.green { background: #00b894; }
+  .mockup-frame .frame-bar .url {
+    flex: 1;
+    text-align: center;
+    font-size: 12px;
+    color: #636e72;
+    font-family: monospace;
+  }
+  .mockup-frame .frame-body {
+    display: flex;
+    min-height: 520px;
+  }
+
+  /* ===== APP SIDEBAR (inside mockups) ===== */
+  .app-sidebar {
+    width: 220px;
+    min-width: 220px;
+    background: #16161d;
+    border-right: 1px solid #2a2a35;
+    padding: 20px 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .app-sidebar .sidebar-brand {
+    padding: 0 20px 20px;
+    border-bottom: 1px solid #2a2a35;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .app-sidebar .sidebar-brand .brand-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+  }
+  .app-sidebar .sidebar-brand .brand-name {
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .app-sidebar .nav-section-label {
+    padding: 12px 20px 6px;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #636e72;
+    font-weight: 600;
+  }
+  .app-sidebar .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 20px;
+    font-size: 13px;
+    color: #b2bec3;
+    cursor: pointer;
+    transition: all 0.15s;
+    border-left: 3px solid transparent;
+    margin: 1px 0;
+  }
+  .app-sidebar .nav-item:hover {
+    background: rgba(255,255,255,0.03);
+    color: #fff;
+  }
+  .app-sidebar .nav-item.active {
+    background: rgba(108,92,231,0.1);
+    color: #a29bfe;
+    border-left-color: #6c5ce7;
+    font-weight: 500;
+  }
+  .app-sidebar .nav-item .nav-icon {
+    width: 18px;
+    text-align: center;
+    font-size: 14px;
+    opacity: 0.7;
+  }
+  .app-sidebar .nav-item.active .nav-icon { opacity: 1; }
+  .app-sidebar .nav-item .nav-badge {
+    margin-left: auto;
+    background: #2a2a35;
+    padding: 1px 7px;
+    border-radius: 10px;
+    font-size: 10px;
+    color: #636e72;
+    font-weight: 600;
+  }
+  .app-sidebar .nav-item.active .nav-badge {
+    background: rgba(108,92,231,0.2);
+    color: #a29bfe;
+  }
+  .app-sidebar .sidebar-footer {
+    margin-top: auto;
+    padding: 16px 20px;
+    border-top: 1px solid #2a2a35;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .app-sidebar .sidebar-footer .avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #e17055, #fd79a8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .app-sidebar .sidebar-footer .user-info { font-size: 12px; }
+  .app-sidebar .sidebar-footer .user-info .name { font-weight: 600; }
+  .app-sidebar .sidebar-footer .user-info .role { color: #636e72; font-size: 11px; }
+
+  /* ===== APP MAIN CONTENT ===== */
+  .app-main {
+    flex: 1;
+    padding: 28px 32px;
+    overflow-y: auto;
+    background: #0f0f14;
+    position: relative;
+  }
+  .app-main .page-header {
+    margin-bottom: 28px;
+  }
+  .app-main .page-header h1 {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    background: none;
+    -webkit-text-fill-color: #fff;
+  }
+  .app-main .page-header .page-desc {
+    font-size: 13px;
+    color: #636e72;
+  }
+  .app-main .page-header .page-actions {
+    margin-top: 16px;
+    display: flex;
+    gap: 10px;
+  }
+
+  /* Breadcrumb */
+  .breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: #636e72;
+    margin-bottom: 16px;
+  }
+  .breadcrumb a { color: #b2bec3; text-decoration: none; }
+  .breadcrumb a:hover { color: #fff; }
+  .breadcrumb .sep { opacity: 0.4; }
+
+  /* ===== COMPONENT: STATS CARD ===== */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+  .stat-card {
+    background: #1e1e28;
+    border: 1px solid #2a2a35;
+    border-radius: 10px;
+    padding: 20px;
+    transition: border-color 0.15s;
+  }
+  .stat-card:hover { border-color: #3a3a45; }
+  .stat-card .stat-label {
+    font-size: 12px;
+    color: #636e72;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 500;
+    margin-bottom: 8px;
+  }
+  .stat-card .stat-value {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .stat-card .stat-status {
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .stat-card .stat-status.green { color: #00b894; }
+  .stat-card .stat-status.blue { color: #0984e3; }
+  .stat-card .stat-status.orange { color: #e17055; }
+  .stat-card .stat-status.purple { color: #a29bfe; }
+
+  /* ===== COMPONENT: SEARCH INPUT ===== */
+  .search-input {
+    display: flex;
+    align-items: center;
+    background: #1e1e28;
+    border: 1px solid #2a2a35;
+    border-radius: 8px;
+    padding: 0 14px;
+    gap: 10px;
+    transition: border-color 0.15s;
+  }
+  .search-input:focus-within { border-color: #6c5ce7; }
+  .search-input .search-icon { color: #636e72; font-size: 14px; }
+  .search-input input {
+    background: none;
+    border: none;
+    outline: none;
+    color: #fff;
+    font-size: 13px;
+    padding: 10px 0;
+    width: 100%;
+    font-family: inherit;
+  }
+  .search-input input::placeholder { color: #636e72; }
+  .search-input .search-shortcut {
+    font-size: 10px;
+    color: #636e72;
+    border: 1px solid #2a2a35;
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-family: monospace;
+    white-space: nowrap;
+  }
+
+  /* ===== COMPONENT: BUTTONS ===== */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+    text-decoration: none;
+  }
+  .btn-primary {
+    background: #6c5ce7;
+    color: #fff;
+    border-color: #6c5ce7;
+  }
+  .btn-primary:hover { background: #5a4bd6; }
+  .btn-secondary {
+    background: transparent;
+    color: #b2bec3;
+    border-color: #2a2a35;
+  }
+  .btn-secondary:hover { border-color: #636e72; color: #fff; }
+  .btn-danger {
+    background: rgba(255,71,87,0.1);
+    color: #ff4757;
+    border-color: rgba(255,71,87,0.3);
+  }
+  .btn-danger:hover { background: rgba(255,71,87,0.2); }
+  .btn-ghost {
+    background: transparent;
+    color: #636e72;
+    border-color: transparent;
+  }
+  .btn-ghost:hover { color: #b2bec3; background: rgba(255,255,255,0.04); }
+  .btn-sm { padding: 5px 10px; font-size: 12px; }
+
+  /* ===== COMPONENT: TAGS / BADGES ===== */
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    font-size: 11px;
+    font-weight: 500;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+  .tag-purple { background: rgba(108,92,231,0.15); color: #a29bfe; }
+  .tag-green { background: rgba(0,184,148,0.15); color: #55efc4; }
+  .tag-blue { background: rgba(9,132,227,0.15); color: #74b9ff; }
+  .tag-orange { background: rgba(225,112,85,0.15); color: #e17055; }
+  .tag-yellow { background: rgba(253,203,110,0.15); color: #fdcb6e; }
+  .tag-pink { background: rgba(253,121,168,0.15); color: #fd79a8; }
+  .tag-red { background: rgba(255,71,87,0.15); color: #ff4757; }
+  .tag-gray { background: rgba(99,110,114,0.15); color: #b2bec3; }
+
+  /* ===== COMPONENT: PLUGIN LIST ITEM ===== */
+  .list-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    background: #1e1e28;
+    border: 1px solid #2a2a35;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    transition: border-color 0.15s;
+    cursor: pointer;
+  }
+  .list-item:hover { border-color: #3a3a45; }
+  .list-item .item-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+  .list-item .item-body { flex: 1; min-width: 0; }
+  .list-item .item-title {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 2px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .list-item .item-subtitle {
+    font-size: 12px;
+    color: #636e72;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .list-item .item-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  /* Status dot */
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .status-dot.green { background: #00b894; box-shadow: 0 0 6px rgba(0,184,148,0.4); }
+  .status-dot.red { background: #ff4757; box-shadow: 0 0 6px rgba(255,71,87,0.4); }
+  .status-dot.yellow { background: #fdcb6e; box-shadow: 0 0 6px rgba(253,203,110,0.4); }
+  .status-dot.gray { background: #636e72; }
+
+  /* ===== COMPONENT: DETAIL PANEL ===== */
+  .detail-overlay {
+    position: absolute;
+    top: 0; right: 0; bottom: 0;
+    width: 420px;
+    background: #1e1e28;
+    border-left: 1px solid #2a2a35;
+    box-shadow: -8px 0 32px rgba(0,0,0,0.5);
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+  }
+  .detail-overlay .detail-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid #2a2a35;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+  .detail-overlay .detail-header h3 {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .detail-overlay .detail-body {
+    padding: 20px 24px;
+    flex: 1;
+    overflow-y: auto;
+  }
+  .detail-overlay .detail-body .detail-section {
+    margin-bottom: 24px;
+  }
+  .detail-overlay .detail-body .detail-section h4 {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #636e72;
+    margin-bottom: 10px;
+  }
+  .detail-overlay .detail-body .detail-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    font-size: 13px;
+    border-bottom: 1px solid rgba(42,42,53,0.5);
+  }
+  .detail-overlay .detail-body .detail-row .label { color: #b2bec3; }
+  .detail-overlay .detail-body .detail-row .value { color: #fff; font-weight: 500; }
+  .detail-overlay .detail-footer {
+    padding: 16px 24px;
+    border-top: 1px solid #2a2a35;
+    display: flex;
+    gap: 10px;
+  }
+
+  /* ===== COMPONENT: PROFILE CARD ===== */
+  .profile-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  .profile-card {
+    background: #1e1e28;
+    border: 1px solid #2a2a35;
+    border-radius: 10px;
+    padding: 20px;
+    transition: border-color 0.15s;
+    cursor: pointer;
+  }
+  .profile-card:hover { border-color: #3a3a45; }
+  .profile-card .profile-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .profile-card .profile-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+  }
+  .profile-card .profile-name {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 2px;
+  }
+  .profile-card .profile-date {
+    font-size: 11px;
+    color: #636e72;
+  }
+  .profile-card .profile-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 16px;
+  }
+  .profile-card .profile-actions {
+    display: flex;
+    gap: 8px;
+    border-top: 1px solid #2a2a35;
+    padding-top: 14px;
+  }
+
+  /* ===== COMPONENT: CHECKBOX GRID ===== */
+  .checkbox-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+  .checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    background: #16161d;
+    border: 1px solid #2a2a35;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .checkbox-item:hover { border-color: #3a3a45; }
+  .checkbox-item.selected {
+    border-color: #6c5ce7;
+    background: rgba(108,92,231,0.06);
+  }
+  .checkbox-item.disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+  .checkbox-item .check-box {
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    border: 2px solid #2a2a35;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 11px;
+    color: transparent;
+  }
+  .checkbox-item.selected .check-box {
+    background: #6c5ce7;
+    border-color: #6c5ce7;
+    color: #fff;
+  }
+  .checkbox-item .check-label { font-size: 13px; }
+
+  /* ===== COMPONENT: ENV VAR EDITOR ===== */
+  .env-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .env-input {
+    flex: 1;
+    padding: 8px 12px;
+    background: #16161d;
+    border: 1px solid #2a2a35;
+    border-radius: 6px;
+    color: #fff;
+    font-size: 13px;
+    font-family: monospace;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .env-input:focus { border-color: #6c5ce7; }
+  .env-input.key { max-width: 200px; color: #fdcb6e; }
+  .env-eq { color: #636e72; font-family: monospace; font-size: 16px; }
+  .env-remove {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    background: rgba(255,71,87,0.1);
+    border: none;
+    color: #ff4757;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* ===== COMPONENT: HOOK DISPLAY ===== */
+  .hook-item {
+    background: #1e1e28;
+    border: 1px solid #2a2a35;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 10px;
+  }
+  .hook-item .hook-top {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .hook-item .hook-matcher {
+    font-size: 12px;
+    color: #636e72;
+    margin-bottom: 8px;
+  }
+  .hook-item .hook-cmd {
+    background: #0f0f14;
+    border-radius: 6px;
+    padding: 10px 14px;
+    font-family: monospace;
+    font-size: 12px;
+    color: #55efc4;
+  }
+
+  /* ===== COMPONENT: DROPDOWN ===== */
+  .dropdown {
+    position: relative;
+    display: inline-flex;
+  }
+  .dropdown-trigger {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    background: #1e1e28;
+    border: 1px solid #2a2a35;
+    border-radius: 6px;
+    color: #fff;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: border-color 0.15s;
+  }
+  .dropdown-trigger:hover { border-color: #3a3a45; }
+  .dropdown-trigger .arrow { color: #636e72; font-size: 10px; }
+  .dropdown-menu {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    min-width: 180px;
+    background: #1e1e28;
+    border: 1px solid #2a2a35;
+    border-radius: 8px;
+    padding: 6px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    z-index: 20;
+  }
+  .dropdown-menu .dropdown-item {
+    padding: 7px 12px;
+    font-size: 13px;
+    color: #b2bec3;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  .dropdown-menu .dropdown-item:hover { background: rgba(255,255,255,0.04); color: #fff; }
+  .dropdown-menu .dropdown-item.active { color: #a29bfe; background: rgba(108,92,231,0.08); }
+
+  /* ===== COMPONENT: EXPORT / IMPORT PANELS ===== */
+  .panel-split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+  .panel-box {
+    background: #1e1e28;
+    border: 1px solid #2a2a35;
+    border-radius: 10px;
+    padding: 24px;
+  }
+  .panel-box h3 {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .panel-box .panel-desc {
+    font-size: 12px;
+    color: #636e72;
+    margin-bottom: 20px;
+  }
+
+  /* Drop zone */
+  .drop-zone {
+    border: 2px dashed #2a2a35;
+    border-radius: 10px;
+    padding: 40px;
+    text-align: center;
+    transition: all 0.15s;
+    cursor: pointer;
+    margin-bottom: 16px;
+  }
+  .drop-zone:hover { border-color: #6c5ce7; background: rgba(108,92,231,0.03); }
+  .drop-zone .drop-icon { font-size: 32px; margin-bottom: 10px; color: #636e72; }
+  .drop-zone .drop-text { font-size: 13px; color: #b2bec3; }
+  .drop-zone .drop-hint { font-size: 11px; color: #636e72; margin-top: 6px; }
+
+  /* ===== COMPONENT: SKELETON ===== */
+  .skeleton {
+    background: linear-gradient(90deg, #1e1e28 25%, #2a2a35 50%, #1e1e28 75%);
+    background-size: 200% 100%;
+    border-radius: 6px;
+    animation: shimmer 1.5s infinite;
+  }
+  @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+  /* ===== COMPONENT: EMPTY STATE ===== */
+  .empty-state {
+    text-align: center;
+    padding: 60px 40px;
+  }
+  .empty-state .empty-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.3; }
+  .empty-state .empty-title { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+  .empty-state .empty-desc { font-size: 13px; color: #636e72; margin-bottom: 20px; }
+
+  /* ===== HELPER: Dividers, spacers ===== */
+  .divider { border-top: 1px solid #2a2a35; margin: 32px 0; }
+  .spacer-sm { height: 16px; }
+  .spacer-md { height: 24px; }
+  .spacer-lg { height: 40px; }
+
+  /* ===== SPEC ANNOTATIONS ===== */
+  .spec-note {
+    background: rgba(108,92,231,0.06);
+    border-left: 3px solid #6c5ce7;
+    padding: 14px 18px;
+    border-radius: 0 8px 8px 0;
+    font-size: 13px;
+    color: #b2bec3;
+    margin: 16px 0;
+  }
+  .spec-note strong { color: #a29bfe; }
+
+  .spec-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
+    margin: 16px 0;
+  }
+
+  /* Dim overlay for detail panel demos */
+  .dim-bg {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 5;
+  }
+
+  /* Typography samples */
+  .type-sample { margin-bottom: 12px; }
+  .type-sample .type-label { font-size: 11px; color: #636e72; margin-bottom: 4px; }
+
+  /* Section grid for components */
+  .component-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+</style>
+</head>
+<body>
+
+<!-- ============================================================ -->
+<!--                    TABLE OF CONTENTS                          -->
+<!-- ============================================================ -->
+<nav class="doc-toc">
+  <h3>Design Spec</h3>
+  <a href="#design-system">1. Design System</a>
+  <a href="#components">2. Component Library</a>
+  <a href="#pages">3. Page Mockups</a>
+  <a href="#interactions">4. Interaction Patterns</a>
+  <a href="#responsive">5. Responsive Considerations</a>
+  <a href="#spacing">6. Spacing &amp; Layout Grid</a>
+</nav>
+
+<!-- ============================================================ -->
+<!--                      DOCUMENT HEADER                         -->
+<!-- ============================================================ -->
+<div class="doc-header">
+  <div class="eyebrow">Design Specification v1.0</div>
+  <h1>Claude Config Manager</h1>
+  <div class="subtitle">A web dashboard for managing Claude Code configurations, plugins, MCP servers, skills, profiles, and more.</div>
+  <div class="meta">
+    <span>Last updated: March 25, 2026</span>
+    <span>Status: Draft</span>
+    <span>Author: Design Team</span>
+  </div>
+</div>
+
+<div class="doc-body">
+
+<!-- ============================================================ -->
+<!--                  SECTION 1: DESIGN SYSTEM                    -->
+<!-- ============================================================ -->
+<div class="section" id="design-system">
+  <div class="section-label purple">Section 1</div>
+  <h2>Design System</h2>
+  <div class="section-desc">Foundation tokens, color palette, typography, and spacing rules that govern every component and page in the application.</div>
+
+  <!-- Color Palette -->
+  <div class="subsection" id="colors">
+    <h3>Color Palette</h3>
+    <p>The palette is split into backgrounds, text, and accent categories. Backgrounds layer from deepest to surface; accents are purpose-driven.</p>
+
+    <h4 style="font-size:12px; color:#636e72; text-transform:uppercase; letter-spacing:1.5px; margin:24px 0 12px;">Backgrounds</h4>
+    <div class="color-grid">
+      <div class="color-swatch"><div class="swatch-color" style="background:#0f0f14;"></div><div class="swatch-info"><div class="name">Main BG</div><div class="hex">#0f0f14</div></div></div>
+      <div class="color-swatch"><div class="swatch-color" style="background:#16161d;"></div><div class="swatch-info"><div class="name">Sidebar</div><div class="hex">#16161d</div></div></div>
+      <div class="color-swatch"><div class="swatch-color" style="background:#1e1e28;"></div><div class="swatch-info"><div class="name">Card</div><div class="hex">#1e1e28</div></div></div>
+      <div class="color-swatch"><div class="swatch-color" style="background:#2a2a35;"></div><div class="swatch-info"><div class="name">Border / Subtle</div><div class="hex">#2a2a35</div></div></div>
+    </div>
+
+    <h4 style="font-size:12px; color:#636e72; text-transform:uppercase; letter-spacing:1.5px; margin:24px 0 12px;">Text</h4>
+    <div class="color-grid">
+      <div class="color-swatch"><div class="swatch-color" style="background:#fff;"></div><div class="swatch-info"><div class="name">Primary</div><div class="hex">#ffffff</div></div></div>
+      <div class="color-swatch"><div class="swatch-color" style="background:#b2bec3;"></div><div class="swatch-info"><div class="name">Secondary</div><div class="hex">#b2bec3</div></div></div>
+      <div class="color-swatch"><div class="swatch-color" style="background:#636e72;"></div><div class="swatch-info"><div class="name">Muted</div><div class="hex">#636e72</div></div></div>
+    </div>
+
+    <h4 style="font-size:12px; color:#636e72; text-transform:uppercase; letter-spacing:1.5px; margin:24px 0 12px;">Accent Colors</h4>
+    <div class="color-grid">
+      <div class="color-swatch"><div class="swatch-color" style="background:linear-gradient(135deg,#6c5ce7,#a29bfe);"></div><div class="swatch-info"><div class="name">Purple</div><div class="hex">#6c5ce7 / #a29bfe</div></div></div>
+      <div class="color-swatch"><div class="swatch-color" style="background:linear-gradient(135deg,#00b894,#55efc4);"></div><div class="swatch-info"><div class="name">Green</div><div class="hex">#00b894 / #55efc4</div></div></div>
+      <div class="color-swatch"><div class="swatch-color" style="background:linear-gradient(135deg,#0984e3,#74b9ff);"></div><div class="swatch-info"><div class="name">Blue</div><div class="hex">#0984e3 / #74b9ff</div></div></div>
+      <div class="color-swatch"><div class="swatch-color" style="background:linear-gradient(135deg,#e17055,#fab1a0);"></div><div class="swatch-info"><div class="name">Orange</div><div class="hex">#e17055</div></div></div>
+      <div class="color-swatch"><div class="swatch-color" style="background:linear-gradient(135deg,#fdcb6e,#ffeaa7);"></div><div class="swatch-info"><div class="name">Yellow</div><div class="hex">#fdcb6e</div></div></div>
+      <div class="color-swatch"><div class="swatch-color" style="background:linear-gradient(135deg,#fd79a8,#e84393);"></div><div class="swatch-info"><div class="name">Pink</div><div class="hex">#fd79a8 / #e84393</div></div></div>
+      <div class="color-swatch"><div class="swatch-color" style="background:#ff4757;"></div><div class="swatch-info"><div class="name">Red (Danger)</div><div class="hex">#ff4757</div></div></div>
+    </div>
+  </div>
+
+  <!-- Typography -->
+  <div class="subsection" id="typography">
+    <h3>Typography</h3>
+    <p>We use the system font stack for UI and a monospace stack for code and technical values.</p>
+    <div style="background:#1e1e28; border:1px solid #2a2a35; border-radius:10px; padding:28px; margin-top:16px;">
+      <div class="type-sample"><div class="type-label">Page Title / 22px Bold</div><div style="font-size:22px; font-weight:700;">Claude Config Manager</div></div>
+      <div class="type-sample"><div class="type-label">Section Title / 18px SemiBold</div><div style="font-size:18px; font-weight:600;">Installed Plugins</div></div>
+      <div class="type-sample"><div class="type-label">Card Title / 15px SemiBold</div><div style="font-size:15px; font-weight:600;">Development Profile</div></div>
+      <div class="type-sample"><div class="type-label">Body / 14px Regular</div><div style="font-size:14px; color:#b2bec3;">Manage your plugins, MCP servers, and configuration profiles.</div></div>
+      <div class="type-sample"><div class="type-label">Caption / 12px Regular</div><div style="font-size:12px; color:#636e72;">Last updated 3 days ago</div></div>
+      <div class="type-sample"><div class="type-label">Label / 11px Uppercase 1.5px tracking</div><div style="font-size:11px; text-transform:uppercase; letter-spacing:1.5px; color:#636e72;">CONFIGURATION</div></div>
+      <div class="type-sample"><div class="type-label">Code / 13px Monospace</div><div style="font-size:13px; font-family:'SF Mono','Fira Code','Cascadia Code',Consolas,monospace; color:#55efc4;">npx @anthropic/mcp-server-filesystem</div></div>
+    </div>
+  </div>
+
+  <!-- Border Radius & Shadows -->
+  <div class="subsection" id="radii">
+    <h3>Border Radius &amp; Shadows</h3>
+    <div style="display:flex; gap:24px; margin-top:16px;">
+      <div style="text-align:center;">
+        <div style="width:80px;height:80px;background:#1e1e28;border:1px solid #2a2a35;border-radius:6px;margin-bottom:8px;"></div>
+        <div style="font-size:12px;color:#636e72;">6px &mdash; small</div>
+      </div>
+      <div style="text-align:center;">
+        <div style="width:80px;height:80px;background:#1e1e28;border:1px solid #2a2a35;border-radius:8px;margin-bottom:8px;"></div>
+        <div style="font-size:12px;color:#636e72;">8px &mdash; medium</div>
+      </div>
+      <div style="text-align:center;">
+        <div style="width:80px;height:80px;background:#1e1e28;border:1px solid #2a2a35;border-radius:12px;margin-bottom:8px;"></div>
+        <div style="font-size:12px;color:#636e72;">12px &mdash; card</div>
+      </div>
+      <div style="text-align:center;">
+        <div style="width:80px;height:80px;background:#1e1e28;border:1px solid #2a2a35;border-radius:12px;box-shadow:-8px 0 32px rgba(0,0,0,0.5);margin-bottom:8px;"></div>
+        <div style="font-size:12px;color:#636e72;">Detail panel shadow</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ============================================================ -->
+<!--                 SECTION 2: COMPONENT LIBRARY                 -->
+<!-- ============================================================ -->
+<div class="section" id="components">
+  <div class="section-label green">Section 2</div>
+  <h2>Component Library</h2>
+  <div class="section-desc">Every reusable UI component documented with live HTML/CSS mockups, variant states, and usage guidelines.</div>
+
+  <!-- 1. Sidebar Navigation -->
+  <div class="subsection" id="comp-sidebar">
+    <h3>1. Sidebar Navigation</h3>
+    <p>Fixed left sidebar with brand, navigation sections, active states, item badges, and a user footer.</p>
+    <div style="display:inline-flex; background:#0f0f14; border:1px solid #2a2a35; border-radius:12px; overflow:hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.4);">
+      <div class="app-sidebar" style="min-height:480px;">
+        <div class="sidebar-brand">
+          <div class="brand-icon">C</div>
+          <div class="brand-name">Config Manager</div>
+        </div>
+        <div class="nav-section-label">Dashboard</div>
+        <div class="nav-item active"><span class="nav-icon">&#9671;</span> Overview</div>
+        <div class="nav-item"><span class="nav-icon">&#9881;</span> Settings</div>
+        <div class="nav-section-label">Configuration</div>
+        <div class="nav-item"><span class="nav-icon">&#9850;</span> Plugins <span class="nav-badge">12</span></div>
+        <div class="nav-item"><span class="nav-icon">&#9648;</span> MCP Servers <span class="nav-badge">5</span></div>
+        <div class="nav-item"><span class="nav-icon">&#10038;</span> Skills <span class="nav-badge">28</span></div>
+        <div class="nav-item"><span class="nav-icon">&#8801;</span> Commands</div>
+        <div class="nav-section-label">Management</div>
+        <div class="nav-item"><span class="nav-icon">&#9632;</span> Profiles <span class="nav-badge">3</span></div>
+        <div class="nav-item"><span class="nav-icon">&#8693;</span> Export / Import</div>
+        <div class="sidebar-footer">
+          <div class="avatar">JD</div>
+          <div class="user-info"><div class="name">Jane Doe</div><div class="role">Admin</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="spec-note"><strong>Behavior:</strong> Active item has a purple left-border accent and tinted background. Badges show counts. Footer shows current user. On viewports below 1280px, sidebar collapses to icon-only mode.</div>
+  </div>
+
+  <!-- 2. Stats Card -->
+  <div class="subsection" id="comp-stats">
+    <h3>2. Stats Card</h3>
+    <p>Dashboard-level KPI cards showing a numeric value, label, and contextual status indicator.</p>
+    <div class="stats-grid" style="max-width:800px;">
+      <div class="stat-card">
+        <div class="stat-label">Plugins</div>
+        <div class="stat-value" style="color:#a29bfe;">12</div>
+        <div class="stat-status green">&#9679; All active</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">MCP Servers</div>
+        <div class="stat-value" style="color:#e17055;">5</div>
+        <div class="stat-status green">&#9679; 4 connected</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Skills</div>
+        <div class="stat-value" style="color:#74b9ff;">28</div>
+        <div class="stat-status blue">&#9679; 3 plugins</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Profiles</div>
+        <div class="stat-value" style="color:#55efc4;">3</div>
+        <div class="stat-status purple">&#9679; 1 active</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Plugin List Item -->
+  <div class="subsection" id="comp-plugin">
+    <h3>3. Plugin List Item</h3>
+    <p>Displays plugin icon, name, version tag, marketplace tag, and action buttons.</p>
+    <div style="max-width:700px;">
+      <div class="list-item">
+        <div class="item-icon" style="background:linear-gradient(135deg,#6c5ce7,#a29bfe);">&#9881;</div>
+        <div class="item-body">
+          <div class="item-title">@anthropic/code-analysis <span class="tag tag-purple">v2.1.0</span> <span class="tag tag-blue">Marketplace</span></div>
+          <div class="item-subtitle">Static analysis and code quality tools for Claude Code</div>
+        </div>
+        <div class="item-actions">
+          <button class="btn btn-secondary btn-sm">Configure</button>
+          <button class="btn btn-danger btn-sm">Remove</button>
+        </div>
+      </div>
+      <div class="list-item">
+        <div class="item-icon" style="background:linear-gradient(135deg,#00b894,#55efc4);">&#9733;</div>
+        <div class="item-body">
+          <div class="item-title">@community/git-helper <span class="tag tag-green">v1.4.2</span> <span class="tag tag-gray">Local</span></div>
+          <div class="item-subtitle">Enhanced git workflow commands and shortcuts</div>
+        </div>
+        <div class="item-actions">
+          <button class="btn btn-secondary btn-sm">Configure</button>
+          <button class="btn btn-danger btn-sm">Remove</button>
+        </div>
+      </div>
+      <div class="list-item" style="opacity:0.6;">
+        <div class="item-icon" style="background:#2a2a35;">&#9744;</div>
+        <div class="item-body">
+          <div class="item-title">@anthropic/web-tools <span class="tag tag-gray">v0.9.0</span> <span class="tag tag-yellow">Disabled</span></div>
+          <div class="item-subtitle">Web fetching and scraping utilities</div>
+        </div>
+        <div class="item-actions">
+          <button class="btn btn-primary btn-sm">Enable</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. MCP Server List Item -->
+  <div class="subsection" id="comp-mcp">
+    <h3>4. MCP Server List Item</h3>
+    <p>Status dot, server name, command preview, and connection status tag.</p>
+    <div style="max-width:700px;">
+      <div class="list-item">
+        <div class="status-dot green"></div>
+        <div class="item-body">
+          <div class="item-title">filesystem <span class="tag tag-green">Connected</span></div>
+          <div class="item-subtitle mono" style="font-size:12px;">npx @anthropic/mcp-server-filesystem /home/user/projects</div>
+        </div>
+        <div class="item-actions"><button class="btn btn-ghost btn-sm">&#8250;</button></div>
+      </div>
+      <div class="list-item">
+        <div class="status-dot green"></div>
+        <div class="item-body">
+          <div class="item-title">github <span class="tag tag-green">Connected</span></div>
+          <div class="item-subtitle mono" style="font-size:12px;">npx @anthropic/mcp-server-github</div>
+        </div>
+        <div class="item-actions"><button class="btn btn-ghost btn-sm">&#8250;</button></div>
+      </div>
+      <div class="list-item">
+        <div class="status-dot red"></div>
+        <div class="item-body">
+          <div class="item-title">database <span class="tag tag-red">Disconnected</span></div>
+          <div class="item-subtitle mono" style="font-size:12px;">npx @anthropic/mcp-server-postgres --connection-string $DB_URL</div>
+        </div>
+        <div class="item-actions"><button class="btn btn-secondary btn-sm">Retry</button> <button class="btn btn-ghost btn-sm">&#8250;</button></div>
+      </div>
+      <div class="list-item">
+        <div class="status-dot yellow"></div>
+        <div class="item-body">
+          <div class="item-title">slack <span class="tag tag-yellow">Connecting...</span></div>
+          <div class="item-subtitle mono" style="font-size:12px;">npx @anthropic/mcp-server-slack</div>
+        </div>
+        <div class="item-actions"><button class="btn btn-ghost btn-sm">&#8250;</button></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. Skill List Item -->
+  <div class="subsection" id="comp-skill">
+    <h3>5. Skill List Item</h3>
+    <p>Name, type badge, description snippet, and expand arrow.</p>
+    <div style="max-width:700px;">
+      <div class="list-item">
+        <div class="item-body">
+          <div class="item-title">code_review <span class="tag tag-pink">Tool</span></div>
+          <div class="item-subtitle">Reviews code changes and provides actionable feedback</div>
+        </div>
+        <div class="item-actions"><span style="color:#636e72;">&#8250;</span></div>
+      </div>
+      <div class="list-item">
+        <div class="item-body">
+          <div class="item-title">file_search <span class="tag tag-blue">Resource</span></div>
+          <div class="item-subtitle">Search for files by name, pattern, or content across the workspace</div>
+        </div>
+        <div class="item-actions"><span style="color:#636e72;">&#8250;</span></div>
+      </div>
+      <div class="list-item">
+        <div class="item-body">
+          <div class="item-title">git_commit <span class="tag tag-orange">Mutation</span></div>
+          <div class="item-subtitle">Creates a git commit with the staged changes and a generated message</div>
+        </div>
+        <div class="item-actions"><span style="color:#636e72;">&#8250;</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. Detail Panel -->
+  <div class="subsection" id="comp-detail">
+    <h3>6. Detail Panel</h3>
+    <p>Slides in from the right edge with a shadow. Contains header, scrollable body with key-value sections, and footer actions.</p>
+    <div style="position:relative; height:440px; background:#0f0f14; border:1px solid #2a2a35; border-radius:12px; overflow:hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.4);">
+      <!-- Dimmed background content -->
+      <div style="padding:24px; opacity:0.3;">
+        <div style="height:16px; width:200px; background:#2a2a35; border-radius:4px; margin-bottom:12px;"></div>
+        <div style="height:12px; width:300px; background:#2a2a35; border-radius:4px; margin-bottom:24px;"></div>
+        <div style="height:60px; background:#1e1e28; border:1px solid #2a2a35; border-radius:8px; margin-bottom:8px;"></div>
+        <div style="height:60px; background:#1e1e28; border:1px solid #2a2a35; border-radius:8px; margin-bottom:8px;"></div>
+        <div style="height:60px; background:#1e1e28; border:1px solid #2a2a35; border-radius:8px;"></div>
+      </div>
+      <div class="dim-bg"></div>
+      <!-- Detail panel -->
+      <div class="detail-overlay">
+        <div class="detail-header">
+          <div>
+            <h3>@anthropic/code-analysis</h3>
+            <div style="display:flex; gap:6px; margin-top:8px;">
+              <span class="tag tag-purple">v2.1.0</span>
+              <span class="tag tag-blue">Marketplace</span>
+              <span class="tag tag-green">Active</span>
+            </div>
+          </div>
+          <button class="btn btn-ghost btn-sm" style="font-size:16px;">&#10005;</button>
+        </div>
+        <div class="detail-body">
+          <div class="detail-section">
+            <h4>Information</h4>
+            <div class="detail-row"><span class="label">Author</span><span class="value">Anthropic</span></div>
+            <div class="detail-row"><span class="label">Installed</span><span class="value">Mar 12, 2026</span></div>
+            <div class="detail-row"><span class="label">Skills</span><span class="value">8 tools</span></div>
+            <div class="detail-row"><span class="label">Size</span><span class="value">2.4 MB</span></div>
+          </div>
+          <div class="detail-section">
+            <h4>Description</h4>
+            <div style="font-size:13px; color:#b2bec3; line-height:1.6;">Static analysis and code quality tools for Claude Code. Includes linting, complexity analysis, dependency scanning, and security checks.</div>
+          </div>
+          <div class="detail-section">
+            <h4>Skills Provided</h4>
+            <div style="display:flex; flex-wrap:wrap; gap:6px;">
+              <span class="tag tag-pink">lint_code</span>
+              <span class="tag tag-pink">analyze_complexity</span>
+              <span class="tag tag-pink">scan_deps</span>
+              <span class="tag tag-pink">security_check</span>
+            </div>
+          </div>
+        </div>
+        <div class="detail-footer">
+          <button class="btn btn-secondary" style="flex:1;">Configure</button>
+          <button class="btn btn-danger">Remove</button>
+        </div>
+      </div>
+    </div>
+    <div class="spec-note"><strong>Animation:</strong> Panel slides in from right over 200ms with ease-out. Background dims to rgba(0,0,0,0.4). Clicking the dimmed area or the close button dismisses the panel.</div>
+  </div>
+
+  <!-- 7. Profile Card -->
+  <div class="subsection" id="comp-profile">
+    <h3>7. Profile Card</h3>
+    <p>Displays profile icon, name, creation date, component tags, and edit/delete actions.</p>
+    <div class="profile-grid" style="max-width:800px;">
+      <div class="profile-card">
+        <div class="profile-header">
+          <div class="profile-icon" style="background:linear-gradient(135deg,#6c5ce7,#a29bfe);">&#9733;</div>
+          <div>
+            <div class="profile-name">Development</div>
+            <div class="profile-date">Created Mar 10, 2026</div>
+          </div>
+        </div>
+        <div class="profile-tags">
+          <span class="tag tag-purple">8 plugins</span>
+          <span class="tag tag-orange">3 MCP</span>
+          <span class="tag tag-yellow">5 env vars</span>
+        </div>
+        <div class="profile-actions">
+          <button class="btn btn-primary btn-sm" style="flex:1;">Activate</button>
+          <button class="btn btn-secondary btn-sm">Edit</button>
+          <button class="btn btn-ghost btn-sm" style="color:#ff4757;">&#128465;</button>
+        </div>
+      </div>
+      <div class="profile-card" style="border-color:#6c5ce7;">
+        <div class="profile-header">
+          <div class="profile-icon" style="background:linear-gradient(135deg,#00b894,#55efc4);">&#9670;</div>
+          <div>
+            <div class="profile-name">Production <span class="tag tag-green" style="font-size:10px;">Active</span></div>
+            <div class="profile-date">Created Feb 28, 2026</div>
+          </div>
+        </div>
+        <div class="profile-tags">
+          <span class="tag tag-purple">5 plugins</span>
+          <span class="tag tag-orange">2 MCP</span>
+          <span class="tag tag-yellow">3 env vars</span>
+        </div>
+        <div class="profile-actions">
+          <button class="btn btn-secondary btn-sm" style="flex:1;">Edit</button>
+          <button class="btn btn-ghost btn-sm" style="color:#ff4757;">&#128465;</button>
+        </div>
+      </div>
+      <div class="profile-card">
+        <div class="profile-header">
+          <div class="profile-icon" style="background:linear-gradient(135deg,#e17055,#fab1a0);">&#9673;</div>
+          <div>
+            <div class="profile-name">Minimal</div>
+            <div class="profile-date">Created Mar 20, 2026</div>
+          </div>
+        </div>
+        <div class="profile-tags">
+          <span class="tag tag-purple">2 plugins</span>
+          <span class="tag tag-orange">1 MCP</span>
+        </div>
+        <div class="profile-actions">
+          <button class="btn btn-primary btn-sm" style="flex:1;">Activate</button>
+          <button class="btn btn-secondary btn-sm">Edit</button>
+          <button class="btn btn-ghost btn-sm" style="color:#ff4757;">&#128465;</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 8. Checkbox Grid -->
+  <div class="subsection" id="comp-checkbox">
+    <h3>8. Checkbox Grid</h3>
+    <p>Used in profile editing for selecting plugins, MCP servers, and other toggleable items.</p>
+    <div class="checkbox-grid" style="max-width:600px;">
+      <div class="checkbox-item selected"><div class="check-box">&#10003;</div><div class="check-label">code-analysis</div></div>
+      <div class="checkbox-item selected"><div class="check-box">&#10003;</div><div class="check-label">git-helper</div></div>
+      <div class="checkbox-item"><div class="check-box"></div><div class="check-label">web-tools</div></div>
+      <div class="checkbox-item selected"><div class="check-box">&#10003;</div><div class="check-label">test-runner</div></div>
+      <div class="checkbox-item"><div class="check-box"></div><div class="check-label">docs-gen</div></div>
+      <div class="checkbox-item disabled"><div class="check-box"></div><div class="check-label" style="color:#636e72;">deprecated-tool</div></div>
+    </div>
+    <div class="spec-note"><strong>States:</strong> Default (gray border), Selected (purple border + checkmark + tinted bg), Hover (lighter border), Disabled (0.5 opacity, no cursor).</div>
+  </div>
+
+  <!-- 9-10. Export & Import Panels -->
+  <div class="subsection" id="comp-export-import">
+    <h3>9 &amp; 10. Export &amp; Import Panels</h3>
+    <p>Side-by-side panels for exporting configurations and importing from files.</p>
+    <div class="panel-split" style="max-width:800px;">
+      <div class="panel-box">
+        <h3>Export Configuration</h3>
+        <div class="panel-desc">Select a profile and choose what to include in the export.</div>
+        <div style="margin-bottom:16px;">
+          <div style="font-size:11px; color:#636e72; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;">Profile</div>
+          <div class="dropdown-trigger" style="width:100%;"><span>Development</span><span class="arrow" style="margin-left:auto;">&#9662;</span></div>
+        </div>
+        <div style="margin-bottom:16px;">
+          <div style="font-size:11px; color:#636e72; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;">Include</div>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;"><div class="check-box" style="width:16px;height:16px;border-radius:3px;border:2px solid #6c5ce7;background:#6c5ce7;display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff;">&#10003;</div> Plugins</label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;"><div class="check-box" style="width:16px;height:16px;border-radius:3px;border:2px solid #6c5ce7;background:#6c5ce7;display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff;">&#10003;</div> MCP Servers</label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;"><div class="check-box" style="width:16px;height:16px;border-radius:3px;border:2px solid #2a2a35;display:flex;align-items:center;justify-content:center;font-size:10px;color:transparent;">&#10003;</div> <span style="color:#b2bec3;">Environment Variables</span></label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;"><div class="check-box" style="width:16px;height:16px;border-radius:3px;border:2px solid #6c5ce7;background:#6c5ce7;display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff;">&#10003;</div> Hooks</label>
+          </div>
+        </div>
+        <div style="margin-bottom:16px;">
+          <div style="font-size:11px; color:#636e72; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;">Format</div>
+          <div class="dropdown-trigger" style="width:100%;"><span>JSON</span><span class="arrow" style="margin-left:auto;">&#9662;</span></div>
+        </div>
+        <button class="btn btn-primary" style="width:100%; justify-content:center;">Export Configuration</button>
+      </div>
+      <div class="panel-box">
+        <h3>Import Configuration</h3>
+        <div class="panel-desc">Upload a previously exported configuration file.</div>
+        <div class="drop-zone">
+          <div class="drop-icon">&#8682;</div>
+          <div class="drop-text">Drop configuration file here</div>
+          <div class="drop-hint">or click to browse &mdash; .json, .yaml supported</div>
+        </div>
+        <div style="background:#0f0f14;border-radius:8px;padding:14px;margin-bottom:16px;">
+          <div style="font-size:11px;color:#636e72;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Preview</div>
+          <div style="font-size:12px;color:#636e72;text-align:center;padding:16px;">No file selected</div>
+        </div>
+        <div style="display:flex;gap:10px;">
+          <button class="btn btn-primary" style="flex:1;justify-content:center;opacity:0.5;">Merge</button>
+          <button class="btn btn-secondary" style="flex:1;justify-content:center;opacity:0.5;">Replace</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 11. Env Var Editor -->
+  <div class="subsection" id="comp-env">
+    <h3>11. Environment Variable Editor</h3>
+    <p>Key-value input pairs with add/remove actions.</p>
+    <div style="max-width:600px; background:#1e1e28; border:1px solid #2a2a35; border-radius:10px; padding:20px;">
+      <div style="font-size:14px;font-weight:600;margin-bottom:14px;">Environment Variables</div>
+      <div class="env-row">
+        <input class="env-input key" value="ANTHROPIC_API_KEY" readonly>
+        <span class="env-eq">=</span>
+        <input class="env-input" value="sk-ant-***********" readonly>
+        <button class="env-remove">&#10005;</button>
+      </div>
+      <div class="env-row">
+        <input class="env-input key" value="DB_URL" readonly>
+        <span class="env-eq">=</span>
+        <input class="env-input" value="postgres://localhost:5432/dev" readonly>
+        <button class="env-remove">&#10005;</button>
+      </div>
+      <div class="env-row">
+        <input class="env-input key" value="NODE_ENV" readonly>
+        <span class="env-eq">=</span>
+        <input class="env-input" value="development" readonly>
+        <button class="env-remove">&#10005;</button>
+      </div>
+      <button class="btn btn-secondary btn-sm" style="margin-top:8px;">+ Add Variable</button>
+    </div>
+  </div>
+
+  <!-- 12. Hook Display -->
+  <div class="subsection" id="comp-hook">
+    <h3>12. Hook Display</h3>
+    <p>Shows event type badge, matcher pattern, and the command to execute.</p>
+    <div style="max-width:600px;">
+      <div class="hook-item">
+        <div class="hook-top">
+          <span class="tag tag-purple">PreToolCall</span>
+          <span class="tag tag-gray">file_write</span>
+        </div>
+        <div class="hook-matcher">Matcher: <code style="color:#fdcb6e;">tool_name == "file_write"</code></div>
+        <div class="hook-cmd">eslint --fix $FILE_PATH</div>
+      </div>
+      <div class="hook-item">
+        <div class="hook-top">
+          <span class="tag tag-green">PostToolCall</span>
+          <span class="tag tag-gray">git_commit</span>
+        </div>
+        <div class="hook-matcher">Matcher: <code style="color:#fdcb6e;">tool_name == "git_commit"</code></div>
+        <div class="hook-cmd">git push origin $(git branch --show-current)</div>
+      </div>
+      <div class="hook-item">
+        <div class="hook-top">
+          <span class="tag tag-orange">OnError</span>
+          <span class="tag tag-gray">*</span>
+        </div>
+        <div class="hook-matcher">Matcher: <code style="color:#fdcb6e;">*</code> (all errors)</div>
+        <div class="hook-cmd">notify-send "Claude Error" "$ERROR_MESSAGE"</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 13. Search Input -->
+  <div class="subsection" id="comp-search">
+    <h3>13. Search Input</h3>
+    <p>Global search bar with icon, placeholder, and keyboard shortcut hint.</p>
+    <div style="max-width:500px;">
+      <div class="search-input" style="margin-bottom:12px;">
+        <span class="search-icon">&#128269;</span>
+        <input placeholder="Search plugins, servers, skills..." readonly>
+        <span class="search-shortcut">&#8984;K</span>
+      </div>
+      <div class="search-input" style="border-color:#6c5ce7;">
+        <span class="search-icon" style="color:#a29bfe;">&#128269;</span>
+        <input placeholder="" value="code-analysis" readonly style="color:#fff;">
+        <span class="search-shortcut">ESC</span>
+      </div>
+    </div>
+    <div class="spec-note"><strong>States:</strong> Default (subtle border), Focused (purple border, icon tint), With value (white text, ESC hint).</div>
+  </div>
+
+  <!-- 14. Tag/Badge -->
+  <div class="subsection" id="comp-tags">
+    <h3>14. Tag / Badge Variants</h3>
+    <p>Color-coded tags for categorization, status, and metadata across the app.</p>
+    <div class="component-row">
+      <span class="tag tag-purple">Plugin v2.1</span>
+      <span class="tag tag-green">Connected</span>
+      <span class="tag tag-blue">Marketplace</span>
+      <span class="tag tag-orange">Mutation</span>
+      <span class="tag tag-yellow">Warning</span>
+      <span class="tag tag-pink">Type</span>
+      <span class="tag tag-red">Danger</span>
+      <span class="tag tag-gray">Disabled</span>
+    </div>
+  </div>
+
+  <!-- 15. Button Variants -->
+  <div class="subsection" id="comp-buttons">
+    <h3>15. Button Variants</h3>
+    <p>Primary, secondary, danger, and ghost buttons in default and small sizes.</p>
+    <div class="component-row" style="margin-bottom:12px;">
+      <button class="btn btn-primary">Primary Action</button>
+      <button class="btn btn-secondary">Secondary</button>
+      <button class="btn btn-danger">Delete</button>
+      <button class="btn btn-ghost">Ghost</button>
+    </div>
+    <div class="component-row">
+      <button class="btn btn-primary btn-sm">Small Primary</button>
+      <button class="btn btn-secondary btn-sm">Small Secondary</button>
+      <button class="btn btn-danger btn-sm">Small Danger</button>
+      <button class="btn btn-ghost btn-sm">Small Ghost</button>
+    </div>
+  </div>
+
+  <!-- 16. Dropdown -->
+  <div class="subsection" id="comp-dropdown">
+    <h3>16. Dropdown Select</h3>
+    <p>Trigger button with an expanded menu panel showing selectable items.</p>
+    <div style="display:flex; gap:24px; align-items:flex-start;">
+      <div>
+        <div style="font-size:11px;color:#636e72;margin-bottom:6px;">Closed</div>
+        <div class="dropdown-trigger"><span>Claude Sonnet 4</span><span class="arrow">&#9662;</span></div>
+      </div>
+      <div>
+        <div style="font-size:11px;color:#636e72;margin-bottom:6px;">Open</div>
+        <div style="position:relative;">
+          <div class="dropdown-trigger" style="border-color:#6c5ce7;"><span>Claude Sonnet 4</span><span class="arrow">&#9652;</span></div>
+          <div class="dropdown-menu" style="position:relative; top:4px;">
+            <div class="dropdown-item">Claude Opus 4</div>
+            <div class="dropdown-item active">Claude Sonnet 4 &#10003;</div>
+            <div class="dropdown-item">Claude Haiku 3.5</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 17. Breadcrumb -->
+  <div class="subsection" id="comp-breadcrumb">
+    <h3>17. Breadcrumb Navigation</h3>
+    <p>Shows the navigation path for nested pages and detail views.</p>
+    <div style="background:#1e1e28; border:1px solid #2a2a35; border-radius:8px; padding:16px; max-width:500px;">
+      <div class="breadcrumb">
+        <a href="#">Home</a><span class="sep">/</span>
+        <a href="#">Plugins</a><span class="sep">/</span>
+        <span style="color:#fff;">@anthropic/code-analysis</span>
+      </div>
+      <div class="breadcrumb" style="margin:0;">
+        <a href="#">Home</a><span class="sep">/</span>
+        <a href="#">Profiles</a><span class="sep">/</span>
+        <a href="#">Development</a><span class="sep">/</span>
+        <span style="color:#fff;">Edit</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ============================================================ -->
+<!--                   SECTION 3: PAGE MOCKUPS                    -->
+<!-- ============================================================ -->
+<div class="section" id="pages">
+  <div class="section-label blue">Section 3</div>
+  <h2>Page Mockups</h2>
+  <div class="section-desc">Full-page mockups showing every screen in the application with the sidebar navigation, content area, and interactive states.</div>
+
+  <!-- ============ PAGE 1: OVERVIEW ============ -->
+  <div class="subsection" id="page-overview">
+    <h3>1. Overview Page</h3>
+    <p>The landing dashboard showing KPI stats, a quick-glance plugins list, and MCP servers list.</p>
+    <div class="mockup-frame">
+      <div class="frame-bar">
+        <div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div>
+        <div class="url">localhost:3399</div>
+      </div>
+      <div class="frame-body">
+        <div class="app-sidebar">
+          <div class="sidebar-brand"><div class="brand-icon">C</div><div class="brand-name">Config Manager</div></div>
+          <div class="nav-section-label">Dashboard</div>
+          <div class="nav-item active"><span class="nav-icon">&#9671;</span> Overview</div>
+          <div class="nav-item"><span class="nav-icon">&#9881;</span> Settings</div>
+          <div class="nav-section-label">Configuration</div>
+          <div class="nav-item"><span class="nav-icon">&#9850;</span> Plugins <span class="nav-badge">12</span></div>
+          <div class="nav-item"><span class="nav-icon">&#9648;</span> MCP Servers <span class="nav-badge">5</span></div>
+          <div class="nav-item"><span class="nav-icon">&#10038;</span> Skills <span class="nav-badge">28</span></div>
+          <div class="nav-item"><span class="nav-icon">&#8801;</span> Commands</div>
+          <div class="nav-section-label">Management</div>
+          <div class="nav-item"><span class="nav-icon">&#9632;</span> Profiles <span class="nav-badge">3</span></div>
+          <div class="nav-item"><span class="nav-icon">&#8693;</span> Export / Import</div>
+          <div class="sidebar-footer"><div class="avatar">JD</div><div class="user-info"><div class="name">Jane Doe</div><div class="role">Admin</div></div></div>
+        </div>
+        <div class="app-main">
+          <div class="page-header">
+            <h1>Overview</h1>
+            <div class="page-desc">Your Claude Code configuration at a glance.</div>
+          </div>
+          <div class="stats-grid">
+            <div class="stat-card"><div class="stat-label">Plugins</div><div class="stat-value" style="color:#a29bfe;">12</div><div class="stat-status green">&#9679; All active</div></div>
+            <div class="stat-card"><div class="stat-label">MCP Servers</div><div class="stat-value" style="color:#e17055;">5</div><div class="stat-status green">&#9679; 4 connected</div></div>
+            <div class="stat-card"><div class="stat-label">Skills</div><div class="stat-value" style="color:#74b9ff;">28</div><div class="stat-status blue">&#9679; 3 plugins</div></div>
+            <div class="stat-card"><div class="stat-label">Profiles</div><div class="stat-value" style="color:#55efc4;">3</div><div class="stat-status purple">&#9679; 1 active</div></div>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+            <div>
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+                <div style="font-size:15px;font-weight:600;">Recent Plugins</div>
+                <button class="btn btn-ghost btn-sm">View all &#8250;</button>
+              </div>
+              <div class="list-item"><div class="item-icon" style="background:linear-gradient(135deg,#6c5ce7,#a29bfe);font-size:12px;">&#9881;</div><div class="item-body"><div class="item-title" style="font-size:13px;">code-analysis <span class="tag tag-purple" style="font-size:10px;">v2.1</span></div><div class="item-subtitle">Static analysis tools</div></div></div>
+              <div class="list-item"><div class="item-icon" style="background:linear-gradient(135deg,#00b894,#55efc4);font-size:12px;">&#9733;</div><div class="item-body"><div class="item-title" style="font-size:13px;">git-helper <span class="tag tag-green" style="font-size:10px;">v1.4</span></div><div class="item-subtitle">Git workflow tools</div></div></div>
+              <div class="list-item"><div class="item-icon" style="background:linear-gradient(135deg,#0984e3,#74b9ff);font-size:12px;">&#9830;</div><div class="item-body"><div class="item-title" style="font-size:13px;">test-runner <span class="tag tag-blue" style="font-size:10px;">v3.0</span></div><div class="item-subtitle">Test execution framework</div></div></div>
+            </div>
+            <div>
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+                <div style="font-size:15px;font-weight:600;">MCP Servers</div>
+                <button class="btn btn-ghost btn-sm">View all &#8250;</button>
+              </div>
+              <div class="list-item"><div class="status-dot green"></div><div class="item-body"><div class="item-title" style="font-size:13px;">filesystem <span class="tag tag-green" style="font-size:10px;">Connected</span></div><div class="item-subtitle mono" style="font-size:11px;">npx @anthropic/mcp-server-filesystem</div></div></div>
+              <div class="list-item"><div class="status-dot green"></div><div class="item-body"><div class="item-title" style="font-size:13px;">github <span class="tag tag-green" style="font-size:10px;">Connected</span></div><div class="item-subtitle mono" style="font-size:11px;">npx @anthropic/mcp-server-github</div></div></div>
+              <div class="list-item"><div class="status-dot red"></div><div class="item-body"><div class="item-title" style="font-size:13px;">database <span class="tag tag-red" style="font-size:10px;">Error</span></div><div class="item-subtitle mono" style="font-size:11px;">npx @anthropic/mcp-server-postgres</div></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PAGE 2: PLUGINS ============ -->
+  <div class="subsection" id="page-plugins">
+    <h3>2. Plugins Page</h3>
+    <p>Full list of installed plugins with search, filter, and install actions.</p>
+    <div class="mockup-frame">
+      <div class="frame-bar"><div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div><div class="url">localhost:3399/plugins</div></div>
+      <div class="frame-body">
+        <div class="app-sidebar">
+          <div class="sidebar-brand"><div class="brand-icon">C</div><div class="brand-name">Config Manager</div></div>
+          <div class="nav-section-label">Dashboard</div>
+          <div class="nav-item"><span class="nav-icon">&#9671;</span> Overview</div>
+          <div class="nav-item"><span class="nav-icon">&#9881;</span> Settings</div>
+          <div class="nav-section-label">Configuration</div>
+          <div class="nav-item active"><span class="nav-icon">&#9850;</span> Plugins <span class="nav-badge">12</span></div>
+          <div class="nav-item"><span class="nav-icon">&#9648;</span> MCP Servers <span class="nav-badge">5</span></div>
+          <div class="nav-item"><span class="nav-icon">&#10038;</span> Skills <span class="nav-badge">28</span></div>
+          <div class="nav-item"><span class="nav-icon">&#8801;</span> Commands</div>
+          <div class="nav-section-label">Management</div>
+          <div class="nav-item"><span class="nav-icon">&#9632;</span> Profiles</div>
+          <div class="nav-item"><span class="nav-icon">&#8693;</span> Export / Import</div>
+          <div class="sidebar-footer"><div class="avatar">JD</div><div class="user-info"><div class="name">Jane Doe</div><div class="role">Admin</div></div></div>
+        </div>
+        <div class="app-main">
+          <div class="page-header">
+            <h1>Plugins</h1>
+            <div class="page-desc">Manage installed plugins and discover new ones.</div>
+            <div class="page-actions">
+              <div class="search-input" style="flex:1;max-width:360px;"><span class="search-icon">&#128269;</span><input placeholder="Search plugins..." readonly><span class="search-shortcut">&#8984;K</span></div>
+              <div class="dropdown-trigger"><span>All Status</span><span class="arrow">&#9662;</span></div>
+              <button class="btn btn-primary">+ Install Plugin</button>
+            </div>
+          </div>
+          <div class="list-item">
+            <div class="item-icon" style="background:linear-gradient(135deg,#6c5ce7,#a29bfe);">&#9881;</div>
+            <div class="item-body"><div class="item-title">@anthropic/code-analysis <span class="tag tag-purple">v2.1.0</span> <span class="tag tag-blue">Marketplace</span></div><div class="item-subtitle">Static analysis and code quality tools for Claude Code</div></div>
+            <div class="item-actions"><button class="btn btn-secondary btn-sm">Configure</button><button class="btn btn-danger btn-sm">Remove</button></div>
+          </div>
+          <div class="list-item">
+            <div class="item-icon" style="background:linear-gradient(135deg,#00b894,#55efc4);">&#9733;</div>
+            <div class="item-body"><div class="item-title">@community/git-helper <span class="tag tag-green">v1.4.2</span> <span class="tag tag-gray">Local</span></div><div class="item-subtitle">Enhanced git workflow commands and shortcuts</div></div>
+            <div class="item-actions"><button class="btn btn-secondary btn-sm">Configure</button><button class="btn btn-danger btn-sm">Remove</button></div>
+          </div>
+          <div class="list-item">
+            <div class="item-icon" style="background:linear-gradient(135deg,#0984e3,#74b9ff);">&#9830;</div>
+            <div class="item-body"><div class="item-title">@anthropic/test-runner <span class="tag tag-blue">v3.0.1</span> <span class="tag tag-blue">Marketplace</span></div><div class="item-subtitle">Test execution framework with coverage reporting</div></div>
+            <div class="item-actions"><button class="btn btn-secondary btn-sm">Configure</button><button class="btn btn-danger btn-sm">Remove</button></div>
+          </div>
+          <div class="list-item">
+            <div class="item-icon" style="background:linear-gradient(135deg,#fd79a8,#e84393);">&#9827;</div>
+            <div class="item-body"><div class="item-title">@anthropic/docs-gen <span class="tag tag-pink">v1.2.0</span> <span class="tag tag-blue">Marketplace</span></div><div class="item-subtitle">Automatic documentation generation from code</div></div>
+            <div class="item-actions"><button class="btn btn-secondary btn-sm">Configure</button><button class="btn btn-danger btn-sm">Remove</button></div>
+          </div>
+          <div class="list-item" style="opacity:0.6;">
+            <div class="item-icon" style="background:#2a2a35;">&#9744;</div>
+            <div class="item-body"><div class="item-title">@anthropic/web-tools <span class="tag tag-gray">v0.9.0</span> <span class="tag tag-yellow">Disabled</span></div><div class="item-subtitle">Web fetching and scraping utilities</div></div>
+            <div class="item-actions"><button class="btn btn-primary btn-sm">Enable</button></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PAGE 3: MCP SERVERS ============ -->
+  <div class="subsection" id="page-mcp">
+    <h3>3. MCP Servers Page</h3>
+    <p>All configured MCP servers with live status indicators and add/manage actions.</p>
+    <div class="mockup-frame">
+      <div class="frame-bar"><div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div><div class="url">localhost:3399/mcp-servers</div></div>
+      <div class="frame-body">
+        <div class="app-sidebar">
+          <div class="sidebar-brand"><div class="brand-icon">C</div><div class="brand-name">Config Manager</div></div>
+          <div class="nav-section-label">Dashboard</div>
+          <div class="nav-item"><span class="nav-icon">&#9671;</span> Overview</div>
+          <div class="nav-item"><span class="nav-icon">&#9881;</span> Settings</div>
+          <div class="nav-section-label">Configuration</div>
+          <div class="nav-item"><span class="nav-icon">&#9850;</span> Plugins</div>
+          <div class="nav-item active"><span class="nav-icon">&#9648;</span> MCP Servers <span class="nav-badge">5</span></div>
+          <div class="nav-item"><span class="nav-icon">&#10038;</span> Skills</div>
+          <div class="nav-item"><span class="nav-icon">&#8801;</span> Commands</div>
+          <div class="nav-section-label">Management</div>
+          <div class="nav-item"><span class="nav-icon">&#9632;</span> Profiles</div>
+          <div class="nav-item"><span class="nav-icon">&#8693;</span> Export / Import</div>
+          <div class="sidebar-footer"><div class="avatar">JD</div><div class="user-info"><div class="name">Jane Doe</div><div class="role">Admin</div></div></div>
+        </div>
+        <div class="app-main">
+          <div class="page-header">
+            <h1>MCP Servers</h1>
+            <div class="page-desc">Model Context Protocol servers that extend Claude's capabilities.</div>
+            <div class="page-actions">
+              <div class="search-input" style="flex:1;max-width:360px;"><span class="search-icon">&#128269;</span><input placeholder="Search servers..." readonly></div>
+              <button class="btn btn-primary">+ Add Server</button>
+            </div>
+          </div>
+          <div class="list-item">
+            <div class="status-dot green"></div>
+            <div class="item-body"><div class="item-title">filesystem <span class="tag tag-green">Connected</span></div><div class="item-subtitle mono" style="font-size:12px;">npx @anthropic/mcp-server-filesystem /home/user/projects</div></div>
+            <div class="item-actions"><span style="font-size:12px;color:#636e72;">3 tools</span><button class="btn btn-ghost btn-sm">&#8250;</button></div>
+          </div>
+          <div class="list-item">
+            <div class="status-dot green"></div>
+            <div class="item-body"><div class="item-title">github <span class="tag tag-green">Connected</span></div><div class="item-subtitle mono" style="font-size:12px;">npx @anthropic/mcp-server-github</div></div>
+            <div class="item-actions"><span style="font-size:12px;color:#636e72;">8 tools</span><button class="btn btn-ghost btn-sm">&#8250;</button></div>
+          </div>
+          <div class="list-item">
+            <div class="status-dot green"></div>
+            <div class="item-body"><div class="item-title">slack <span class="tag tag-green">Connected</span></div><div class="item-subtitle mono" style="font-size:12px;">npx @anthropic/mcp-server-slack</div></div>
+            <div class="item-actions"><span style="font-size:12px;color:#636e72;">5 tools</span><button class="btn btn-ghost btn-sm">&#8250;</button></div>
+          </div>
+          <div class="list-item">
+            <div class="status-dot red"></div>
+            <div class="item-body"><div class="item-title">database <span class="tag tag-red">Disconnected</span></div><div class="item-subtitle mono" style="font-size:12px;">npx @anthropic/mcp-server-postgres --connection-string $DB_URL</div></div>
+            <div class="item-actions"><button class="btn btn-secondary btn-sm">Retry</button><button class="btn btn-ghost btn-sm">&#8250;</button></div>
+          </div>
+          <div class="list-item">
+            <div class="status-dot gray"></div>
+            <div class="item-body"><div class="item-title">memory <span class="tag tag-gray">Stopped</span></div><div class="item-subtitle mono" style="font-size:12px;">npx @anthropic/mcp-server-memory</div></div>
+            <div class="item-actions"><button class="btn btn-secondary btn-sm">Start</button><button class="btn btn-ghost btn-sm">&#8250;</button></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PAGE 4: SKILLS ============ -->
+  <div class="subsection" id="page-skills">
+    <h3>4. Skills Page</h3>
+    <p>Skills grouped by their source plugin, with expandable sections and type badges.</p>
+    <div class="mockup-frame">
+      <div class="frame-bar"><div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div><div class="url">localhost:3399/skills</div></div>
+      <div class="frame-body">
+        <div class="app-sidebar">
+          <div class="sidebar-brand"><div class="brand-icon">C</div><div class="brand-name">Config Manager</div></div>
+          <div class="nav-section-label">Dashboard</div>
+          <div class="nav-item"><span class="nav-icon">&#9671;</span> Overview</div>
+          <div class="nav-item"><span class="nav-icon">&#9881;</span> Settings</div>
+          <div class="nav-section-label">Configuration</div>
+          <div class="nav-item"><span class="nav-icon">&#9850;</span> Plugins</div>
+          <div class="nav-item"><span class="nav-icon">&#9648;</span> MCP Servers</div>
+          <div class="nav-item active"><span class="nav-icon">&#10038;</span> Skills <span class="nav-badge">28</span></div>
+          <div class="nav-item"><span class="nav-icon">&#8801;</span> Commands</div>
+          <div class="nav-section-label">Management</div>
+          <div class="nav-item"><span class="nav-icon">&#9632;</span> Profiles</div>
+          <div class="nav-item"><span class="nav-icon">&#8693;</span> Export / Import</div>
+          <div class="sidebar-footer"><div class="avatar">JD</div><div class="user-info"><div class="name">Jane Doe</div><div class="role">Admin</div></div></div>
+        </div>
+        <div class="app-main">
+          <div class="page-header">
+            <h1>Skills</h1>
+            <div class="page-desc">Tools, resources, and prompts provided by plugins and MCP servers.</div>
+            <div class="page-actions">
+              <div class="search-input" style="flex:1;max-width:360px;"><span class="search-icon">&#128269;</span><input placeholder="Search skills..." readonly></div>
+              <div class="dropdown-trigger"><span>All Types</span><span class="arrow">&#9662;</span></div>
+            </div>
+          </div>
+          <!-- Plugin group -->
+          <div style="margin-bottom:24px;">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;padding:8px 0;border-bottom:1px solid #2a2a35;">
+              <span style="color:#a29bfe;font-size:14px;">&#9660;</span>
+              <span style="font-size:14px;font-weight:600;">@anthropic/code-analysis</span>
+              <span class="tag tag-purple" style="font-size:10px;">8 skills</span>
+            </div>
+            <div class="list-item"><div class="item-body"><div class="item-title" style="font-size:13px;">lint_code <span class="tag tag-pink">Tool</span></div><div class="item-subtitle">Run linting on specified files or directories</div></div><div class="item-actions"><span style="color:#636e72;">&#8250;</span></div></div>
+            <div class="list-item"><div class="item-body"><div class="item-title" style="font-size:13px;">analyze_complexity <span class="tag tag-pink">Tool</span></div><div class="item-subtitle">Calculate cyclomatic complexity for functions</div></div><div class="item-actions"><span style="color:#636e72;">&#8250;</span></div></div>
+            <div class="list-item"><div class="item-body"><div class="item-title" style="font-size:13px;">scan_deps <span class="tag tag-orange">Mutation</span></div><div class="item-subtitle">Scan and update outdated dependencies</div></div><div class="item-actions"><span style="color:#636e72;">&#8250;</span></div></div>
+            <div class="list-item"><div class="item-body"><div class="item-title" style="font-size:13px;">security_check <span class="tag tag-pink">Tool</span></div><div class="item-subtitle">Run security vulnerability scans</div></div><div class="item-actions"><span style="color:#636e72;">&#8250;</span></div></div>
+          </div>
+          <!-- Another plugin group (collapsed) -->
+          <div style="margin-bottom:24px;">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;padding:8px 0;border-bottom:1px solid #2a2a35;">
+              <span style="color:#636e72;font-size:14px;">&#9654;</span>
+              <span style="font-size:14px;font-weight:600;">@community/git-helper</span>
+              <span class="tag tag-green" style="font-size:10px;">6 skills</span>
+            </div>
+          </div>
+          <div style="margin-bottom:24px;">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;padding:8px 0;border-bottom:1px solid #2a2a35;">
+              <span style="color:#636e72;font-size:14px;">&#9654;</span>
+              <span style="font-size:14px;font-weight:600;">MCP: filesystem</span>
+              <span class="tag tag-orange" style="font-size:10px;">3 skills</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PAGE 5: COMMANDS ============ -->
+  <div class="subsection" id="page-commands">
+    <h3>5. Commands Page</h3>
+    <p>Custom slash commands defined in the configuration.</p>
+    <div class="mockup-frame">
+      <div class="frame-bar"><div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div><div class="url">localhost:3399/commands</div></div>
+      <div class="frame-body">
+        <div class="app-sidebar">
+          <div class="sidebar-brand"><div class="brand-icon">C</div><div class="brand-name">Config Manager</div></div>
+          <div class="nav-section-label">Dashboard</div>
+          <div class="nav-item"><span class="nav-icon">&#9671;</span> Overview</div>
+          <div class="nav-item"><span class="nav-icon">&#9881;</span> Settings</div>
+          <div class="nav-section-label">Configuration</div>
+          <div class="nav-item"><span class="nav-icon">&#9850;</span> Plugins</div>
+          <div class="nav-item"><span class="nav-icon">&#9648;</span> MCP Servers</div>
+          <div class="nav-item"><span class="nav-icon">&#10038;</span> Skills</div>
+          <div class="nav-item active"><span class="nav-icon">&#8801;</span> Commands</div>
+          <div class="nav-section-label">Management</div>
+          <div class="nav-item"><span class="nav-icon">&#9632;</span> Profiles</div>
+          <div class="nav-item"><span class="nav-icon">&#8693;</span> Export / Import</div>
+          <div class="sidebar-footer"><div class="avatar">JD</div><div class="user-info"><div class="name">Jane Doe</div><div class="role">Admin</div></div></div>
+        </div>
+        <div class="app-main">
+          <div class="page-header">
+            <h1>Commands</h1>
+            <div class="page-desc">Custom slash commands for quick actions in Claude Code.</div>
+            <div class="page-actions"><button class="btn btn-primary">+ Add Command</button></div>
+          </div>
+          <div class="list-item">
+            <div class="item-icon" style="background:rgba(108,92,231,0.15);color:#a29bfe;font-size:14px;font-weight:700;font-family:monospace;">/</div>
+            <div class="item-body">
+              <div class="item-title">/review <span class="tag tag-purple">Custom</span></div>
+              <div class="item-subtitle">Review the current changes, check for bugs, suggest improvements, and ensure test coverage</div>
+            </div>
+            <div class="item-actions"><button class="btn btn-secondary btn-sm">Edit</button><button class="btn btn-ghost btn-sm" style="color:#ff4757;">&#10005;</button></div>
+          </div>
+          <div class="list-item">
+            <div class="item-icon" style="background:rgba(108,92,231,0.15);color:#a29bfe;font-size:14px;font-weight:700;font-family:monospace;">/</div>
+            <div class="item-body">
+              <div class="item-title">/deploy <span class="tag tag-purple">Custom</span></div>
+              <div class="item-subtitle">Run tests, build the project, and deploy to staging environment</div>
+            </div>
+            <div class="item-actions"><button class="btn btn-secondary btn-sm">Edit</button><button class="btn btn-ghost btn-sm" style="color:#ff4757;">&#10005;</button></div>
+          </div>
+          <div class="list-item">
+            <div class="item-icon" style="background:rgba(108,92,231,0.15);color:#a29bfe;font-size:14px;font-weight:700;font-family:monospace;">/</div>
+            <div class="item-body">
+              <div class="item-title">/fix-lint <span class="tag tag-purple">Custom</span></div>
+              <div class="item-subtitle">Find and fix all linting errors in the current project</div>
+            </div>
+            <div class="item-actions"><button class="btn btn-secondary btn-sm">Edit</button><button class="btn btn-ghost btn-sm" style="color:#ff4757;">&#10005;</button></div>
+          </div>
+          <div class="list-item">
+            <div class="item-icon" style="background:rgba(0,184,148,0.15);color:#55efc4;font-size:14px;font-weight:700;font-family:monospace;">/</div>
+            <div class="item-body">
+              <div class="item-title">/commit <span class="tag tag-green">Built-in</span></div>
+              <div class="item-subtitle">Create a well-formatted git commit with AI-generated message</div>
+            </div>
+            <div class="item-actions"><span style="font-size:11px;color:#636e72;">Read-only</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PAGE 6: SETTINGS ============ -->
+  <div class="subsection" id="page-settings">
+    <h3>6. Settings Page</h3>
+    <p>Model selection, environment variables, hooks, and general configuration.</p>
+    <div class="mockup-frame">
+      <div class="frame-bar"><div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div><div class="url">localhost:3399/settings</div></div>
+      <div class="frame-body">
+        <div class="app-sidebar">
+          <div class="sidebar-brand"><div class="brand-icon">C</div><div class="brand-name">Config Manager</div></div>
+          <div class="nav-section-label">Dashboard</div>
+          <div class="nav-item"><span class="nav-icon">&#9671;</span> Overview</div>
+          <div class="nav-item active"><span class="nav-icon">&#9881;</span> Settings</div>
+          <div class="nav-section-label">Configuration</div>
+          <div class="nav-item"><span class="nav-icon">&#9850;</span> Plugins</div>
+          <div class="nav-item"><span class="nav-icon">&#9648;</span> MCP Servers</div>
+          <div class="nav-item"><span class="nav-icon">&#10038;</span> Skills</div>
+          <div class="nav-item"><span class="nav-icon">&#8801;</span> Commands</div>
+          <div class="nav-section-label">Management</div>
+          <div class="nav-item"><span class="nav-icon">&#9632;</span> Profiles</div>
+          <div class="nav-item"><span class="nav-icon">&#8693;</span> Export / Import</div>
+          <div class="sidebar-footer"><div class="avatar">JD</div><div class="user-info"><div class="name">Jane Doe</div><div class="role">Admin</div></div></div>
+        </div>
+        <div class="app-main" style="overflow-y:auto;">
+          <div class="page-header"><h1>Settings</h1><div class="page-desc">Global configuration for Claude Code.</div></div>
+          <!-- Model selection -->
+          <div style="background:#1e1e28;border:1px solid #2a2a35;border-radius:10px;padding:20px;margin-bottom:20px;">
+            <div style="font-size:15px;font-weight:600;margin-bottom:4px;">Model</div>
+            <div style="font-size:12px;color:#636e72;margin-bottom:14px;">Select the default Claude model for this configuration.</div>
+            <div class="dropdown-trigger" style="width:260px;"><span>Claude Sonnet 4</span><span class="arrow" style="margin-left:auto;">&#9662;</span></div>
+          </div>
+          <!-- Env vars -->
+          <div style="background:#1e1e28;border:1px solid #2a2a35;border-radius:10px;padding:20px;margin-bottom:20px;">
+            <div style="font-size:15px;font-weight:600;margin-bottom:4px;">Environment Variables</div>
+            <div style="font-size:12px;color:#636e72;margin-bottom:14px;">Variables available to MCP servers and hooks.</div>
+            <div class="env-row"><input class="env-input key" value="ANTHROPIC_API_KEY" readonly><span class="env-eq">=</span><input class="env-input" value="sk-ant-***********" readonly><button class="env-remove">&#10005;</button></div>
+            <div class="env-row"><input class="env-input key" value="DB_URL" readonly><span class="env-eq">=</span><input class="env-input" value="postgres://localhost:5432/dev" readonly><button class="env-remove">&#10005;</button></div>
+            <div class="env-row"><input class="env-input key" value="GITHUB_TOKEN" readonly><span class="env-eq">=</span><input class="env-input" value="ghp_***********" readonly><button class="env-remove">&#10005;</button></div>
+            <button class="btn btn-secondary btn-sm" style="margin-top:8px;">+ Add Variable</button>
+          </div>
+          <!-- Hooks -->
+          <div style="background:#1e1e28;border:1px solid #2a2a35;border-radius:10px;padding:20px;margin-bottom:20px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+              <div><div style="font-size:15px;font-weight:600;margin-bottom:4px;">Hooks</div><div style="font-size:12px;color:#636e72;">Automated actions triggered by Claude Code events.</div></div>
+              <button class="btn btn-secondary btn-sm">+ Add Hook</button>
+            </div>
+            <div class="hook-item">
+              <div class="hook-top"><span class="tag tag-purple">PreToolCall</span><span class="tag tag-gray">file_write</span></div>
+              <div class="hook-cmd">eslint --fix $FILE_PATH</div>
+            </div>
+            <div class="hook-item">
+              <div class="hook-top"><span class="tag tag-green">PostToolCall</span><span class="tag tag-gray">git_commit</span></div>
+              <div class="hook-cmd">git push origin $(git branch --show-current)</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PAGE 7: PROFILES ============ -->
+  <div class="subsection" id="page-profiles">
+    <h3>7. Profiles Page</h3>
+    <p>Grid of configuration profiles with activation, editing, and deletion actions.</p>
+    <div class="mockup-frame">
+      <div class="frame-bar"><div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div><div class="url">localhost:3399/profiles</div></div>
+      <div class="frame-body">
+        <div class="app-sidebar">
+          <div class="sidebar-brand"><div class="brand-icon">C</div><div class="brand-name">Config Manager</div></div>
+          <div class="nav-section-label">Dashboard</div>
+          <div class="nav-item"><span class="nav-icon">&#9671;</span> Overview</div>
+          <div class="nav-item"><span class="nav-icon">&#9881;</span> Settings</div>
+          <div class="nav-section-label">Configuration</div>
+          <div class="nav-item"><span class="nav-icon">&#9850;</span> Plugins</div>
+          <div class="nav-item"><span class="nav-icon">&#9648;</span> MCP Servers</div>
+          <div class="nav-item"><span class="nav-icon">&#10038;</span> Skills</div>
+          <div class="nav-item"><span class="nav-icon">&#8801;</span> Commands</div>
+          <div class="nav-section-label">Management</div>
+          <div class="nav-item active"><span class="nav-icon">&#9632;</span> Profiles <span class="nav-badge">3</span></div>
+          <div class="nav-item"><span class="nav-icon">&#8693;</span> Export / Import</div>
+          <div class="sidebar-footer"><div class="avatar">JD</div><div class="user-info"><div class="name">Jane Doe</div><div class="role">Admin</div></div></div>
+        </div>
+        <div class="app-main">
+          <div class="page-header">
+            <h1>Profiles</h1>
+            <div class="page-desc">Save and switch between different Claude Code configurations.</div>
+            <div class="page-actions"><button class="btn btn-primary">+ Create Profile</button></div>
+          </div>
+          <div class="profile-grid">
+            <div class="profile-card">
+              <div class="profile-header"><div class="profile-icon" style="background:linear-gradient(135deg,#6c5ce7,#a29bfe);">&#9733;</div><div><div class="profile-name">Development</div><div class="profile-date">Created Mar 10, 2026</div></div></div>
+              <div class="profile-tags"><span class="tag tag-purple">8 plugins</span><span class="tag tag-orange">3 MCP</span><span class="tag tag-yellow">5 env vars</span><span class="tag tag-green">2 hooks</span></div>
+              <div class="profile-actions"><button class="btn btn-primary btn-sm" style="flex:1;">Activate</button><button class="btn btn-secondary btn-sm">Edit</button><button class="btn btn-ghost btn-sm" style="color:#ff4757;">&#128465;</button></div>
+            </div>
+            <div class="profile-card" style="border-color:#6c5ce7;">
+              <div class="profile-header"><div class="profile-icon" style="background:linear-gradient(135deg,#00b894,#55efc4);">&#9670;</div><div><div class="profile-name">Production <span class="tag tag-green" style="font-size:10px;">Active</span></div><div class="profile-date">Created Feb 28, 2026</div></div></div>
+              <div class="profile-tags"><span class="tag tag-purple">5 plugins</span><span class="tag tag-orange">2 MCP</span><span class="tag tag-yellow">3 env vars</span></div>
+              <div class="profile-actions"><button class="btn btn-secondary btn-sm" style="flex:1;">Edit</button><button class="btn btn-ghost btn-sm" style="color:#ff4757;">&#128465;</button></div>
+            </div>
+            <div class="profile-card">
+              <div class="profile-header"><div class="profile-icon" style="background:linear-gradient(135deg,#e17055,#fab1a0);">&#9673;</div><div><div class="profile-name">Minimal</div><div class="profile-date">Created Mar 20, 2026</div></div></div>
+              <div class="profile-tags"><span class="tag tag-purple">2 plugins</span><span class="tag tag-orange">1 MCP</span></div>
+              <div class="profile-actions"><button class="btn btn-primary btn-sm" style="flex:1;">Activate</button><button class="btn btn-secondary btn-sm">Edit</button><button class="btn btn-ghost btn-sm" style="color:#ff4757;">&#128465;</button></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PAGE 8: EDIT PROFILE ============ -->
+  <div class="subsection" id="page-edit-profile">
+    <h3>8. Edit Profile Page</h3>
+    <p>Full profile editing with plugin checkboxes, MCP server selection, env vars, hooks, commands, and save.</p>
+    <div class="mockup-frame">
+      <div class="frame-bar"><div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div><div class="url">localhost:3399/profiles/development/edit</div></div>
+      <div class="frame-body" style="min-height:700px;">
+        <div class="app-sidebar">
+          <div class="sidebar-brand"><div class="brand-icon">C</div><div class="brand-name">Config Manager</div></div>
+          <div class="nav-section-label">Dashboard</div>
+          <div class="nav-item"><span class="nav-icon">&#9671;</span> Overview</div>
+          <div class="nav-item"><span class="nav-icon">&#9881;</span> Settings</div>
+          <div class="nav-section-label">Configuration</div>
+          <div class="nav-item"><span class="nav-icon">&#9850;</span> Plugins</div>
+          <div class="nav-item"><span class="nav-icon">&#9648;</span> MCP Servers</div>
+          <div class="nav-item"><span class="nav-icon">&#10038;</span> Skills</div>
+          <div class="nav-item"><span class="nav-icon">&#8801;</span> Commands</div>
+          <div class="nav-section-label">Management</div>
+          <div class="nav-item active"><span class="nav-icon">&#9632;</span> Profiles</div>
+          <div class="nav-item"><span class="nav-icon">&#8693;</span> Export / Import</div>
+          <div class="sidebar-footer"><div class="avatar">JD</div><div class="user-info"><div class="name">Jane Doe</div><div class="role">Admin</div></div></div>
+        </div>
+        <div class="app-main" style="overflow-y:auto;">
+          <div class="breadcrumb"><a href="#">Profiles</a><span class="sep">/</span><a href="#">Development</a><span class="sep">/</span><span style="color:#fff;">Edit</span></div>
+          <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start;">
+            <div><h1>Edit: Development</h1><div class="page-desc">Customize which plugins, servers, and settings are included.</div></div>
+            <div style="display:flex;gap:10px;"><button class="btn btn-secondary">Cancel</button><button class="btn btn-primary">Save Profile</button></div>
+          </div>
+
+          <!-- Profile name -->
+          <div style="background:#1e1e28;border:1px solid #2a2a35;border-radius:10px;padding:20px;margin-bottom:20px;">
+            <div style="font-size:14px;font-weight:600;margin-bottom:10px;">Profile Name</div>
+            <input class="env-input" value="Development" readonly style="max-width:300px;">
+          </div>
+
+          <!-- Plugins checkbox grid -->
+          <div style="background:#1e1e28;border:1px solid #2a2a35;border-radius:10px;padding:20px;margin-bottom:20px;">
+            <div style="font-size:14px;font-weight:600;margin-bottom:4px;">Plugins</div>
+            <div style="font-size:12px;color:#636e72;margin-bottom:14px;">Select which plugins to include in this profile.</div>
+            <div class="checkbox-grid">
+              <div class="checkbox-item selected"><div class="check-box">&#10003;</div><div class="check-label">code-analysis</div></div>
+              <div class="checkbox-item selected"><div class="check-box">&#10003;</div><div class="check-label">git-helper</div></div>
+              <div class="checkbox-item selected"><div class="check-box">&#10003;</div><div class="check-label">test-runner</div></div>
+              <div class="checkbox-item selected"><div class="check-box">&#10003;</div><div class="check-label">docs-gen</div></div>
+              <div class="checkbox-item"><div class="check-box"></div><div class="check-label">web-tools</div></div>
+              <div class="checkbox-item selected"><div class="check-box">&#10003;</div><div class="check-label">db-tools</div></div>
+              <div class="checkbox-item selected"><div class="check-box">&#10003;</div><div class="check-label">ci-helper</div></div>
+              <div class="checkbox-item"><div class="check-box"></div><div class="check-label">diagram-gen</div></div>
+              <div class="checkbox-item selected"><div class="check-box">&#10003;</div><div class="check-label">perf-monitor</div></div>
+            </div>
+          </div>
+
+          <!-- MCP Servers checkbox list -->
+          <div style="background:#1e1e28;border:1px solid #2a2a35;border-radius:10px;padding:20px;margin-bottom:20px;">
+            <div style="font-size:14px;font-weight:600;margin-bottom:4px;">MCP Servers</div>
+            <div style="font-size:12px;color:#636e72;margin-bottom:14px;">Select which MCP servers to include.</div>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <div class="checkbox-item selected" style="max-width:400px;"><div class="check-box">&#10003;</div><div class="check-label">filesystem</div><span class="tag tag-green" style="margin-left:auto;font-size:10px;">Connected</span></div>
+              <div class="checkbox-item selected" style="max-width:400px;"><div class="check-box">&#10003;</div><div class="check-label">github</div><span class="tag tag-green" style="margin-left:auto;font-size:10px;">Connected</span></div>
+              <div class="checkbox-item selected" style="max-width:400px;"><div class="check-box">&#10003;</div><div class="check-label">database</div><span class="tag tag-red" style="margin-left:auto;font-size:10px;">Error</span></div>
+              <div class="checkbox-item" style="max-width:400px;"><div class="check-box"></div><div class="check-label">slack</div><span class="tag tag-green" style="margin-left:auto;font-size:10px;">Connected</span></div>
+              <div class="checkbox-item" style="max-width:400px;"><div class="check-box"></div><div class="check-label">memory</div><span class="tag tag-gray" style="margin-left:auto;font-size:10px;">Stopped</span></div>
+            </div>
+          </div>
+
+          <!-- Settings overrides -->
+          <div style="background:#1e1e28;border:1px solid #2a2a35;border-radius:10px;padding:20px;margin-bottom:20px;">
+            <div style="font-size:14px;font-weight:600;margin-bottom:4px;">Settings Override</div>
+            <div style="font-size:12px;color:#636e72;margin-bottom:14px;">Override default settings for this profile.</div>
+            <div style="margin-bottom:14px;"><div style="font-size:12px;color:#636e72;margin-bottom:6px;">Model</div><div class="dropdown-trigger" style="width:260px;"><span>Claude Sonnet 4</span><span class="arrow" style="margin-left:auto;">&#9662;</span></div></div>
+            <div style="font-size:12px;color:#636e72;margin-bottom:6px;">Environment Variables</div>
+            <div class="env-row"><input class="env-input key" value="NODE_ENV" readonly style="max-width:160px;"><span class="env-eq">=</span><input class="env-input" value="development" readonly><button class="env-remove">&#10005;</button></div>
+            <div class="env-row"><input class="env-input key" value="DEBUG" readonly style="max-width:160px;"><span class="env-eq">=</span><input class="env-input" value="true" readonly><button class="env-remove">&#10005;</button></div>
+            <button class="btn btn-secondary btn-sm" style="margin-top:6px;">+ Add Variable</button>
+          </div>
+
+          <!-- Hooks -->
+          <div style="background:#1e1e28;border:1px solid #2a2a35;border-radius:10px;padding:20px;margin-bottom:20px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+              <div><div style="font-size:14px;font-weight:600;">Hooks</div><div style="font-size:12px;color:#636e72;">Profile-specific hooks.</div></div>
+              <button class="btn btn-secondary btn-sm">+ Add Hook</button>
+            </div>
+            <div class="hook-item">
+              <div class="hook-top"><span class="tag tag-purple">PreToolCall</span><span class="tag tag-gray">file_write</span></div>
+              <div class="hook-cmd">eslint --fix $FILE_PATH</div>
+            </div>
+          </div>
+
+          <!-- Commands -->
+          <div style="background:#1e1e28;border:1px solid #2a2a35;border-radius:10px;padding:20px;margin-bottom:20px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+              <div><div style="font-size:14px;font-weight:600;">Custom Commands</div><div style="font-size:12px;color:#636e72;">Profile-specific slash commands.</div></div>
+              <button class="btn btn-secondary btn-sm">+ Add Command</button>
+            </div>
+            <div class="list-item">
+              <div class="item-icon" style="background:rgba(108,92,231,0.15);color:#a29bfe;font-size:12px;font-weight:700;font-family:monospace;">/</div>
+              <div class="item-body"><div class="item-title" style="font-size:13px;">/review</div><div class="item-subtitle">Review current changes for bugs and improvements</div></div>
+              <div class="item-actions"><button class="btn btn-ghost btn-sm" style="color:#ff4757;">&#10005;</button></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PAGE 9: EXPORT / IMPORT ============ -->
+  <div class="subsection" id="page-export-import">
+    <h3>9. Export / Import Page</h3>
+    <p>Side-by-side export and import panels for configuration portability.</p>
+    <div class="mockup-frame">
+      <div class="frame-bar"><div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div><div class="url">localhost:3399/export-import</div></div>
+      <div class="frame-body">
+        <div class="app-sidebar">
+          <div class="sidebar-brand"><div class="brand-icon">C</div><div class="brand-name">Config Manager</div></div>
+          <div class="nav-section-label">Dashboard</div>
+          <div class="nav-item"><span class="nav-icon">&#9671;</span> Overview</div>
+          <div class="nav-item"><span class="nav-icon">&#9881;</span> Settings</div>
+          <div class="nav-section-label">Configuration</div>
+          <div class="nav-item"><span class="nav-icon">&#9850;</span> Plugins</div>
+          <div class="nav-item"><span class="nav-icon">&#9648;</span> MCP Servers</div>
+          <div class="nav-item"><span class="nav-icon">&#10038;</span> Skills</div>
+          <div class="nav-item"><span class="nav-icon">&#8801;</span> Commands</div>
+          <div class="nav-section-label">Management</div>
+          <div class="nav-item"><span class="nav-icon">&#9632;</span> Profiles</div>
+          <div class="nav-item active"><span class="nav-icon">&#8693;</span> Export / Import</div>
+          <div class="sidebar-footer"><div class="avatar">JD</div><div class="user-info"><div class="name">Jane Doe</div><div class="role">Admin</div></div></div>
+        </div>
+        <div class="app-main">
+          <div class="page-header"><h1>Export / Import</h1><div class="page-desc">Share and restore your Claude Code configurations.</div></div>
+          <div class="panel-split">
+            <div class="panel-box">
+              <h3>Export Configuration</h3>
+              <div class="panel-desc">Select a profile and choose what to include.</div>
+              <div style="margin-bottom:16px;">
+                <div style="font-size:11px;color:#636e72;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Profile</div>
+                <div class="dropdown-trigger" style="width:100%;"><span>Development</span><span class="arrow" style="margin-left:auto;">&#9662;</span></div>
+              </div>
+              <div style="margin-bottom:16px;">
+                <div style="font-size:11px;color:#636e72;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Include</div>
+                <div style="display:flex;flex-direction:column;gap:8px;">
+                  <label style="display:flex;align-items:center;gap:8px;font-size:13px;"><div style="width:16px;height:16px;border-radius:3px;background:#6c5ce7;border:2px solid #6c5ce7;display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff;">&#10003;</div> Plugins</label>
+                  <label style="display:flex;align-items:center;gap:8px;font-size:13px;"><div style="width:16px;height:16px;border-radius:3px;background:#6c5ce7;border:2px solid #6c5ce7;display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff;">&#10003;</div> MCP Servers</label>
+                  <label style="display:flex;align-items:center;gap:8px;font-size:13px;"><div style="width:16px;height:16px;border-radius:3px;border:2px solid #2a2a35;"></div> <span style="color:#b2bec3;">Environment Variables</span></label>
+                  <label style="display:flex;align-items:center;gap:8px;font-size:13px;"><div style="width:16px;height:16px;border-radius:3px;background:#6c5ce7;border:2px solid #6c5ce7;display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff;">&#10003;</div> Hooks</label>
+                  <label style="display:flex;align-items:center;gap:8px;font-size:13px;"><div style="width:16px;height:16px;border-radius:3px;background:#6c5ce7;border:2px solid #6c5ce7;display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff;">&#10003;</div> Commands</label>
+                </div>
+              </div>
+              <div style="margin-bottom:16px;">
+                <div style="font-size:11px;color:#636e72;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Format</div>
+                <div class="dropdown-trigger" style="width:100%;"><span>JSON</span><span class="arrow" style="margin-left:auto;">&#9662;</span></div>
+              </div>
+              <button class="btn btn-primary" style="width:100%;justify-content:center;">Export Configuration</button>
+            </div>
+            <div class="panel-box">
+              <h3>Import Configuration</h3>
+              <div class="panel-desc">Upload a previously exported configuration file.</div>
+              <div class="drop-zone">
+                <div class="drop-icon">&#8682;</div>
+                <div class="drop-text">Drop configuration file here</div>
+                <div class="drop-hint">or click to browse &mdash; .json, .yaml supported</div>
+              </div>
+              <div style="background:#0f0f14;border-radius:8px;padding:14px;margin-bottom:16px;">
+                <div style="font-size:11px;color:#636e72;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Preview</div>
+                <div style="font-size:12px;color:#636e72;text-align:center;padding:16px;">No file selected</div>
+              </div>
+              <div style="display:flex;gap:10px;">
+                <button class="btn btn-primary" style="flex:1;justify-content:center;opacity:0.5;">Merge with Existing</button>
+                <button class="btn btn-secondary" style="flex:1;justify-content:center;opacity:0.5;">Replace All</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PAGE 10: PLUGIN DETAIL PANEL ============ -->
+  <div class="subsection" id="page-plugin-detail">
+    <h3>10. Plugin Detail Panel (Overlay)</h3>
+    <p>Slide-in panel overlaying the plugins list page. Shows full plugin metadata, skills, and actions.</p>
+    <div class="mockup-frame">
+      <div class="frame-bar"><div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div><div class="url">localhost:3399/plugins</div></div>
+      <div class="frame-body">
+        <div class="app-sidebar">
+          <div class="sidebar-brand"><div class="brand-icon">C</div><div class="brand-name">Config Manager</div></div>
+          <div class="nav-section-label">Dashboard</div>
+          <div class="nav-item"><span class="nav-icon">&#9671;</span> Overview</div>
+          <div class="nav-item"><span class="nav-icon">&#9881;</span> Settings</div>
+          <div class="nav-section-label">Configuration</div>
+          <div class="nav-item active"><span class="nav-icon">&#9850;</span> Plugins</div>
+          <div class="nav-item"><span class="nav-icon">&#9648;</span> MCP Servers</div>
+          <div class="nav-item"><span class="nav-icon">&#10038;</span> Skills</div>
+          <div class="nav-item"><span class="nav-icon">&#8801;</span> Commands</div>
+          <div class="nav-section-label">Management</div>
+          <div class="nav-item"><span class="nav-icon">&#9632;</span> Profiles</div>
+          <div class="nav-item"><span class="nav-icon">&#8693;</span> Export / Import</div>
+          <div class="sidebar-footer"><div class="avatar">JD</div><div class="user-info"><div class="name">Jane Doe</div><div class="role">Admin</div></div></div>
+        </div>
+        <div class="app-main" style="position:relative;">
+          <!-- Background content (dimmed) -->
+          <div style="opacity:0.3;">
+            <div class="page-header"><h1>Plugins</h1><div class="page-desc">Manage installed plugins.</div></div>
+            <div class="list-item"><div class="item-icon" style="background:linear-gradient(135deg,#6c5ce7,#a29bfe);">&#9881;</div><div class="item-body"><div class="item-title">code-analysis <span class="tag tag-purple">v2.1</span></div><div class="item-subtitle">Static analysis tools</div></div></div>
+            <div class="list-item"><div class="item-icon" style="background:linear-gradient(135deg,#00b894,#55efc4);">&#9733;</div><div class="item-body"><div class="item-title">git-helper <span class="tag tag-green">v1.4</span></div><div class="item-subtitle">Git workflow tools</div></div></div>
+          </div>
+          <div class="dim-bg"></div>
+          <!-- Detail panel -->
+          <div class="detail-overlay">
+            <div class="detail-header">
+              <div>
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+                  <div class="item-icon" style="background:linear-gradient(135deg,#6c5ce7,#a29bfe);width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;">&#9881;</div>
+                  <h3>@anthropic/code-analysis</h3>
+                </div>
+                <div style="display:flex;gap:6px;"><span class="tag tag-purple">v2.1.0</span><span class="tag tag-blue">Marketplace</span><span class="tag tag-green">Active</span></div>
+              </div>
+              <button class="btn btn-ghost btn-sm" style="font-size:16px;">&#10005;</button>
+            </div>
+            <div class="detail-body">
+              <div class="detail-section">
+                <h4>Description</h4>
+                <div style="font-size:13px;color:#b2bec3;line-height:1.6;">Static analysis and code quality tools for Claude Code. Includes linting, complexity analysis, dependency scanning, and security vulnerability checks.</div>
+              </div>
+              <div class="detail-section">
+                <h4>Information</h4>
+                <div class="detail-row"><span class="label">Author</span><span class="value">Anthropic</span></div>
+                <div class="detail-row"><span class="label">Installed</span><span class="value">Mar 12, 2026</span></div>
+                <div class="detail-row"><span class="label">Last Updated</span><span class="value">Mar 20, 2026</span></div>
+                <div class="detail-row"><span class="label">License</span><span class="value">MIT</span></div>
+                <div class="detail-row"><span class="label">Size</span><span class="value">2.4 MB</span></div>
+              </div>
+              <div class="detail-section">
+                <h4>Skills (8)</h4>
+                <div style="display:flex;flex-wrap:wrap;gap:6px;">
+                  <span class="tag tag-pink">lint_code</span><span class="tag tag-pink">analyze_complexity</span><span class="tag tag-orange">scan_deps</span><span class="tag tag-pink">security_check</span><span class="tag tag-pink">code_metrics</span><span class="tag tag-pink">dead_code</span><span class="tag tag-orange">fix_lint</span><span class="tag tag-blue">lint_config</span>
+                </div>
+              </div>
+              <div class="detail-section">
+                <h4>Configuration</h4>
+                <div class="env-row"><input class="env-input key" value="STRICT_MODE" readonly style="max-width:140px;font-size:12px;"><span class="env-eq">=</span><input class="env-input" value="true" readonly style="font-size:12px;"></div>
+                <div class="env-row"><input class="env-input key" value="IGNORE_DIRS" readonly style="max-width:140px;font-size:12px;"><span class="env-eq">=</span><input class="env-input" value="node_modules,dist" readonly style="font-size:12px;"></div>
+              </div>
+            </div>
+            <div class="detail-footer">
+              <button class="btn btn-secondary" style="flex:1;">Configure</button>
+              <button class="btn btn-danger">Remove Plugin</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PAGE 11: MCP SERVER DETAIL PANEL ============ -->
+  <div class="subsection" id="page-mcp-detail">
+    <h3>11. MCP Server Detail Panel (Overlay)</h3>
+    <p>Detailed view of an MCP server showing connection info, tools, environment, and management actions.</p>
+    <div class="mockup-frame">
+      <div class="frame-bar"><div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div><div class="url">localhost:3399/mcp-servers</div></div>
+      <div class="frame-body">
+        <div class="app-sidebar">
+          <div class="sidebar-brand"><div class="brand-icon">C</div><div class="brand-name">Config Manager</div></div>
+          <div class="nav-section-label">Dashboard</div>
+          <div class="nav-item"><span class="nav-icon">&#9671;</span> Overview</div>
+          <div class="nav-item"><span class="nav-icon">&#9881;</span> Settings</div>
+          <div class="nav-section-label">Configuration</div>
+          <div class="nav-item"><span class="nav-icon">&#9850;</span> Plugins</div>
+          <div class="nav-item active"><span class="nav-icon">&#9648;</span> MCP Servers</div>
+          <div class="nav-item"><span class="nav-icon">&#10038;</span> Skills</div>
+          <div class="nav-item"><span class="nav-icon">&#8801;</span> Commands</div>
+          <div class="nav-section-label">Management</div>
+          <div class="nav-item"><span class="nav-icon">&#9632;</span> Profiles</div>
+          <div class="nav-item"><span class="nav-icon">&#8693;</span> Export / Import</div>
+          <div class="sidebar-footer"><div class="avatar">JD</div><div class="user-info"><div class="name">Jane Doe</div><div class="role">Admin</div></div></div>
+        </div>
+        <div class="app-main" style="position:relative;">
+          <div style="opacity:0.3;">
+            <div class="page-header"><h1>MCP Servers</h1></div>
+            <div class="list-item"><div class="status-dot green"></div><div class="item-body"><div class="item-title">filesystem</div></div></div>
+            <div class="list-item"><div class="status-dot green"></div><div class="item-body"><div class="item-title">github</div></div></div>
+          </div>
+          <div class="dim-bg"></div>
+          <div class="detail-overlay">
+            <div class="detail-header">
+              <div>
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+                  <div class="status-dot green" style="width:10px;height:10px;"></div>
+                  <h3>github</h3>
+                </div>
+                <div style="display:flex;gap:6px;"><span class="tag tag-green">Connected</span><span class="tag tag-blue">8 tools</span></div>
+              </div>
+              <button class="btn btn-ghost btn-sm" style="font-size:16px;">&#10005;</button>
+            </div>
+            <div class="detail-body">
+              <div class="detail-section">
+                <h4>Command</h4>
+                <div style="background:#0f0f14;border-radius:6px;padding:12px;font-family:monospace;font-size:12px;color:#55efc4;">npx @anthropic/mcp-server-github</div>
+              </div>
+              <div class="detail-section">
+                <h4>Connection</h4>
+                <div class="detail-row"><span class="label">Status</span><span class="value" style="color:#00b894;">Connected</span></div>
+                <div class="detail-row"><span class="label">Uptime</span><span class="value">2h 34m</span></div>
+                <div class="detail-row"><span class="label">Transport</span><span class="value">stdio</span></div>
+                <div class="detail-row"><span class="label">PID</span><span class="value mono">48291</span></div>
+              </div>
+              <div class="detail-section">
+                <h4>Tools (8)</h4>
+                <div style="display:flex;flex-direction:column;gap:4px;">
+                  <div style="display:flex;align-items:center;gap:8px;font-size:13px;padding:4px 0;"><span class="tag tag-pink" style="font-size:10px;">Tool</span> create_issue</div>
+                  <div style="display:flex;align-items:center;gap:8px;font-size:13px;padding:4px 0;"><span class="tag tag-pink" style="font-size:10px;">Tool</span> list_repos</div>
+                  <div style="display:flex;align-items:center;gap:8px;font-size:13px;padding:4px 0;"><span class="tag tag-orange" style="font-size:10px;">Mutation</span> create_pr</div>
+                  <div style="display:flex;align-items:center;gap:8px;font-size:13px;padding:4px 0;"><span class="tag tag-pink" style="font-size:10px;">Tool</span> search_code</div>
+                  <div style="font-size:12px;color:#636e72;padding:4px 0;">+ 4 more tools</div>
+                </div>
+              </div>
+              <div class="detail-section">
+                <h4>Environment</h4>
+                <div class="detail-row"><span class="label mono" style="color:#fdcb6e;">GITHUB_TOKEN</span><span class="value mono">ghp_***</span></div>
+              </div>
+            </div>
+            <div class="detail-footer">
+              <button class="btn btn-secondary" style="flex:1;">Restart</button>
+              <button class="btn btn-secondary">Edit</button>
+              <button class="btn btn-danger">Remove</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PAGE 12: SKILL DETAIL PANEL ============ -->
+  <div class="subsection" id="page-skill-detail">
+    <h3>12. Skill Detail Panel (Overlay)</h3>
+    <p>Detailed view of a skill showing parameters, return type, source, and usage info.</p>
+    <div class="mockup-frame">
+      <div class="frame-bar"><div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div><div class="url">localhost:3399/skills</div></div>
+      <div class="frame-body">
+        <div class="app-sidebar">
+          <div class="sidebar-brand"><div class="brand-icon">C</div><div class="brand-name">Config Manager</div></div>
+          <div class="nav-section-label">Dashboard</div>
+          <div class="nav-item"><span class="nav-icon">&#9671;</span> Overview</div>
+          <div class="nav-item"><span class="nav-icon">&#9881;</span> Settings</div>
+          <div class="nav-section-label">Configuration</div>
+          <div class="nav-item"><span class="nav-icon">&#9850;</span> Plugins</div>
+          <div class="nav-item"><span class="nav-icon">&#9648;</span> MCP Servers</div>
+          <div class="nav-item active"><span class="nav-icon">&#10038;</span> Skills</div>
+          <div class="nav-item"><span class="nav-icon">&#8801;</span> Commands</div>
+          <div class="nav-section-label">Management</div>
+          <div class="nav-item"><span class="nav-icon">&#9632;</span> Profiles</div>
+          <div class="nav-item"><span class="nav-icon">&#8693;</span> Export / Import</div>
+          <div class="sidebar-footer"><div class="avatar">JD</div><div class="user-info"><div class="name">Jane Doe</div><div class="role">Admin</div></div></div>
+        </div>
+        <div class="app-main" style="position:relative;">
+          <div style="opacity:0.3;">
+            <div class="page-header"><h1>Skills</h1></div>
+            <div style="margin-bottom:12px;padding:8px 0;border-bottom:1px solid #2a2a35;"><span style="font-size:14px;font-weight:600;">@anthropic/code-analysis</span></div>
+            <div class="list-item"><div class="item-body"><div class="item-title" style="font-size:13px;">lint_code</div></div></div>
+            <div class="list-item"><div class="item-body"><div class="item-title" style="font-size:13px;">analyze_complexity</div></div></div>
+          </div>
+          <div class="dim-bg"></div>
+          <div class="detail-overlay">
+            <div class="detail-header">
+              <div>
+                <h3>lint_code</h3>
+                <div style="display:flex;gap:6px;margin-top:8px;">
+                  <span class="tag tag-pink">Tool</span>
+                  <span class="tag tag-purple">code-analysis</span>
+                </div>
+              </div>
+              <button class="btn btn-ghost btn-sm" style="font-size:16px;">&#10005;</button>
+            </div>
+            <div class="detail-body">
+              <div class="detail-section">
+                <h4>Description</h4>
+                <div style="font-size:13px;color:#b2bec3;line-height:1.6;">Runs ESLint, Prettier, or project-specific linters on the specified files or directories. Returns a structured report of issues found with severity levels and suggested fixes.</div>
+              </div>
+              <div class="detail-section">
+                <h4>Parameters</h4>
+                <div style="background:#0f0f14;border-radius:8px;padding:14px;font-family:monospace;font-size:12px;line-height:1.8;">
+                  <div><span style="color:#fd79a8;">path</span> <span style="color:#636e72;">:</span> <span style="color:#74b9ff;">string</span> <span style="color:#ff4757;">*required</span></div>
+                  <div style="color:#636e72;padding-left:16px;margin-bottom:6px;">File or directory path to lint</div>
+                  <div><span style="color:#fd79a8;">fix</span> <span style="color:#636e72;">:</span> <span style="color:#74b9ff;">boolean</span> <span style="color:#636e72;">= false</span></div>
+                  <div style="color:#636e72;padding-left:16px;margin-bottom:6px;">Auto-fix fixable issues</div>
+                  <div><span style="color:#fd79a8;">config</span> <span style="color:#636e72;">:</span> <span style="color:#74b9ff;">string?</span></div>
+                  <div style="color:#636e72;padding-left:16px;">Path to custom linter config</div>
+                </div>
+              </div>
+              <div class="detail-section">
+                <h4>Returns</h4>
+                <div style="background:#0f0f14;border-radius:8px;padding:14px;font-family:monospace;font-size:12px;">
+                  <span style="color:#74b9ff;">LintReport</span> <span style="color:#636e72;">{</span><br>
+                  <span style="padding-left:16px;color:#fd79a8;">issues</span><span style="color:#636e72;">:</span> <span style="color:#74b9ff;">LintIssue[]</span><br>
+                  <span style="padding-left:16px;color:#fd79a8;">summary</span><span style="color:#636e72;">:</span> <span style="color:#74b9ff;">string</span><br>
+                  <span style="padding-left:16px;color:#fd79a8;">fixable</span><span style="color:#636e72;">:</span> <span style="color:#74b9ff;">number</span><br>
+                  <span style="color:#636e72;">}</span>
+                </div>
+              </div>
+              <div class="detail-section">
+                <h4>Source</h4>
+                <div class="detail-row"><span class="label">Plugin</span><span class="value">@anthropic/code-analysis</span></div>
+                <div class="detail-row"><span class="label">Type</span><span class="value" style="color:#fd79a8;">Tool (read-only)</span></div>
+                <div class="detail-row"><span class="label">Added</span><span class="value">v2.0.0</span></div>
+              </div>
+            </div>
+            <div class="detail-footer">
+              <button class="btn btn-secondary" style="flex:1;">View Plugin</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ============================================================ -->
+<!--             SECTION 4: INTERACTION PATTERNS                  -->
+<!-- ============================================================ -->
+<div class="section" id="interactions">
+  <div class="section-label orange">Section 4</div>
+  <h2>Interaction Patterns</h2>
+  <div class="section-desc">Documented behaviors for hover, active, loading, and empty states across the application.</div>
+
+  <!-- Hover States -->
+  <div class="subsection">
+    <h3>Hover States</h3>
+    <p>Interactive items shift border color from #2a2a35 to #3a3a45 on hover. Buttons darken slightly. Ghost elements reveal background.</p>
+    <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;">
+      <div style="text-align:center;">
+        <div style="font-size:11px;color:#636e72;margin-bottom:6px;">Default</div>
+        <div style="background:#1e1e28;border:1px solid #2a2a35;border-radius:8px;padding:14px 20px;font-size:13px;">List item</div>
+      </div>
+      <div style="text-align:center;">
+        <div style="font-size:11px;color:#636e72;margin-bottom:6px;">Hover</div>
+        <div style="background:#1e1e28;border:1px solid #3a3a45;border-radius:8px;padding:14px 20px;font-size:13px;">List item</div>
+      </div>
+      <div style="text-align:center;">
+        <div style="font-size:11px;color:#636e72;margin-bottom:6px;">Selected</div>
+        <div style="background:rgba(108,92,231,0.06);border:1px solid #6c5ce7;border-radius:8px;padding:14px 20px;font-size:13px;color:#a29bfe;">List item &#10003;</div>
+      </div>
+      <div style="text-align:center;">
+        <div style="font-size:11px;color:#636e72;margin-bottom:6px;">Disabled</div>
+        <div style="background:#1e1e28;border:1px solid #2a2a35;border-radius:8px;padding:14px 20px;font-size:13px;opacity:0.5;">List item</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading States / Skeleton -->
+  <div class="subsection">
+    <h3>Loading States (Skeleton Screens)</h3>
+    <p>Skeleton placeholders with a shimmer animation while data loads.</p>
+    <div style="max-width:600px;background:#0f0f14;border:1px solid #2a2a35;border-radius:10px;padding:24px;">
+      <div style="display:flex;gap:14px;align-items:center;margin-bottom:16px;">
+        <div class="skeleton" style="width:36px;height:36px;border-radius:8px;"></div>
+        <div style="flex:1;"><div class="skeleton" style="height:14px;width:60%;margin-bottom:6px;"></div><div class="skeleton" style="height:10px;width:80%;"></div></div>
+        <div class="skeleton" style="height:28px;width:80px;border-radius:6px;"></div>
+      </div>
+      <div style="display:flex;gap:14px;align-items:center;margin-bottom:16px;">
+        <div class="skeleton" style="width:36px;height:36px;border-radius:8px;"></div>
+        <div style="flex:1;"><div class="skeleton" style="height:14px;width:50%;margin-bottom:6px;"></div><div class="skeleton" style="height:10px;width:70%;"></div></div>
+        <div class="skeleton" style="height:28px;width:80px;border-radius:6px;"></div>
+      </div>
+      <div style="display:flex;gap:14px;align-items:center;">
+        <div class="skeleton" style="width:36px;height:36px;border-radius:8px;"></div>
+        <div style="flex:1;"><div class="skeleton" style="height:14px;width:55%;margin-bottom:6px;"></div><div class="skeleton" style="height:10px;width:65%;"></div></div>
+        <div class="skeleton" style="height:28px;width:80px;border-radius:6px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty States -->
+  <div class="subsection">
+    <h3>Empty States</h3>
+    <p>Shown when a section has no data. Contains a visual indicator, message, and call to action.</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:700px;">
+      <div style="background:#1e1e28;border:1px solid #2a2a35;border-radius:10px;">
+        <div class="empty-state">
+          <div class="empty-icon">&#9850;</div>
+          <div class="empty-title">No Plugins Installed</div>
+          <div class="empty-desc">Get started by installing your first plugin from the marketplace.</div>
+          <button class="btn btn-primary btn-sm">+ Install Plugin</button>
+        </div>
+      </div>
+      <div style="background:#1e1e28;border:1px solid #2a2a35;border-radius:10px;">
+        <div class="empty-state">
+          <div class="empty-icon">&#9648;</div>
+          <div class="empty-title">No MCP Servers</div>
+          <div class="empty-desc">Add an MCP server to extend Claude's capabilities.</div>
+          <button class="btn btn-primary btn-sm">+ Add Server</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Detail Panel Animation -->
+  <div class="subsection">
+    <h3>Detail Panel Transition</h3>
+    <p>The detail panel slides in from the right edge over 200ms with an ease-out timing function. The background is dimmed with a semi-transparent overlay.</p>
+    <div style="display:flex;gap:20px;align-items:center;">
+      <div style="text-align:center;">
+        <div style="font-size:11px;color:#636e72;margin-bottom:6px;">Step 1: User clicks item</div>
+        <div style="width:200px;height:120px;background:#0f0f14;border:1px solid #2a2a35;border-radius:8px;position:relative;overflow:hidden;">
+          <div style="padding:8px;"><div style="height:6px;background:#2a2a35;border-radius:3px;margin-bottom:4px;width:80%;"></div><div style="height:20px;background:#1e1e28;border:1px solid #6c5ce7;border-radius:4px;margin-bottom:4px;"></div><div style="height:20px;background:#1e1e28;border:1px solid #2a2a35;border-radius:4px;"></div></div>
+        </div>
+      </div>
+      <div style="color:#636e72;font-size:20px;">&#8594;</div>
+      <div style="text-align:center;">
+        <div style="font-size:11px;color:#636e72;margin-bottom:6px;">Step 2: BG dims, panel enters</div>
+        <div style="width:200px;height:120px;background:#0f0f14;border:1px solid #2a2a35;border-radius:8px;position:relative;overflow:hidden;">
+          <div style="position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);"></div>
+          <div style="position:absolute;top:0;right:0;width:55%;bottom:0;background:#1e1e28;border-left:1px solid #2a2a35;box-shadow:-4px 0 16px rgba(0,0,0,0.5);padding:8px;">
+            <div style="height:6px;background:#2a2a35;border-radius:3px;margin-bottom:6px;width:60%;"></div>
+            <div style="height:4px;background:#2a2a35;border-radius:2px;margin-bottom:3px;width:80%;"></div>
+            <div style="height:4px;background:#2a2a35;border-radius:2px;width:70%;"></div>
+          </div>
+        </div>
+      </div>
+      <div style="color:#636e72;font-size:20px;">&#8594;</div>
+      <div style="text-align:center;">
+        <div style="font-size:11px;color:#636e72;margin-bottom:6px;">Step 3: Panel fully visible</div>
+        <div style="width:200px;height:120px;background:#0f0f14;border:1px solid #2a2a35;border-radius:8px;position:relative;overflow:hidden;">
+          <div style="position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);"></div>
+          <div style="position:absolute;top:0;right:0;width:55%;bottom:0;background:#1e1e28;border-left:1px solid #2a2a35;box-shadow:-4px 0 16px rgba(0,0,0,0.5);padding:8px;">
+            <div style="height:6px;background:#fff;border-radius:3px;margin-bottom:8px;width:60%;"></div>
+            <div style="height:4px;background:#636e72;border-radius:2px;margin-bottom:3px;width:90%;"></div>
+            <div style="height:4px;background:#636e72;border-radius:2px;margin-bottom:3px;width:80%;"></div>
+            <div style="height:4px;background:#636e72;border-radius:2px;width:70%;"></div>
+            <div style="position:absolute;bottom:8px;left:8px;right:8px;display:flex;gap:4px;">
+              <div style="flex:1;height:16px;background:#6c5ce7;border-radius:3px;"></div>
+              <div style="width:40px;height:16px;background:rgba(255,71,87,0.2);border-radius:3px;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ============================================================ -->
+<!--             SECTION 5: RESPONSIVE CONSIDERATIONS             -->
+<!-- ============================================================ -->
+<div class="section" id="responsive">
+  <div class="section-label pink">Section 5</div>
+  <h2>Responsive Considerations</h2>
+  <div class="section-desc">Breakpoint definitions and layout adaptations for different screen sizes.</div>
+
+  <div style="background:#1e1e28;border:1px solid #2a2a35;border-radius:10px;padding:24px;margin-bottom:24px;">
+    <div style="font-size:15px;font-weight:600;margin-bottom:16px;">Breakpoints</div>
+    <div class="detail-row"><span class="label">Desktop (default)</span><span class="value">&ge; 1280px &mdash; Full sidebar + content + detail panel side-by-side</span></div>
+    <div class="detail-row"><span class="label">Small Desktop</span><span class="value">1024px &ndash; 1279px &mdash; Sidebar collapses to icon-only (56px wide)</span></div>
+    <div class="detail-row"><span class="label">Tablet</span><span class="value">768px &ndash; 1023px &mdash; Sidebar hidden by default, hamburger toggle. Detail panel full-width.</span></div>
+    <div class="detail-row" style="border:none;"><span class="label">Minimum supported</span><span class="value">1024px &mdash; Desktop-first, no mobile optimization</span></div>
+  </div>
+
+  <div style="display:flex;gap:20px;flex-wrap:wrap;">
+    <div style="text-align:center;">
+      <div style="font-size:11px;color:#636e72;margin-bottom:8px;">Desktop &ge; 1280px</div>
+      <div style="width:280px;height:160px;background:#0f0f14;border:1px solid #2a2a35;border-radius:8px;display:flex;overflow:hidden;">
+        <div style="width:60px;background:#16161d;border-right:1px solid #2a2a35;padding:8px 4px;">
+          <div style="width:20px;height:20px;background:linear-gradient(135deg,#6c5ce7,#a29bfe);border-radius:4px;margin:0 auto 8px;"></div>
+          <div style="width:20px;height:4px;background:rgba(108,92,231,0.3);border-radius:2px;margin:4px auto;"></div>
+          <div style="width:20px;height:4px;background:#2a2a35;border-radius:2px;margin:4px auto;"></div>
+          <div style="width:20px;height:4px;background:#2a2a35;border-radius:2px;margin:4px auto;"></div>
+          <div style="width:20px;height:4px;background:#2a2a35;border-radius:2px;margin:4px auto;"></div>
+        </div>
+        <div style="flex:1;padding:8px;">
+          <div style="height:6px;background:#2a2a35;border-radius:3px;width:40%;margin-bottom:8px;"></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:6px;">
+            <div style="height:28px;background:#1e1e28;border:1px solid #2a2a35;border-radius:4px;"></div>
+            <div style="height:28px;background:#1e1e28;border:1px solid #2a2a35;border-radius:4px;"></div>
+          </div>
+          <div style="height:16px;background:#1e1e28;border:1px solid #2a2a35;border-radius:3px;margin-bottom:3px;"></div>
+          <div style="height:16px;background:#1e1e28;border:1px solid #2a2a35;border-radius:3px;"></div>
+        </div>
+      </div>
+      <div style="font-size:11px;color:#636e72;margin-top:6px;">Full sidebar + content</div>
+    </div>
+    <div style="text-align:center;">
+      <div style="font-size:11px;color:#636e72;margin-bottom:8px;">Small Desktop 1024-1279px</div>
+      <div style="width:240px;height:160px;background:#0f0f14;border:1px solid #2a2a35;border-radius:8px;display:flex;overflow:hidden;">
+        <div style="width:32px;background:#16161d;border-right:1px solid #2a2a35;padding:6px 4px;">
+          <div style="width:16px;height:16px;background:linear-gradient(135deg,#6c5ce7,#a29bfe);border-radius:3px;margin:0 auto 6px;"></div>
+          <div style="width:12px;height:3px;background:rgba(108,92,231,0.3);border-radius:2px;margin:4px auto;"></div>
+          <div style="width:12px;height:3px;background:#2a2a35;border-radius:2px;margin:4px auto;"></div>
+          <div style="width:12px;height:3px;background:#2a2a35;border-radius:2px;margin:4px auto;"></div>
+        </div>
+        <div style="flex:1;padding:8px;">
+          <div style="height:6px;background:#2a2a35;border-radius:3px;width:40%;margin-bottom:8px;"></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:6px;">
+            <div style="height:28px;background:#1e1e28;border:1px solid #2a2a35;border-radius:4px;"></div>
+            <div style="height:28px;background:#1e1e28;border:1px solid #2a2a35;border-radius:4px;"></div>
+          </div>
+          <div style="height:16px;background:#1e1e28;border:1px solid #2a2a35;border-radius:3px;margin-bottom:3px;"></div>
+          <div style="height:16px;background:#1e1e28;border:1px solid #2a2a35;border-radius:3px;"></div>
+        </div>
+      </div>
+      <div style="font-size:11px;color:#636e72;margin-top:6px;">Icon-only sidebar</div>
+    </div>
+    <div style="text-align:center;">
+      <div style="font-size:11px;color:#636e72;margin-bottom:8px;">Tablet with Detail Panel</div>
+      <div style="width:200px;height:160px;background:#0f0f14;border:1px solid #2a2a35;border-radius:8px;position:relative;overflow:hidden;">
+        <div style="position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);"></div>
+        <div style="position:absolute;top:0;right:0;width:100%;bottom:0;background:#1e1e28;border-left:1px solid #2a2a35;padding:10px;">
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px;"><div style="height:8px;background:#fff;border-radius:3px;width:40%;"></div><div style="width:12px;height:12px;border:1px solid #636e72;border-radius:3px;"></div></div>
+          <div style="height:4px;background:#636e72;border-radius:2px;margin-bottom:4px;width:80%;"></div>
+          <div style="height:4px;background:#636e72;border-radius:2px;margin-bottom:4px;width:60%;"></div>
+          <div style="height:4px;background:#636e72;border-radius:2px;width:70%;"></div>
+        </div>
+      </div>
+      <div style="font-size:11px;color:#636e72;margin-top:6px;">Full-width detail panel</div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ============================================================ -->
+<!--                SECTION 6: SPACING & GRID                     -->
+<!-- ============================================================ -->
+<div class="section" id="spacing">
+  <div class="section-label yellow">Section 6</div>
+  <h2>Spacing &amp; Layout Grid</h2>
+  <div class="section-desc">Consistent spacing scale and layout rules used across all pages.</div>
+
+  <div style="background:#1e1e28;border:1px solid #2a2a35;border-radius:10px;padding:24px;margin-bottom:24px;">
+    <div style="font-size:15px;font-weight:600;margin-bottom:16px;">Spacing Scale</div>
+    <div style="display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap;">
+      <div style="text-align:center;"><div style="width:4px;height:4px;background:#6c5ce7;border-radius:1px;margin:0 auto 8px;"></div><div style="font-size:11px;color:#636e72;">4px</div></div>
+      <div style="text-align:center;"><div style="width:8px;height:8px;background:#6c5ce7;border-radius:2px;margin:0 auto 8px;"></div><div style="font-size:11px;color:#636e72;">8px</div></div>
+      <div style="text-align:center;"><div style="width:10px;height:10px;background:#6c5ce7;border-radius:2px;margin:0 auto 8px;"></div><div style="font-size:11px;color:#636e72;">10px</div></div>
+      <div style="text-align:center;"><div style="width:12px;height:12px;background:#6c5ce7;border-radius:2px;margin:0 auto 8px;"></div><div style="font-size:11px;color:#636e72;">12px</div></div>
+      <div style="text-align:center;"><div style="width:16px;height:16px;background:#6c5ce7;border-radius:2px;margin:0 auto 8px;"></div><div style="font-size:11px;color:#636e72;">16px</div></div>
+      <div style="text-align:center;"><div style="width:20px;height:20px;background:#6c5ce7;border-radius:3px;margin:0 auto 8px;"></div><div style="font-size:11px;color:#636e72;">20px</div></div>
+      <div style="text-align:center;"><div style="width:24px;height:24px;background:#6c5ce7;border-radius:3px;margin:0 auto 8px;"></div><div style="font-size:11px;color:#636e72;">24px</div></div>
+      <div style="text-align:center;"><div style="width:28px;height:28px;background:#6c5ce7;border-radius:3px;margin:0 auto 8px;"></div><div style="font-size:11px;color:#636e72;">28px</div></div>
+      <div style="text-align:center;"><div style="width:32px;height:32px;background:#6c5ce7;border-radius:4px;margin:0 auto 8px;"></div><div style="font-size:11px;color:#636e72;">32px</div></div>
+      <div style="text-align:center;"><div style="width:40px;height:40px;background:#6c5ce7;border-radius:4px;margin:0 auto 8px;"></div><div style="font-size:11px;color:#636e72;">40px</div></div>
+      <div style="text-align:center;"><div style="width:48px;height:48px;background:#6c5ce7;border-radius:5px;margin:0 auto 8px;"></div><div style="font-size:11px;color:#636e72;">48px</div></div>
+    </div>
+  </div>
+
+  <div style="background:#1e1e28;border:1px solid #2a2a35;border-radius:10px;padding:24px;">
+    <div style="font-size:15px;font-weight:600;margin-bottom:16px;">Layout Dimensions</div>
+    <div class="detail-row"><span class="label">Sidebar width</span><span class="value">220px (expanded) / 56px (collapsed)</span></div>
+    <div class="detail-row"><span class="label">Detail panel width</span><span class="value">420px</span></div>
+    <div class="detail-row"><span class="label">Main content padding</span><span class="value">28px top, 32px horizontal</span></div>
+    <div class="detail-row"><span class="label">Card padding</span><span class="value">20px</span></div>
+    <div class="detail-row"><span class="label">List item padding</span><span class="value">14px 16px</span></div>
+    <div class="detail-row"><span class="label">Stats grid</span><span class="value">4 columns, 16px gap</span></div>
+    <div class="detail-row"><span class="label">Profile grid</span><span class="value">3 columns, 16px gap</span></div>
+    <div class="detail-row" style="border:none;"><span class="label">Checkbox grid</span><span class="value">3 columns, 10px gap</span></div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- Footer -->
+<div style="text-align:center; padding: 40px 0 20px;">
+  <div style="font-size:12px; color:#636e72;">Claude Config Manager Design Spec v1.0 &mdash; March 2026</div>
+  <div style="font-size:11px; color:#2a2a35; margin-top:8px;">End of Document</div>
+</div>
+
+</div><!-- end doc-body -->
+</body>
+</html>

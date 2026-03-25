@@ -1,0 +1,1872 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>claude-config-manager &mdash; Architecture Specification</title>
+  <style>
+    /* ===== Reset & Base ===== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-primary:    #0d1117;
+      --bg-secondary:  #161b22;
+      --bg-tertiary:   #1c2333;
+      --bg-card:       #1a2030;
+      --border-color:  #30363d;
+      --border-accent: #3b82f6;
+      --text-primary:  #e6edf3;
+      --text-secondary:#8b949e;
+      --text-muted:    #6e7681;
+      --accent-blue:   #58a6ff;
+      --accent-purple: #bc8cff;
+      --accent-green:  #3fb950;
+      --accent-orange: #d29922;
+      --accent-red:    #f85149;
+      --accent-teal:   #39d0d8;
+      --accent-pink:   #f778ba;
+      --font-sans:     'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-mono:     'JetBrains Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace;
+      --radius:        8px;
+      --radius-lg:     12px;
+      --shadow:        0 4px 24px rgba(0,0,0,.4);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.7;
+      font-size: 16px;
+    }
+
+    /* ===== Layout ===== */
+    .page-wrapper {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* ===== Sidebar / Table of Contents ===== */
+    .sidebar {
+      position: fixed;
+      top: 0; left: 0;
+      width: 280px;
+      height: 100vh;
+      background: var(--bg-secondary);
+      border-right: 1px solid var(--border-color);
+      padding: 28px 20px;
+      overflow-y: auto;
+      z-index: 100;
+    }
+
+    .sidebar-title {
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--accent-blue);
+      margin-bottom: 20px;
+    }
+
+    .sidebar nav a {
+      display: block;
+      padding: 6px 12px;
+      margin: 2px 0;
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 13.5px;
+      border-radius: 6px;
+      transition: all .15s;
+    }
+
+    .sidebar nav a:hover {
+      color: var(--text-primary);
+      background: var(--bg-tertiary);
+    }
+
+    .sidebar nav a.indent { padding-left: 28px; font-size: 12.5px; }
+
+    /* ===== Main Content ===== */
+    .main-content {
+      margin-left: 280px;
+      flex: 1;
+      max-width: 980px;
+      padding: 48px 56px 120px;
+    }
+
+    /* ===== Hero ===== */
+    .hero {
+      margin-bottom: 56px;
+      padding-bottom: 40px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .hero h1 {
+      font-size: 42px;
+      font-weight: 800;
+      letter-spacing: -1px;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 12px;
+    }
+
+    .hero .subtitle {
+      font-size: 18px;
+      color: var(--text-secondary);
+      margin-bottom: 20px;
+    }
+
+    .hero-meta {
+      display: flex;
+      gap: 24px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .hero-meta span { display: flex; align-items: center; gap: 6px; }
+
+    /* ===== Section Headings ===== */
+    h2 {
+      font-size: 28px;
+      font-weight: 700;
+      margin-top: 64px;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--border-color);
+      color: var(--text-primary);
+    }
+
+    h3 {
+      font-size: 20px;
+      font-weight: 600;
+      margin-top: 36px;
+      margin-bottom: 14px;
+      color: var(--accent-blue);
+    }
+
+    h4 {
+      font-size: 16px;
+      font-weight: 600;
+      margin-top: 24px;
+      margin-bottom: 10px;
+      color: var(--accent-purple);
+    }
+
+    p { margin-bottom: 14px; }
+
+    /* ===== Cards ===== */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 24px 28px;
+      margin: 20px 0;
+      box-shadow: var(--shadow);
+    }
+
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+      margin: 20px 0;
+    }
+
+    .card-grid .card { margin: 0; }
+
+    .card h4 { margin-top: 0; color: var(--accent-blue); }
+
+    .card .badge {
+      display: inline-block;
+      padding: 2px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      border-radius: 20px;
+      margin-bottom: 8px;
+    }
+
+    .badge-blue   { background: rgba(88,166,255,.15); color: var(--accent-blue); }
+    .badge-purple { background: rgba(188,140,255,.15); color: var(--accent-purple); }
+    .badge-green  { background: rgba(63,185,80,.15);  color: var(--accent-green); }
+    .badge-orange { background: rgba(210,153,34,.15);  color: var(--accent-orange); }
+    .badge-teal   { background: rgba(57,208,216,.15);  color: var(--accent-teal); }
+
+    /* ===== Code blocks ===== */
+    pre {
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      padding: 18px 22px;
+      overflow-x: auto;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      line-height: 1.6;
+      margin: 16px 0;
+      color: var(--text-primary);
+    }
+
+    code {
+      font-family: var(--font-mono);
+      font-size: 13.5px;
+      background: var(--bg-tertiary);
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: var(--accent-teal);
+    }
+
+    pre code { background: none; padding: 0; }
+
+    /* ===== Tables ===== */
+    .table-wrapper {
+      overflow-x: auto;
+      margin: 20px 0;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-color);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    thead th {
+      background: var(--bg-tertiary);
+      padding: 12px 16px;
+      text-align: left;
+      font-weight: 600;
+      color: var(--accent-blue);
+      border-bottom: 2px solid var(--border-color);
+      white-space: nowrap;
+    }
+
+    tbody td {
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border-color);
+      vertical-align: top;
+    }
+
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover { background: rgba(88,166,255,.04); }
+
+    /* ===== Lists ===== */
+    ul, ol { margin: 12px 0 12px 24px; }
+    li { margin: 6px 0; }
+
+    /* ===== SVG Diagram Containers ===== */
+    .diagram-container {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 32px;
+      margin: 28px 0;
+      overflow-x: auto;
+      box-shadow: var(--shadow);
+    }
+
+    .diagram-container svg { display: block; margin: 0 auto; }
+
+    .diagram-caption {
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 14px;
+      font-style: italic;
+    }
+
+    /* ===== Callouts ===== */
+    .callout {
+      border-left: 4px solid;
+      padding: 16px 20px;
+      margin: 20px 0;
+      border-radius: 0 var(--radius) var(--radius) 0;
+      font-size: 14px;
+    }
+
+    .callout-info    { border-color: var(--accent-blue);   background: rgba(88,166,255,.06); }
+    .callout-warn    { border-color: var(--accent-orange); background: rgba(210,153,34,.06); }
+    .callout-danger  { border-color: var(--accent-red);    background: rgba(248,81,73,.06); }
+    .callout-success { border-color: var(--accent-green);  background: rgba(63,185,80,.06); }
+
+    .callout strong { display: block; margin-bottom: 4px; }
+
+    /* ===== Misc ===== */
+    a { color: var(--accent-blue); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    hr { border: none; border-top: 1px solid var(--border-color); margin: 40px 0; }
+
+    .tag {
+      display: inline-block;
+      padding: 2px 8px;
+      font-size: 11px;
+      font-weight: 600;
+      border-radius: 4px;
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
+      margin-right: 4px;
+    }
+
+    /* ===== Responsive ===== */
+    @media (max-width: 900px) {
+      .sidebar { display: none; }
+      .main-content { margin-left: 0; padding: 28px 20px 80px; }
+    }
+  </style>
+</head>
+<body>
+<div class="page-wrapper">
+
+  <!-- ===== Sidebar ===== -->
+  <aside class="sidebar">
+    <div class="sidebar-title">Architecture Spec</div>
+    <nav>
+      <a href="#overview">Overview</a>
+      <a href="#tech-stack">Tech Stack</a>
+      <a href="#architecture-diagram">Architecture Diagram</a>
+      <a href="#package-structure">Package Structure</a>
+      <a href="#pkg-types" class="indent">@ccm/types</a>
+      <a href="#pkg-core" class="indent">@ccm/core</a>
+      <a href="#pkg-dashboard" class="indent">@ccm/dashboard</a>
+      <a href="#pkg-mcp" class="indent">@ccm/mcp</a>
+      <a href="#pkg-cli" class="indent">@ccm/cli</a>
+      <a href="#dependency-graph">Dependency Graph</a>
+      <a href="#data-flow">Data Flow</a>
+      <a href="#filesystem-layout">Filesystem Layout</a>
+      <a href="#api-routes">API Route Table</a>
+      <a href="#mcp-tools">MCP Tool Reference</a>
+      <a href="#cli-commands">CLI Commands</a>
+      <a href="#sequence-diagrams">Sequence Diagrams</a>
+      <a href="#seq-export" class="indent">Export Flow</a>
+      <a href="#seq-import" class="indent">Import Flow</a>
+      <a href="#seq-install" class="indent">Plugin Install</a>
+      <a href="#seq-profile" class="indent">Profile Switch</a>
+      <a href="#profiles">Profile System</a>
+      <a href="#security">Security Considerations</a>
+      <a href="#concurrency">Concurrency Model</a>
+      <a href="#design-decisions">Design Decisions</a>
+      <a href="#error-handling">Error Handling</a>
+      <a href="#testing-strategy">Testing Strategy</a>
+      <a href="#future">Future Considerations</a>
+    </nav>
+  </aside>
+
+  <!-- ===== Main ===== -->
+  <main class="main-content">
+
+    <!-- Hero -->
+    <header class="hero" id="overview">
+      <h1>claude-config-manager</h1>
+      <p class="subtitle">
+        A Claude Code plugin and npm package for managing configurations, plugins, MCP servers,
+        profiles, skills, and custom commands through a unified interface.
+      </p>
+      <div class="hero-meta">
+        <span>Version 1.0.0</span>
+        <span>Architecture Spec</span>
+        <span>2026-03-25</span>
+        <span>Status: Draft</span>
+      </div>
+    </header>
+
+    <!-- ================================================================== -->
+    <!-- SECTION: Tech Stack                                                -->
+    <!-- ================================================================== -->
+    <section id="tech-stack">
+      <h2>Tech Stack</h2>
+      <p>
+        The project is organized as a <strong>Turborepo monorepo</strong> with five packages,
+        each with clearly scoped responsibilities and minimal coupling. All packages share
+        a common TypeScript configuration base and are built with the Turbo pipeline.
+      </p>
+
+      <div class="card-grid">
+        <div class="card">
+          <span class="badge badge-blue">Core</span>
+          <h4>@ccm/core</h4>
+          <p>Pure TypeScript. Zero UI dependencies. Houses all business logic: plugin management, MCP server registry, profile switching, config read/write, and skill scanning.</p>
+          <div><span class="tag">TypeScript 5.x</span><span class="tag">Node.js 20+</span></div>
+        </div>
+        <div class="card">
+          <span class="badge badge-purple">Dashboard</span>
+          <h4>@ccm/dashboard</h4>
+          <p>Next.js 14+ App Router web application providing a visual management UI. Uses React Server Components where possible, client components for interactive panels.</p>
+          <div><span class="tag">Next.js 14</span><span class="tag">React 18</span><span class="tag">Tailwind CSS</span></div>
+        </div>
+        <div class="card">
+          <span class="badge badge-green">MCP Server</span>
+          <h4>@ccm/mcp</h4>
+          <p>Lightweight MCP server using stdio transport. Exposes query and mutation tools so Claude can manage its own configuration conversationally.</p>
+          <div><span class="tag">@modelcontextprotocol/sdk</span><span class="tag">stdio</span></div>
+        </div>
+        <div class="card">
+          <span class="badge badge-orange">CLI</span>
+          <h4>@ccm/cli</h4>
+          <p>Command-line interface for headless management. Supports starting the dashboard, listing resources, profile management, and config export/import.</p>
+          <div><span class="tag">Commander.js</span><span class="tag">chalk</span><span class="tag">ora</span></div>
+        </div>
+        <div class="card">
+          <span class="badge badge-teal">Types</span>
+          <h4>@ccm/types</h4>
+          <p>TypeScript types and runtime type guards/validators used by every other package.</p>
+          <div><span class="tag">TypeScript</span><span class="tag">declaration-only</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================== -->
+    <!-- SECTION: High-Level Architecture Diagram                           -->
+    <!-- ================================================================== -->
+    <section id="architecture-diagram">
+      <h2>High-Level Architecture</h2>
+      <p>
+        All four entry points &mdash; the CLI, Dashboard API Routes, MCP Server, and the
+        Claude Code Plugin hook &mdash; converge on <code>@ccm/core</code>, which is the
+        sole package that touches the <code>~/.claude/</code> filesystem.
+      </p>
+
+      <div class="diagram-container">
+        <svg viewBox="0 0 880 520" xmlns="http://www.w3.org/2000/svg" font-family="Inter, sans-serif">
+          <!-- Background grid (subtle) -->
+          <defs>
+            <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+              <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#1e2a3a" stroke-width="0.5"/>
+            </pattern>
+            <filter id="glow">
+              <feGaussianBlur stdDeviation="3" result="blur"/>
+              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+            <linearGradient id="grad-blue" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#3b82f6"/>
+              <stop offset="100%" stop-color="#6366f1"/>
+            </linearGradient>
+            <linearGradient id="grad-green" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#22c55e"/>
+              <stop offset="100%" stop-color="#14b8a6"/>
+            </linearGradient>
+          </defs>
+          <rect width="880" height="520" fill="#0f1724" rx="12"/>
+          <rect width="880" height="520" fill="url(#grid)" rx="12"/>
+
+          <!-- Title -->
+          <text x="440" y="36" text-anchor="middle" fill="#8b949e" font-size="13" font-weight="600">HIGH-LEVEL ARCHITECTURE</text>
+
+          <!-- Entry Points Row -->
+          <!-- CLI -->
+          <rect x="30" y="60" width="170" height="68" rx="8" fill="#1a2744" stroke="#d29922" stroke-width="1.5"/>
+          <text x="115" y="88" text-anchor="middle" fill="#d29922" font-size="12" font-weight="700">@ccm/cli</text>
+          <text x="115" y="108" text-anchor="middle" fill="#8b949e" font-size="10">Commander.js + chalk</text>
+
+          <!-- Dashboard -->
+          <rect x="230" y="60" width="170" height="68" rx="8" fill="#1a2744" stroke="#bc8cff" stroke-width="1.5"/>
+          <text x="315" y="88" text-anchor="middle" fill="#bc8cff" font-size="12" font-weight="700">@ccm/dashboard</text>
+          <text x="315" y="108" text-anchor="middle" fill="#8b949e" font-size="10">Next.js 14 App Router</text>
+
+          <!-- MCP Server -->
+          <rect x="430" y="60" width="170" height="68" rx="8" fill="#1a2744" stroke="#3fb950" stroke-width="1.5"/>
+          <text x="515" y="88" text-anchor="middle" fill="#3fb950" font-size="12" font-weight="700">@ccm/mcp</text>
+          <text x="515" y="108" text-anchor="middle" fill="#8b949e" font-size="10">MCP SDK / stdio</text>
+
+          <!-- Plugin Hook -->
+          <rect x="630" y="60" width="190" height="68" rx="8" fill="#1a2744" stroke="#f778ba" stroke-width="1.5"/>
+          <text x="725" y="88" text-anchor="middle" fill="#f778ba" font-size="12" font-weight="700">Claude Code Plugin</text>
+          <text x="725" y="108" text-anchor="middle" fill="#8b949e" font-size="10">plugin.json manifest</text>
+
+          <!-- Arrows from entry points to core -->
+          <line x1="115" y1="128" x2="440" y2="210" stroke="#58a6ff" stroke-width="1.5" stroke-dasharray="6,3" opacity="0.6"/>
+          <line x1="315" y1="128" x2="440" y2="210" stroke="#58a6ff" stroke-width="1.5" stroke-dasharray="6,3" opacity="0.6"/>
+          <line x1="515" y1="128" x2="440" y2="210" stroke="#58a6ff" stroke-width="1.5" stroke-dasharray="6,3" opacity="0.6"/>
+          <line x1="725" y1="128" x2="440" y2="210" stroke="#58a6ff" stroke-width="1.5" stroke-dasharray="6,3" opacity="0.6"/>
+
+          <!-- Core Package (central) -->
+          <rect x="260" y="200" width="360" height="100" rx="10" fill="url(#grad-blue)" opacity="0.15" stroke="#58a6ff" stroke-width="2"/>
+          <rect x="260" y="200" width="360" height="100" rx="10" fill="none" stroke="#58a6ff" stroke-width="2" filter="url(#glow)"/>
+          <text x="440" y="238" text-anchor="middle" fill="#58a6ff" font-size="16" font-weight="800">@ccm/core</text>
+          <text x="440" y="258" text-anchor="middle" fill="#c9d4e0" font-size="11">PluginManager | McpManager | ProfileManager</text>
+          <text x="440" y="275" text-anchor="middle" fill="#c9d4e0" font-size="11">ConfigManager | SkillScanner</text>
+
+          <!-- Types Package (side) -->
+          <rect x="680" y="218" width="160" height="64" rx="8" fill="#1a2744" stroke="#39d0d8" stroke-width="1.5"/>
+          <text x="760" y="246" text-anchor="middle" fill="#39d0d8" font-size="12" font-weight="700">@ccm/types</text>
+          <text x="760" y="264" text-anchor="middle" fill="#8b949e" font-size="10">Shared Interfaces</text>
+          <line x1="620" y1="250" x2="680" y2="250" stroke="#39d0d8" stroke-width="1" stroke-dasharray="4,3"/>
+
+          <!-- Arrow from core to filesystem -->
+          <line x1="440" y1="300" x2="440" y2="350" stroke="#3fb950" stroke-width="2"/>
+          <polygon points="440,360 434,350 446,350" fill="#3fb950"/>
+
+          <!-- Filesystem -->
+          <rect x="180" y="365" width="520" height="130" rx="10" fill="url(#grad-green)" opacity="0.08" stroke="#3fb950" stroke-width="1.5"/>
+          <text x="440" y="392" text-anchor="middle" fill="#3fb950" font-size="14" font-weight="700">~/.claude/ Filesystem</text>
+
+          <!-- Filesystem items -->
+          <rect x="200" y="405" width="130" height="36" rx="6" fill="#132218" stroke="#2d5a3a" stroke-width="1"/>
+          <text x="265" y="428" text-anchor="middle" fill="#8bcea0" font-size="10">settings.json</text>
+
+          <rect x="345" y="405" width="160" height="36" rx="6" fill="#132218" stroke="#2d5a3a" stroke-width="1"/>
+          <text x="425" y="428" text-anchor="middle" fill="#8bcea0" font-size="10">plugins/installed.json</text>
+
+          <rect x="520" y="405" width="160" height="36" rx="6" fill="#132218" stroke="#2d5a3a" stroke-width="1"/>
+          <text x="600" y="428" text-anchor="middle" fill="#8bcea0" font-size="10">plugins/profiles/</text>
+
+          <rect x="200" y="450" width="130" height="36" rx="6" fill="#132218" stroke="#2d5a3a" stroke-width="1"/>
+          <text x="265" y="473" text-anchor="middle" fill="#8bcea0" font-size="10">commands/</text>
+
+          <rect x="345" y="450" width="160" height="36" rx="6" fill="#132218" stroke="#2d5a3a" stroke-width="1"/>
+          <text x="425" y="473" text-anchor="middle" fill="#8bcea0" font-size="10">hooks/</text>
+
+          <rect x="520" y="450" width="160" height="36" rx="6" fill="#132218" stroke="#2d5a3a" stroke-width="1"/>
+          <text x="600" y="473" text-anchor="middle" fill="#8bcea0" font-size="10">plugins/cache/</text>
+        </svg>
+        <p class="diagram-caption">Figure 1 &mdash; High-level architecture showing four entry points converging on @ccm/core</p>
+      </div>
+    </section>
+
+    <!-- ================================================================== -->
+    <!-- SECTION: Package Structure                                         -->
+    <!-- ================================================================== -->
+    <section id="package-structure">
+      <h2>Package Structure</h2>
+      <p>
+        The monorepo root contains a <code>turbo.json</code> pipeline configuration,
+        a shared <code>tsconfig.base.json</code>, and the <code>plugin.json</code> manifest
+        that registers the package as a Claude Code plugin.
+      </p>
+
+      <pre><code>claude-config-manager/
+├── packages/
+│   ├── core/           # @ccm/core - business logic
+│   ├── dashboard/      # @ccm/dashboard - Next.js web UI
+│   ├── mcp/            # @ccm/mcp - MCP server (stdio)
+│   ├── cli/            # @ccm/cli - CLI entry point
+│   └── types/          # @ccm/types - shared TypeScript types
+├── plugin.json          # Claude Code plugin manifest
+├── turbo.json           # Turborepo pipeline config
+├── package.json         # Root workspace config
+└── tsconfig.base.json   # Shared TS compiler options</code></pre>
+
+      <!-- @ccm/types -->
+      <h3 id="pkg-types">@ccm/types &mdash; Shared Type Definitions</h3>
+      <p>
+        This package is the foundation of the type system. It contains zero runtime code and
+        exports only TypeScript interfaces and type aliases. Every other package depends on it.
+      </p>
+
+      <pre><code>packages/types/
+├── src/
+│   ├── plugin.ts          # InstalledPlugin, PluginManifest, MarketplaceEntry
+│   ├── mcp-server.ts      # McpServerConfig, McpServerStatus, TransportType
+│   ├── profile.ts         # Profile, ProfileManifest, ActiveProfileRef
+│   ├── config.ts          # ClaudeSettings, HookConfig, PermissionSet
+│   └── index.ts           # Re-exports all types
+└── package.json</code></pre>
+
+      <h4>Key Interfaces</h4>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Interface</th><th>File</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>InstalledPlugin</code></td><td>plugin.ts</td><td>Metadata for a plugin currently installed in the user's cache</td></tr>
+            <tr><td><code>PluginManifest</code></td><td>plugin.ts</td><td>The <code>plugin.json</code> schema for a Claude Code plugin</td></tr>
+            <tr><td><code>MarketplaceEntry</code></td><td>plugin.ts</td><td>Entry in <code>known_marketplaces.json</code> referencing a git repository</td></tr>
+            <tr><td><code>McpServerConfig</code></td><td>mcp-server.ts</td><td>Configuration for an MCP server including command, args, and env</td></tr>
+            <tr><td><code>Profile</code></td><td>profile.ts</td><td>Full profile snapshot: settings subset, enabled plugins, MCP servers</td></tr>
+            <tr><td><code>ActiveProfileRef</code></td><td>profile.ts</td><td>Contents of <code>active.json</code> pointing to the current profile</td></tr>
+            <tr><td><code>ClaudeSettings</code></td><td>config.ts</td><td>Typed representation of <code>~/.claude/settings.json</code></td></tr>
+            <tr><td><code>HookConfig</code></td><td>config.ts</td><td>Hook definition: event, command, working directory</td></tr>
+            <tr><td><code>PermissionSet</code></td><td>config.ts</td><td>Allowed/denied tool patterns for the permissions system</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- @ccm/core -->
+      <h3 id="pkg-core">@ccm/core &mdash; Business Logic Layer</h3>
+      <p>
+        The core package is the heart of the system. It is a pure TypeScript library with
+        <strong>zero UI dependencies</strong>. All filesystem interactions, data validation,
+        and business rules live here. External entry points are thin wrappers that delegate
+        to core manager classes.
+      </p>
+
+      <pre><code>packages/core/
+├── src/
+│   ├── managers/
+│   │   ├── plugin-manager.ts      # Install, update, remove, list plugins
+│   │   ├── mcp-manager.ts         # Add, remove, toggle MCP servers
+│   │   ├── profile-manager.ts     # Create, switch, delete, export profiles
+│   │   ├── config-manager.ts      # Read/write settings.json, env vars, hooks
+│   │   └── skill-scanner.ts       # Discover custom slash commands
+│   ├── utils/
+│   │   ├── claude-home.ts         # ~/.claude/ path resolution (cross-platform)
+│   │   ├── file-ops.ts            # Atomic file read/write with lock semantics
+│   │   └── marketplace.ts         # git clone, pull, branch operations
+│   └── index.ts                   # Public API barrel export
+├── package.json
+└── tsconfig.json</code></pre>
+
+      <h4>Manager Classes</h4>
+
+      <div class="card">
+        <h4>PluginManager</h4>
+        <p>Manages the full plugin lifecycle: discovery from marketplace repos, installation (git clone into cache), updates (git pull), removal, and enablement toggling in <code>settings.json</code>.</p>
+        <pre><code>class PluginManager {
+  listInstalled(): Promise&lt;InstalledPlugin[]&gt;
+  listAvailable(marketplace?: string): Promise&lt;MarketplaceEntry[]&gt;
+  install(pluginId: string, source: string): Promise&lt;InstalledPlugin&gt;
+  update(pluginId: string): Promise&lt;InstalledPlugin&gt;
+  remove(pluginId: string): Promise&lt;void&gt;
+  enable(pluginId: string): Promise&lt;void&gt;
+  disable(pluginId: string): Promise&lt;void&gt;
+  getPluginDetail(pluginId: string): Promise&lt;InstalledPlugin | null&gt;
+}</code></pre>
+      </div>
+
+      <div class="card">
+        <h4>McpManager</h4>
+        <p>Handles MCP server configuration entries within <code>settings.json</code>. Supports adding, removing, toggling, and listing registered MCP servers.</p>
+        <pre><code>class McpManager {
+  list(): Promise&lt;McpServerConfig[]&gt;
+  add(config: McpServerConfig): Promise&lt;void&gt;
+  remove(serverName: string): Promise&lt;void&gt;
+  toggle(serverName: string, enabled: boolean): Promise&lt;void&gt;
+  getDetail(serverName: string): Promise&lt;McpServerConfig | null&gt;
+}</code></pre>
+      </div>
+
+      <div class="card">
+        <h4>ProfileManager</h4>
+        <p>Orchestrates the profile system: creating snapshots of current configuration, switching between profiles (which rewrites settings), and managing the active profile pointer.</p>
+        <pre><code>class ProfileManager {
+  list(): Promise&lt;ProfileManifest[]&gt;
+  create(name: string, description?: string): Promise&lt;Profile&gt;
+  activate(name: string): Promise&lt;void&gt;
+  delete(name: string): Promise&lt;void&gt;
+  getActive(): Promise&lt;ActiveProfileRef | null&gt;
+  exportProfile(name: string): Promise&lt;string&gt; // JSON string
+  importProfile(data: string): Promise&lt;Profile&gt;
+}</code></pre>
+      </div>
+
+      <div class="card">
+        <h4>ConfigManager</h4>
+        <p>Direct read/write access to <code>settings.json</code> with typed accessors for model, environment variables, hooks, permissions, and enabled plugins.</p>
+        <pre><code>class ConfigManager {
+  getSettings(): Promise&lt;ClaudeSettings&gt;
+  updateSettings(patch: Partial&lt;ClaudeSettings&gt;): Promise&lt;void&gt;
+  getEnvVars(): Promise&lt;Record&lt;string, string&gt;&gt;
+  setEnvVar(key: string, value: string): Promise&lt;void&gt;
+  removeEnvVar(key: string): Promise&lt;void&gt;
+  getHooks(): Promise&lt;HookConfig[]&gt;
+  setHook(hook: HookConfig): Promise&lt;void&gt;
+  removeHook(hookId: string): Promise&lt;void&gt;
+}</code></pre>
+      </div>
+
+      <div class="card">
+        <h4>SkillScanner</h4>
+        <p>Scans the <code>~/.claude/commands/</code> directory and installed plugin command directories to discover available custom slash commands.</p>
+        <pre><code>class SkillScanner {
+  scan(): Promise&lt;SkillDefinition[]&gt;
+  getSkillContent(skillPath: string): Promise&lt;string&gt;
+}</code></pre>
+      </div>
+
+      <h4>Utility Modules</h4>
+
+      <div class="callout callout-info">
+        <strong>claude-home.ts</strong>
+        Resolves the <code>~/.claude/</code> base directory cross-platform. Respects the
+        <code>CLAUDE_CONFIG_DIR</code> environment variable override. All other modules
+        reference paths through this utility rather than hardcoding paths.
+      </div>
+
+      <div class="callout callout-warn">
+        <strong>file-ops.ts</strong>
+        Provides atomic JSON read/write operations. Writes go to a temporary file first, then
+        are renamed into place (atomic on most filesystems). Includes a simple advisory lock
+        mechanism to coordinate concurrent writes from multiple entry points.
+      </div>
+
+      <div class="callout callout-info">
+        <strong>marketplace.ts</strong>
+        Wraps git operations for marketplace management. Handles <code>git clone</code> for
+        initial install, <code>git pull</code> for updates, and provides commit-hash-based
+        version tracking.
+      </div>
+
+      <!-- @ccm/dashboard -->
+      <h3 id="pkg-dashboard">@ccm/dashboard &mdash; Next.js Web UI</h3>
+      <p>
+        The dashboard provides a visual management interface. It uses the Next.js 14 App Router
+        with a combination of React Server Components (for data loading) and Client Components
+        (for interactive elements). All data operations go through API Routes, which are thin
+        wrappers around <code>@ccm/core</code> calls.
+      </p>
+
+      <pre><code>packages/dashboard/
+├── src/
+│   ├── app/
+│   │   ├── layout.tsx               # Root layout with sidebar
+│   │   ├── page.tsx                 # Overview / dashboard home
+│   │   ├── plugins/page.tsx         # Plugin management view
+│   │   ├── mcps/page.tsx            # MCP server management view
+│   │   ├── skills/page.tsx          # Custom commands / skills view
+│   │   ├── commands/page.tsx        # Slash commands editor
+│   │   ├── settings/page.tsx        # Settings editor
+│   │   ├── profiles/page.tsx        # Profile management view
+│   │   ├── export-import/page.tsx   # Export/Import wizard
+│   │   └── api/                     # API Routes (see table below)
+│   │       ├── plugins/route.ts
+│   │       ├── mcps/route.ts
+│   │       ├── profiles/route.ts
+│   │       ├── settings/route.ts
+│   │       ├── skills/route.ts
+│   │       ├── export/route.ts
+│   │       └── import/route.ts
+│   ├── components/
+│   │   ├── layout/
+│   │   │   ├── sidebar.tsx          # Navigation sidebar
+│   │   │   └── header.tsx           # Top bar with profile indicator
+│   │   ├── detail-panel/
+│   │   │   └── detail-panel.tsx     # Slide-in detail drawer
+│   │   └── shared/
+│   │       ├── tag.tsx
+│   │       ├── card.tsx
+│   │       ├── toggle.tsx
+│   │       ├── status-badge.tsx
+│   │       └── confirmation-dialog.tsx
+│   └── lib/
+│       ├── api-client.ts            # Fetch wrappers for API routes
+│       └── utils.ts
+├── package.json
+├── next.config.js
+├── tailwind.config.js
+└── postcss.config.js</code></pre>
+
+      <!-- @ccm/mcp -->
+      <h3 id="pkg-mcp">@ccm/mcp &mdash; MCP Server</h3>
+      <p>
+        The MCP server enables Claude itself to manage its configuration through natural
+        language. It uses the <code>@modelcontextprotocol/sdk</code> package with stdio
+        transport, keeping the process lightweight. The server exposes a curated set of
+        tools organized by concern.
+      </p>
+
+      <pre><code>packages/mcp/
+├── src/
+│   ├── server.ts                    # Server bootstrap + tool registration
+│   ├── tools/
+│   │   ├── query-tools.ts           # Read-only: list plugins, MCPs, settings
+│   │   ├── mutation-tools.ts        # Write: install, remove, toggle, update
+│   │   ├── profile-tools.ts         # Profile: create, switch, list, delete
+│   │   └── dashboard-tools.ts       # Launch/open dashboard
+│   └── index.ts                     # Entry point
+├── package.json
+└── tsconfig.json</code></pre>
+
+      <!-- @ccm/cli -->
+      <h3 id="pkg-cli">@ccm/cli &mdash; Command-Line Interface</h3>
+      <p>
+        The CLI provides headless access to all configuration management features. It serves
+        as both a developer tool and the mechanism for launching the dashboard server.
+      </p>
+
+      <pre><code>packages/cli/
+├── src/
+│   ├── commands/
+│   │   ├── start.ts                 # Launch dashboard dev server
+│   │   ├── list.ts                  # List plugins, MCPs, profiles, skills
+│   │   ├── profile.ts               # Profile create/switch/delete
+│   │   ├── export.ts                # Export config to JSON
+│   │   └── import.ts                # Import config from JSON
+│   └── index.ts                     # Commander.js program setup
+├── package.json
+└── tsconfig.json</code></pre>
+    </section>
+
+    <!-- ================================================================== -->
+    <!-- SECTION: Dependency Graph                                          -->
+    <!-- ================================================================== -->
+    <section id="dependency-graph">
+      <h2>Package Dependency Graph</h2>
+      <p>
+        The dependency graph is strictly acyclic. <code>@ccm/types</code> is the leaf node
+        depended on by all packages. <code>@ccm/core</code> depends only on types. The
+        three entry points (dashboard, mcp, cli) depend on core and types but never on each other.
+      </p>
+
+      <div class="diagram-container">
+        <svg viewBox="0 0 720 380" xmlns="http://www.w3.org/2000/svg" font-family="Inter, sans-serif">
+          <rect width="720" height="380" fill="#0f1724" rx="12"/>
+          <text x="360" y="32" text-anchor="middle" fill="#8b949e" font-size="13" font-weight="600">PACKAGE DEPENDENCY GRAPH</text>
+
+          <!-- @ccm/types (bottom) -->
+          <rect x="270" y="300" width="180" height="50" rx="8" fill="#0e2233" stroke="#39d0d8" stroke-width="2"/>
+          <text x="360" y="330" text-anchor="middle" fill="#39d0d8" font-size="13" font-weight="700">@ccm/types</text>
+
+          <!-- @ccm/core (middle) -->
+          <rect x="270" y="195" width="180" height="50" rx="8" fill="#0e1a33" stroke="#58a6ff" stroke-width="2"/>
+          <text x="360" y="225" text-anchor="middle" fill="#58a6ff" font-size="13" font-weight="700">@ccm/core</text>
+
+          <!-- Arrow core -> types -->
+          <line x1="360" y1="245" x2="360" y2="300" stroke="#58a6ff" stroke-width="1.5"/>
+          <polygon points="360,298 355,288 365,288" fill="#58a6ff"/>
+
+          <!-- @ccm/cli (top-left) -->
+          <rect x="40" y="80" width="160" height="50" rx="8" fill="#1a2218" stroke="#d29922" stroke-width="1.5"/>
+          <text x="120" y="110" text-anchor="middle" fill="#d29922" font-size="13" font-weight="700">@ccm/cli</text>
+
+          <!-- @ccm/dashboard (top-center) -->
+          <rect x="270" y="80" width="180" height="50" rx="8" fill="#1a1828" stroke="#bc8cff" stroke-width="1.5"/>
+          <text x="360" y="110" text-anchor="middle" fill="#bc8cff" font-size="13" font-weight="700">@ccm/dashboard</text>
+
+          <!-- @ccm/mcp (top-right) -->
+          <rect x="520" y="80" width="160" height="50" rx="8" fill="#122218" stroke="#3fb950" stroke-width="1.5"/>
+          <text x="600" y="110" text-anchor="middle" fill="#3fb950" font-size="13" font-weight="700">@ccm/mcp</text>
+
+          <!-- Arrows to core -->
+          <line x1="120" y1="130" x2="310" y2="195" stroke="#d29922" stroke-width="1.2" stroke-dasharray="5,3"/>
+          <polygon points="312,193 302,189 306,199" fill="#d29922"/>
+
+          <line x1="360" y1="130" x2="360" y2="195" stroke="#bc8cff" stroke-width="1.2" stroke-dasharray="5,3"/>
+          <polygon points="360,193 355,183 365,183" fill="#bc8cff"/>
+
+          <line x1="600" y1="130" x2="410" y2="195" stroke="#3fb950" stroke-width="1.2" stroke-dasharray="5,3"/>
+          <polygon points="408,193 414,199 418,189" fill="#3fb950"/>
+
+          <!-- Arrows to types (from top-level packages) -->
+          <line x1="100" y1="130" x2="290" y2="300" stroke="#39d0d8" stroke-width="0.8" stroke-dasharray="3,4" opacity="0.5"/>
+          <line x1="600" y1="130" x2="430" y2="300" stroke="#39d0d8" stroke-width="0.8" stroke-dasharray="3,4" opacity="0.5"/>
+
+          <!-- Legend -->
+          <text x="40" y="360" fill="#8b949e" font-size="10">Solid arrows = primary dependency | Dashed thin = transitive type dependency</text>
+        </svg>
+        <p class="diagram-caption">Figure 2 &mdash; Package dependency graph (acyclic, single source of truth)</p>
+      </div>
+    </section>
+
+    <!-- ================================================================== -->
+    <!-- SECTION: Data Flow                                                 -->
+    <!-- ================================================================== -->
+    <section id="data-flow">
+      <h2>Data Flow</h2>
+      <p>
+        Every entry point follows the same data flow pattern: user intent enters at the
+        boundary (CLI command, HTTP request, MCP tool call, or plugin hook), is translated
+        into a <code>@ccm/core</code> manager method call, which performs atomic filesystem
+        operations on <code>~/.claude/</code> and returns typed results.
+      </p>
+
+      <div class="diagram-container">
+        <svg viewBox="0 0 800 300" xmlns="http://www.w3.org/2000/svg" font-family="Inter, sans-serif">
+          <rect width="800" height="300" fill="#0f1724" rx="12"/>
+          <text x="400" y="30" text-anchor="middle" fill="#8b949e" font-size="13" font-weight="600">DATA FLOW PATTERN</text>
+
+          <!-- User Intent -->
+          <rect x="30" y="120" width="100" height="60" rx="25" fill="#1a2744" stroke="#f778ba" stroke-width="1.5"/>
+          <text x="80" y="148" text-anchor="middle" fill="#f778ba" font-size="11" font-weight="600">User</text>
+          <text x="80" y="163" text-anchor="middle" fill="#8b949e" font-size="9">Intent</text>
+
+          <!-- Entry Points -->
+          <rect x="175" y="90" width="120" height="120" rx="8" fill="#1a2233" stroke="#d29922" stroke-width="1"/>
+          <text x="235" y="115" text-anchor="middle" fill="#d29922" font-size="10" font-weight="600">Entry Points</text>
+          <text x="235" y="135" text-anchor="middle" fill="#8b949e" font-size="9">CLI Command</text>
+          <text x="235" y="150" text-anchor="middle" fill="#8b949e" font-size="9">API Route</text>
+          <text x="235" y="165" text-anchor="middle" fill="#8b949e" font-size="9">MCP Tool Call</text>
+          <text x="235" y="180" text-anchor="middle" fill="#8b949e" font-size="9">Plugin Hook</text>
+
+          <!-- Arrow -->
+          <line x1="130" y1="150" x2="175" y2="150" stroke="#58a6ff" stroke-width="1.5"/>
+          <polygon points="173,150 165,146 165,154" fill="#58a6ff"/>
+
+          <!-- Core Managers -->
+          <rect x="340" y="95" width="150" height="110" rx="8" fill="#0e1a33" stroke="#58a6ff" stroke-width="2"/>
+          <text x="415" y="120" text-anchor="middle" fill="#58a6ff" font-size="11" font-weight="700">@ccm/core</text>
+          <text x="415" y="140" text-anchor="middle" fill="#c9d4e0" font-size="9">PluginManager</text>
+          <text x="415" y="155" text-anchor="middle" fill="#c9d4e0" font-size="9">McpManager</text>
+          <text x="415" y="170" text-anchor="middle" fill="#c9d4e0" font-size="9">ProfileManager</text>
+          <text x="415" y="185" text-anchor="middle" fill="#c9d4e0" font-size="9">ConfigManager</text>
+
+          <line x1="295" y1="150" x2="340" y2="150" stroke="#58a6ff" stroke-width="1.5"/>
+          <polygon points="338,150 330,146 330,154" fill="#58a6ff"/>
+
+          <!-- file-ops -->
+          <rect x="535" y="110" width="100" height="80" rx="8" fill="#1a2744" stroke="#d29922" stroke-width="1"/>
+          <text x="585" y="138" text-anchor="middle" fill="#d29922" font-size="10" font-weight="600">file-ops.ts</text>
+          <text x="585" y="155" text-anchor="middle" fill="#8b949e" font-size="9">Atomic R/W</text>
+          <text x="585" y="170" text-anchor="middle" fill="#8b949e" font-size="9">Advisory Lock</text>
+
+          <line x1="490" y1="150" x2="535" y2="150" stroke="#d29922" stroke-width="1.5"/>
+          <polygon points="533,150 525,146 525,154" fill="#d29922"/>
+
+          <!-- Filesystem -->
+          <rect x="680" y="110" width="90" height="80" rx="8" fill="#122218" stroke="#3fb950" stroke-width="1.5"/>
+          <text x="725" y="143" text-anchor="middle" fill="#3fb950" font-size="10" font-weight="700">~/.claude/</text>
+          <text x="725" y="160" text-anchor="middle" fill="#8b949e" font-size="9">JSON files</text>
+          <text x="725" y="175" text-anchor="middle" fill="#8b949e" font-size="9">Plugin cache</text>
+
+          <line x1="635" y1="150" x2="680" y2="150" stroke="#3fb950" stroke-width="1.5"/>
+          <polygon points="678,150 670,146 670,154" fill="#3fb950"/>
+
+          <!-- Response path (bottom) -->
+          <path d="M 725 190 L 725 260 L 80 260 L 80 180" stroke="#8b949e" stroke-width="1" stroke-dasharray="4,3" fill="none"/>
+          <polygon points="80,182 76,190 84,190" fill="#8b949e"/>
+          <text x="400" y="253" text-anchor="middle" fill="#6e7681" font-size="9">Response: typed results flow back through the same chain</text>
+        </svg>
+        <p class="diagram-caption">Figure 3 &mdash; Unidirectional data flow from user intent to filesystem and back</p>
+      </div>
+    </section>
+
+    <!-- ================================================================== -->
+    <!-- SECTION: Filesystem Layout                                         -->
+    <!-- ================================================================== -->
+    <section id="filesystem-layout">
+      <h2>Filesystem Layout (~/.claude/)</h2>
+      <p>
+        All persistent state lives under the user's <code>~/.claude/</code> directory.
+        The config manager reads and writes the following files and directories:
+      </p>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr><th>Path</th><th>Type</th><th>Owner</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>settings.json</code></td><td>JSON</td><td>ConfigManager</td><td>Primary settings: model, env, hooks, permissions, enabledPlugins, mcpServers</td></tr>
+            <tr><td><code>.credentials.json</code></td><td>JSON</td><td>Claude Code</td><td>Authentication credentials (NEVER exported by default)</td></tr>
+            <tr><td><code>plugins/installed_plugins.json</code></td><td>JSON</td><td>PluginManager</td><td>Registry of installed plugins with metadata, versions, source repos</td></tr>
+            <tr><td><code>plugins/known_marketplaces.json</code></td><td>JSON</td><td>PluginManager</td><td>List of marketplace git repository URLs</td></tr>
+            <tr><td><code>plugins/cache/</code></td><td>Directory</td><td>PluginManager</td><td>Cloned plugin repositories, one subdirectory per plugin</td></tr>
+            <tr><td><code>plugins/profiles/</code></td><td>Directory</td><td>ProfileManager</td><td>Profile JSON snapshots</td></tr>
+            <tr><td><code>plugins/profiles/active.json</code></td><td>JSON</td><td>ProfileManager</td><td>Pointer to the currently active profile (id + name)</td></tr>
+            <tr><td><code>commands/</code></td><td>Directory</td><td>SkillScanner</td><td>User-defined custom slash command markdown files</td></tr>
+            <tr><td><code>hooks/</code></td><td>Directory</td><td>ConfigManager</td><td>Hook scripts referenced by settings.json hook entries</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout callout-warn">
+        <strong>Design Decision: Profile Storage Location</strong>
+        Profiles are stored under <code>~/.claude/plugins/profiles/</code> rather than directly
+        under <code>~/.claude/</code> to avoid polluting the main configuration directory.
+        This keeps the profile system self-contained and easy to back up or remove.
+      </div>
+    </section>
+
+    <!-- ================================================================== -->
+    <!-- SECTION: API Route Table                                           -->
+    <!-- ================================================================== -->
+    <section id="api-routes">
+      <h2>Dashboard API Routes</h2>
+      <p>
+        All API routes live under <code>/api/</code> in the Next.js app. They are thin
+        wrappers: parse the request, call the appropriate <code>@ccm/core</code> manager
+        method, and return the result as JSON. No business logic resides in the route handlers.
+      </p>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr><th>Method</th><th>Route</th><th>Core Method</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><span class="tag">GET</span></td><td><code>/api/plugins</code></td><td>pluginManager.listInstalled()</td><td>List all installed plugins</td></tr>
+            <tr><td><span class="tag">POST</span></td><td><code>/api/plugins</code></td><td>pluginManager.install()</td><td>Install a plugin from marketplace or URL</td></tr>
+            <tr><td><span class="tag">DELETE</span></td><td><code>/api/plugins/[id]</code></td><td>pluginManager.remove()</td><td>Uninstall a plugin</td></tr>
+            <tr><td><span class="tag">PATCH</span></td><td><code>/api/plugins/[id]</code></td><td>pluginManager.enable/disable()</td><td>Toggle plugin enabled state</td></tr>
+            <tr><td><span class="tag">POST</span></td><td><code>/api/plugins/[id]/update</code></td><td>pluginManager.update()</td><td>Pull latest version of a plugin</td></tr>
+            <tr><td><span class="tag">GET</span></td><td><code>/api/plugins/available</code></td><td>pluginManager.listAvailable()</td><td>List plugins available in marketplaces</td></tr>
+            <tr><td><span class="tag">GET</span></td><td><code>/api/mcp-servers</code></td><td>mcpManager.list()</td><td>List configured MCP servers</td></tr>
+            <tr><td><span class="tag">POST</span></td><td><code>/api/mcp-servers</code></td><td>mcpManager.add()</td><td>Register a new MCP server</td></tr>
+            <tr><td><span class="tag">DELETE</span></td><td><code>/api/mcp-servers/[name]</code></td><td>mcpManager.remove()</td><td>Remove an MCP server registration</td></tr>
+            <tr><td><span class="tag">PATCH</span></td><td><code>/api/mcp-servers/[name]</code></td><td>mcpManager.toggle()</td><td>Enable or disable an MCP server</td></tr>
+            <tr><td><span class="tag">GET</span></td><td><code>/api/settings</code></td><td>configManager.getSettings()</td><td>Read full settings object</td></tr>
+            <tr><td><span class="tag">PATCH</span></td><td><code>/api/settings</code></td><td>configManager.updateSettings()</td><td>Partial update to settings</td></tr>
+            <tr><td><span class="tag">GET</span></td><td><code>/api/settings/env</code></td><td>configManager.getEnvVars()</td><td>List environment variables</td></tr>
+            <tr><td><span class="tag">PUT</span></td><td><code>/api/settings/env</code></td><td>configManager.setEnvVar()</td><td>Set or update an env var</td></tr>
+            <tr><td><span class="tag">DELETE</span></td><td><code>/api/settings/env/[key]</code></td><td>configManager.removeEnvVar()</td><td>Remove an environment variable</td></tr>
+            <tr><td><span class="tag">GET</span></td><td><code>/api/settings/hooks</code></td><td>configManager.getHooks()</td><td>List configured hooks</td></tr>
+            <tr><td><span class="tag">PUT</span></td><td><code>/api/settings/hooks</code></td><td>configManager.setHook()</td><td>Create or update a hook</td></tr>
+            <tr><td><span class="tag">DELETE</span></td><td><code>/api/settings/hooks/[id]</code></td><td>configManager.removeHook()</td><td>Remove a hook</td></tr>
+            <tr><td><span class="tag">GET</span></td><td><code>/api/skills</code></td><td>skillScanner.scan()</td><td>List discovered slash commands</td></tr>
+            <tr><td><span class="tag">GET</span></td><td><code>/api/skills/[path]</code></td><td>skillScanner.getSkillContent()</td><td>Read skill markdown content</td></tr>
+            <tr><td><span class="tag">GET</span></td><td><code>/api/profiles</code></td><td>profileManager.list()</td><td>List all profiles</td></tr>
+            <tr><td><span class="tag">POST</span></td><td><code>/api/profiles</code></td><td>profileManager.create()</td><td>Create profile from current config</td></tr>
+            <tr><td><span class="tag">POST</span></td><td><code>/api/profiles/[id]/activate</code></td><td>profileManager.activate()</td><td>Switch to a profile</td></tr>
+            <tr><td><span class="tag">DELETE</span></td><td><code>/api/profiles/[id]</code></td><td>profileManager.delete()</td><td>Delete a profile</td></tr>
+            <tr><td><span class="tag">GET</span></td><td><code>/api/profiles/active</code></td><td>profileManager.getActive()</td><td>Get current active profile</td></tr>
+            <tr><td><span class="tag">POST</span></td><td><code>/api/export</code></td><td>profileManager.exportProfile()</td><td>Export config as JSON download</td></tr>
+            <tr><td><span class="tag">POST</span></td><td><code>/api/import</code></td><td>profileManager.importProfile()</td><td>Import config from uploaded JSON</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ================================================================== -->
+    <!-- SECTION: MCP Tool Reference                                        -->
+    <!-- ================================================================== -->
+    <section id="mcp-tools">
+      <h2>MCP Tool Reference</h2>
+      <p>
+        The MCP server exposes 21 tools organized into four categories. Each tool maps directly
+        to a <code>@ccm/core</code> manager call. The server uses stdio transport and registers
+        tools at startup via <code>server.setRequestHandler(ListToolsRequestSchema, ...)</code>.
+      </p>
+
+      <h3>Query Tools (query-tools.ts)</h3>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Tool Name</th><th>Parameters</th><th>Returns</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>ccm_list_plugins</code></td><td>filter?: string</td><td>InstalledPlugin[]</td><td>List installed plugins, optionally filtered</td></tr>
+            <tr><td><code>ccm_list_mcp_servers</code></td><td>&mdash;</td><td>McpServerConfig[]</td><td>List all configured MCP servers</td></tr>
+            <tr><td><code>ccm_list_skills</code></td><td>&mdash;</td><td>SkillDefinition[]</td><td>Discover available slash commands</td></tr>
+            <tr><td><code>ccm_list_commands</code></td><td>&mdash;</td><td>CommandDefinition[]</td><td>List available CLI commands</td></tr>
+            <tr><td><code>ccm_get_config</code></td><td>&mdash;</td><td>ClaudeSettings</td><td>Read current settings</td></tr>
+            <tr><td><code>ccm_get_component_detail</code></td><td>type: string, id: string</td><td>ComponentDetail</td><td>Get details of a specific plugin, MCP server, or other component</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Mutation Tools (mutation-tools.ts)</h3>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Tool Name</th><th>Parameters</th><th>Returns</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>ccm_install_plugin</code></td><td>pluginId: string, source: string</td><td>InstalledPlugin</td><td>Install a plugin</td></tr>
+            <tr><td><code>ccm_update_plugin</code></td><td>pluginId: string</td><td>InstalledPlugin</td><td>Update plugin to latest version</td></tr>
+            <tr><td><code>ccm_remove_plugin</code></td><td>pluginId: string</td><td>void</td><td>Remove a plugin</td></tr>
+            <tr><td><code>ccm_toggle_plugin</code></td><td>pluginId: string, enabled: boolean</td><td>void</td><td>Enable or disable a plugin</td></tr>
+            <tr><td><code>ccm_add_mcp_server</code></td><td>config: McpServerConfig</td><td>void</td><td>Register a new MCP server</td></tr>
+            <tr><td><code>ccm_remove_mcp_server</code></td><td>serverName: string</td><td>void</td><td>Remove an MCP server</td></tr>
+            <tr><td><code>ccm_update_config</code></td><td>patch: Partial&lt;ClaudeSettings&gt;</td><td>ClaudeSettings</td><td>Patch settings</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Profile Tools (profile-tools.ts)</h3>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Tool Name</th><th>Parameters</th><th>Returns</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>ccm_list_profiles</code></td><td>&mdash;</td><td>ProfileManifest[]</td><td>List all saved profiles</td></tr>
+            <tr><td><code>ccm_create_profile</code></td><td>name: string, description?: string</td><td>Profile</td><td>Snapshot current config as profile</td></tr>
+            <tr><td><code>ccm_activate_profile</code></td><td>name: string</td><td>void</td><td>Switch to a profile</td></tr>
+            <tr><td><code>ccm_export_profile</code></td><td>name: string, includeSecrets?: boolean</td><td>string (JSON)</td><td>Export a profile as JSON</td></tr>
+            <tr><td><code>ccm_import_profile</code></td><td>data: string</td><td>ImportResult</td><td>Import a profile from JSON string</td></tr>
+            <tr><td><code>ccm_delete_profile</code></td><td>name: string</td><td>void</td><td>Delete a saved profile</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Dashboard Tools (dashboard-tools.ts)</h3>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Tool Name</th><th>Parameters</th><th>Returns</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>ccm_open_dashboard</code></td><td>port?: number</td><td>{ url: string }</td><td>Start or connect to the dashboard server</td></tr>
+            <tr><td><code>ccm_dashboard_status</code></td><td>&mdash;</td><td>{ running: boolean, port?: number, url?: string }</td><td>Check if the dashboard server is running</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ================================================================== -->
+    <!-- SECTION: CLI Commands                                              -->
+    <!-- ================================================================== -->
+    <section id="cli-commands">
+      <h2>CLI Commands</h2>
+
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Command</th><th>Alias</th><th>Description</th><th>Core Delegation</th></tr></thead>
+          <tbody>
+            <tr><td><code>claude-config start</code></td><td>&mdash;</td><td>Launch the dashboard web server on the specified port (default 3399)</td><td>Spawns Next.js dev/prod server</td></tr>
+            <tr><td><code>claude-config list plugins</code></td><td><code>claude-config ls plugins</code></td><td>Print table of installed plugins with status</td><td>pluginManager.listInstalled()</td></tr>
+            <tr><td><code>claude-config list mcps</code></td><td><code>claude-config ls mcps</code></td><td>Print table of configured MCP servers</td><td>mcpManager.list()</td></tr>
+            <tr><td><code>claude-config list profiles</code></td><td><code>claude-config ls profiles</code></td><td>Print table of saved profiles with active indicator</td><td>profileManager.list()</td></tr>
+            <tr><td><code>claude-config list skills</code></td><td><code>claude-config ls skills</code></td><td>Print discovered slash commands</td><td>skillScanner.scan()</td></tr>
+            <tr><td><code>claude-config profile create &lt;name&gt;</code></td><td>&mdash;</td><td>Create a profile from current config</td><td>profileManager.create()</td></tr>
+            <tr><td><code>claude-config profile switch &lt;name&gt;</code></td><td><code>claude-config profile use</code></td><td>Activate a profile</td><td>profileManager.activate()</td></tr>
+            <tr><td><code>claude-config profile delete &lt;name&gt;</code></td><td><code>claude-config profile rm</code></td><td>Delete a profile</td><td>profileManager.delete()</td></tr>
+            <tr><td><code>claude-config export [--include-secrets]</code></td><td>&mdash;</td><td>Export config to stdout or file</td><td>profileManager.exportProfile()</td></tr>
+            <tr><td><code>claude-config import &lt;file&gt;</code></td><td>&mdash;</td><td>Import config from JSON file</td><td>profileManager.importProfile()</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ================================================================== -->
+    <!-- SECTION: Sequence Diagrams                                         -->
+    <!-- ================================================================== -->
+    <section id="sequence-diagrams">
+      <h2>Sequence Diagrams</h2>
+      <p>
+        The following diagrams detail the interaction sequences for the most important
+        operations in the system.
+      </p>
+
+      <!-- Export Flow -->
+      <h3 id="seq-export">Export Configuration Flow</h3>
+      <p>
+        Export creates a portable JSON snapshot of the user's configuration. By default,
+        credentials are excluded for security.
+      </p>
+
+      <div class="diagram-container">
+        <svg viewBox="0 0 800 420" xmlns="http://www.w3.org/2000/svg" font-family="Inter, sans-serif">
+          <rect width="800" height="420" fill="#0f1724" rx="12"/>
+          <text x="400" y="28" text-anchor="middle" fill="#8b949e" font-size="13" font-weight="600">EXPORT CONFIGURATION SEQUENCE</text>
+
+          <!-- Lifelines -->
+          <text x="80" y="60" text-anchor="middle" fill="#d29922" font-size="11" font-weight="600">User/CLI</text>
+          <line x1="80" y1="70" x2="80" y2="400" stroke="#333" stroke-width="1" stroke-dasharray="4,4"/>
+          <rect x="68" y="65" width="24" height="335" fill="#d29922" opacity="0.08" rx="4"/>
+
+          <text x="280" y="60" text-anchor="middle" fill="#bc8cff" font-size="11" font-weight="600">ProfileManager</text>
+          <line x1="280" y1="70" x2="280" y2="400" stroke="#333" stroke-width="1" stroke-dasharray="4,4"/>
+          <rect x="268" y="65" width="24" height="335" fill="#bc8cff" opacity="0.08" rx="4"/>
+
+          <text x="480" y="60" text-anchor="middle" fill="#58a6ff" font-size="11" font-weight="600">ConfigManager</text>
+          <line x1="480" y1="70" x2="480" y2="400" stroke="#333" stroke-width="1" stroke-dasharray="4,4"/>
+          <rect x="468" y="65" width="24" height="335" fill="#58a6ff" opacity="0.08" rx="4"/>
+
+          <text x="680" y="60" text-anchor="middle" fill="#3fb950" font-size="11" font-weight="600">file-ops</text>
+          <line x1="680" y1="70" x2="680" y2="400" stroke="#333" stroke-width="1" stroke-dasharray="4,4"/>
+          <rect x="668" y="65" width="24" height="335" fill="#3fb950" opacity="0.08" rx="4"/>
+
+          <!-- Step 1 -->
+          <line x1="80" y1="100" x2="280" y2="100" stroke="#d29922" stroke-width="1.5"/>
+          <polygon points="278,100 270,96 270,104" fill="#d29922"/>
+          <text x="180" y="93" text-anchor="middle" fill="#c9d4e0" font-size="10">exportProfile(id)</text>
+
+          <!-- Step 2 -->
+          <line x1="280" y1="140" x2="480" y2="140" stroke="#bc8cff" stroke-width="1.5"/>
+          <polygon points="478,140 470,136 470,144" fill="#bc8cff"/>
+          <text x="380" y="133" text-anchor="middle" fill="#c9d4e0" font-size="10">getSettings()</text>
+
+          <!-- Step 3 -->
+          <line x1="480" y1="175" x2="680" y2="175" stroke="#58a6ff" stroke-width="1.5"/>
+          <polygon points="678,175 670,171 670,179" fill="#58a6ff"/>
+          <text x="580" y="168" text-anchor="middle" fill="#c9d4e0" font-size="10">readJSON('settings.json')</text>
+
+          <!-- Step 3 return -->
+          <line x1="680" y1="205" x2="480" y2="205" stroke="#3fb950" stroke-width="1" stroke-dasharray="4,3"/>
+          <polygon points="482,205 490,201 490,209" fill="#3fb950"/>
+          <text x="580" y="198" text-anchor="middle" fill="#8b949e" font-size="9">ClaudeSettings</text>
+
+          <!-- Step 4 -->
+          <line x1="280" y1="240" x2="480" y2="240" stroke="#bc8cff" stroke-width="1.5"/>
+          <polygon points="478,240 470,236 470,244" fill="#bc8cff"/>
+          <text x="380" y="233" text-anchor="middle" fill="#c9d4e0" font-size="10">getPluginList()</text>
+
+          <!-- Step 4 return -->
+          <line x1="480" y1="270" x2="280" y2="270" stroke="#58a6ff" stroke-width="1" stroke-dasharray="4,3"/>
+          <polygon points="282,270 290,266 290,274" fill="#58a6ff"/>
+          <text x="380" y="263" text-anchor="middle" fill="#8b949e" font-size="9">InstalledPlugin[]</text>
+
+          <!-- Step 5: Filter credentials -->
+          <rect x="220" y="290" width="120" height="28" rx="4" fill="#f85149" opacity="0.12" stroke="#f85149" stroke-width="1"/>
+          <text x="280" y="308" text-anchor="middle" fill="#f85149" font-size="9">Strip credentials</text>
+
+          <!-- Step 6: Return -->
+          <line x1="280" y1="340" x2="80" y2="340" stroke="#bc8cff" stroke-width="1" stroke-dasharray="4,3"/>
+          <polygon points="82,340 90,336 90,344" fill="#bc8cff"/>
+          <text x="180" y="333" text-anchor="middle" fill="#8b949e" font-size="10">JSON string</text>
+
+          <!-- Step 7: Output -->
+          <rect x="30" y="360" width="100" height="24" rx="4" fill="#d29922" opacity="0.12" stroke="#d29922" stroke-width="1"/>
+          <text x="80" y="376" text-anchor="middle" fill="#d29922" font-size="9">Write to file/stdout</text>
+        </svg>
+        <p class="diagram-caption">Figure 4 &mdash; Export configuration sequence (credentials stripped by default)</p>
+      </div>
+
+      <!-- Import Flow -->
+      <h3 id="seq-import">Import Configuration Flow</h3>
+      <p>
+        Import reads a JSON configuration file, validates its schema, and applies changes
+        to the filesystem. A backup of the current configuration is created before applying.
+      </p>
+
+      <div class="diagram-container">
+        <svg viewBox="0 0 800 460" xmlns="http://www.w3.org/2000/svg" font-family="Inter, sans-serif">
+          <rect width="800" height="460" fill="#0f1724" rx="12"/>
+          <text x="400" y="28" text-anchor="middle" fill="#8b949e" font-size="13" font-weight="600">IMPORT CONFIGURATION SEQUENCE</text>
+
+          <!-- Lifelines -->
+          <text x="80" y="60" text-anchor="middle" fill="#d29922" font-size="11" font-weight="600">User/CLI</text>
+          <line x1="80" y1="70" x2="80" y2="440" stroke="#333" stroke-width="1" stroke-dasharray="4,4"/>
+          <rect x="68" y="65" width="24" height="375" fill="#d29922" opacity="0.08" rx="4"/>
+
+          <text x="260" y="60" text-anchor="middle" fill="#bc8cff" font-size="11" font-weight="600">ProfileManager</text>
+          <line x1="260" y1="70" x2="260" y2="440" stroke="#333" stroke-width="1" stroke-dasharray="4,4"/>
+          <rect x="248" y="65" width="24" height="375" fill="#bc8cff" opacity="0.08" rx="4"/>
+
+          <text x="440" y="60" text-anchor="middle" fill="#58a6ff" font-size="11" font-weight="600">Validator</text>
+          <line x1="440" y1="70" x2="440" y2="440" stroke="#333" stroke-width="1" stroke-dasharray="4,4"/>
+          <rect x="428" y="65" width="24" height="375" fill="#58a6ff" opacity="0.08" rx="4"/>
+
+          <text x="620" y="60" text-anchor="middle" fill="#3fb950" font-size="11" font-weight="600">ConfigManager</text>
+          <line x1="620" y1="70" x2="620" y2="440" stroke="#333" stroke-width="1" stroke-dasharray="4,4"/>
+          <rect x="608" y="65" width="24" height="375" fill="#3fb950" opacity="0.08" rx="4"/>
+
+          <!-- Step 1: Import -->
+          <line x1="80" y1="100" x2="260" y2="100" stroke="#d29922" stroke-width="1.5"/>
+          <polygon points="258,100 250,96 250,104" fill="#d29922"/>
+          <text x="170" y="93" text-anchor="middle" fill="#c9d4e0" font-size="10">importProfile(jsonData)</text>
+
+          <!-- Step 2: Parse -->
+          <rect x="205" y="115" width="110" height="24" rx="4" fill="#bc8cff" opacity="0.1" stroke="#bc8cff"/>
+          <text x="260" y="132" text-anchor="middle" fill="#bc8cff" font-size="9">JSON.parse(data)</text>
+
+          <!-- Step 3: Validate -->
+          <line x1="260" y1="155" x2="440" y2="155" stroke="#bc8cff" stroke-width="1.5"/>
+          <polygon points="438,155 430,151 430,159" fill="#bc8cff"/>
+          <text x="350" y="148" text-anchor="middle" fill="#c9d4e0" font-size="10">validateSchema(parsed)</text>
+
+          <!-- Step 3 return -->
+          <line x1="440" y1="185" x2="260" y2="185" stroke="#58a6ff" stroke-width="1" stroke-dasharray="4,3"/>
+          <polygon points="262,185 270,181 270,189" fill="#58a6ff"/>
+          <text x="350" y="178" text-anchor="middle" fill="#8b949e" font-size="9">ValidationResult (ok/errors)</text>
+
+          <!-- Step 4: Conditional - validation fails -->
+          <rect x="140" y="200" width="240" height="26" rx="4" fill="#f85149" opacity="0.08" stroke="#f85149" stroke-width="1" stroke-dasharray="3,3"/>
+          <text x="260" y="217" text-anchor="middle" fill="#f85149" font-size="9">[if invalid] Return error with validation details</text>
+
+          <!-- Step 5: Backup current -->
+          <line x1="260" y1="245" x2="620" y2="245" stroke="#bc8cff" stroke-width="1.5"/>
+          <polygon points="618,245 610,241 610,249" fill="#bc8cff"/>
+          <text x="440" y="238" text-anchor="middle" fill="#c9d4e0" font-size="10">backupCurrentConfig()</text>
+
+          <!-- Step 5 return -->
+          <line x1="620" y1="275" x2="260" y2="275" stroke="#3fb950" stroke-width="1" stroke-dasharray="4,3"/>
+          <polygon points="262,275 270,271 270,279" fill="#3fb950"/>
+          <text x="440" y="268" text-anchor="middle" fill="#8b949e" font-size="9">backup path</text>
+
+          <!-- Step 6: Apply settings -->
+          <line x1="260" y1="305" x2="620" y2="305" stroke="#bc8cff" stroke-width="1.5"/>
+          <polygon points="618,305 610,301 610,309" fill="#bc8cff"/>
+          <text x="440" y="298" text-anchor="middle" fill="#c9d4e0" font-size="10">updateSettings(imported.settings)</text>
+
+          <!-- Step 7: Apply plugins -->
+          <line x1="260" y1="340" x2="620" y2="340" stroke="#bc8cff" stroke-width="1.5"/>
+          <polygon points="618,340 610,336 610,344" fill="#bc8cff"/>
+          <text x="440" y="333" text-anchor="middle" fill="#c9d4e0" font-size="10">applyPluginConfig(imported.plugins)</text>
+
+          <!-- Step 8: Return success -->
+          <line x1="260" y1="380" x2="80" y2="380" stroke="#bc8cff" stroke-width="1" stroke-dasharray="4,3"/>
+          <polygon points="82,380 90,376 90,384" fill="#bc8cff"/>
+          <text x="170" y="373" text-anchor="middle" fill="#8b949e" font-size="10">ImportResult { success, backup }</text>
+
+          <!-- Step 9 -->
+          <rect x="30" y="400" width="100" height="24" rx="4" fill="#3fb950" opacity="0.12" stroke="#3fb950" stroke-width="1"/>
+          <text x="80" y="416" text-anchor="middle" fill="#3fb950" font-size="9">Display result</text>
+        </svg>
+        <p class="diagram-caption">Figure 5 &mdash; Import configuration sequence with validation and backup</p>
+      </div>
+
+      <!-- Plugin Install Flow -->
+      <h3 id="seq-install">Plugin Install Flow</h3>
+      <p>
+        Plugin installation resolves the source (marketplace or direct URL), clones the
+        repository into the cache directory, validates the plugin manifest, and registers
+        the plugin in the installed plugins registry.
+      </p>
+
+      <div class="diagram-container">
+        <svg viewBox="0 0 860 480" xmlns="http://www.w3.org/2000/svg" font-family="Inter, sans-serif">
+          <rect width="860" height="480" fill="#0f1724" rx="12"/>
+          <text x="430" y="28" text-anchor="middle" fill="#8b949e" font-size="13" font-weight="600">PLUGIN INSTALL SEQUENCE</text>
+
+          <!-- Lifelines -->
+          <text x="70" y="60" text-anchor="middle" fill="#d29922" font-size="11" font-weight="600">Entry Point</text>
+          <line x1="70" y1="70" x2="70" y2="460" stroke="#333" stroke-width="1" stroke-dasharray="4,4"/>
+          <rect x="58" y="65" width="24" height="395" fill="#d29922" opacity="0.08" rx="4"/>
+
+          <text x="230" y="60" text-anchor="middle" fill="#bc8cff" font-size="11" font-weight="600">PluginManager</text>
+          <line x1="230" y1="70" x2="230" y2="460" stroke="#333" stroke-width="1" stroke-dasharray="4,4"/>
+          <rect x="218" y="65" width="24" height="395" fill="#bc8cff" opacity="0.08" rx="4"/>
+
+          <text x="420" y="60" text-anchor="middle" fill="#39d0d8" font-size="11" font-weight="600">marketplace.ts</text>
+          <line x1="420" y1="70" x2="420" y2="460" stroke="#333" stroke-width="1" stroke-dasharray="4,4"/>
+          <rect x="408" y="65" width="24" height="395" fill="#39d0d8" opacity="0.08" rx="4"/>
+
+          <text x="600" y="60" text-anchor="middle" fill="#58a6ff" font-size="11" font-weight="600">Validator</text>
+          <line x1="600" y1="70" x2="600" y2="460" stroke="#333" stroke-width="1" stroke-dasharray="4,4"/>
+          <rect x="588" y="65" width="24" height="395" fill="#58a6ff" opacity="0.08" rx="4"/>
+
+          <text x="770" y="60" text-anchor="middle" fill="#3fb950" font-size="11" font-weight="600">file-ops</text>
+          <line x1="770" y1="70" x2="770" y2="460" stroke="#333" stroke-width="1" stroke-dasharray="4,4"/>
+          <rect x="758" y="65" width="24" height="395" fill="#3fb950" opacity="0.08" rx="4"/>
+
+          <!-- Step 1 -->
+          <line x1="70" y1="100" x2="230" y2="100" stroke="#d29922" stroke-width="1.5"/>
+          <polygon points="228,100 220,96 220,104" fill="#d29922"/>
+          <text x="150" y="93" text-anchor="middle" fill="#c9d4e0" font-size="10">install(id, source)</text>
+
+          <!-- Step 2: Resolve source -->
+          <rect x="175" y="115" width="110" height="24" rx="4" fill="#bc8cff" opacity="0.1" stroke="#bc8cff"/>
+          <text x="230" y="132" text-anchor="middle" fill="#bc8cff" font-size="9">Resolve source URL</text>
+
+          <!-- Step 3: Git clone -->
+          <line x1="230" y1="155" x2="420" y2="155" stroke="#bc8cff" stroke-width="1.5"/>
+          <polygon points="418,155 410,151 410,159" fill="#bc8cff"/>
+          <text x="325" y="148" text-anchor="middle" fill="#c9d4e0" font-size="10">gitClone(url, cachePath)</text>
+
+          <!-- Step 3: git operations -->
+          <rect x="365" y="170" width="110" height="40" rx="4" fill="#39d0d8" opacity="0.08" stroke="#39d0d8"/>
+          <text x="420" y="186" text-anchor="middle" fill="#39d0d8" font-size="9">git clone --depth 1</text>
+          <text x="420" y="200" text-anchor="middle" fill="#8b949e" font-size="8">into plugins/cache/</text>
+
+          <!-- Step 3 return -->
+          <line x1="420" y1="225" x2="230" y2="225" stroke="#39d0d8" stroke-width="1" stroke-dasharray="4,3"/>
+          <polygon points="232,225 240,221 240,229" fill="#39d0d8"/>
+          <text x="325" y="218" text-anchor="middle" fill="#8b949e" font-size="9">clone result + commit hash</text>
+
+          <!-- Step 4: Validate manifest -->
+          <line x1="230" y1="255" x2="600" y2="255" stroke="#bc8cff" stroke-width="1.5"/>
+          <polygon points="598,255 590,251 590,259" fill="#bc8cff"/>
+          <text x="415" y="248" text-anchor="middle" fill="#c9d4e0" font-size="10">validatePluginManifest(cachePath)</text>
+
+          <!-- Step 4 return -->
+          <line x1="600" y1="285" x2="230" y2="285" stroke="#58a6ff" stroke-width="1" stroke-dasharray="4,3"/>
+          <polygon points="232,285 240,281 240,289" fill="#58a6ff"/>
+          <text x="415" y="278" text-anchor="middle" fill="#8b949e" font-size="9">PluginManifest (validated)</text>
+
+          <!-- Step 5: Write registry -->
+          <line x1="230" y1="315" x2="770" y2="315" stroke="#bc8cff" stroke-width="1.5"/>
+          <polygon points="768,315 760,311 760,319" fill="#bc8cff"/>
+          <text x="500" y="308" text-anchor="middle" fill="#c9d4e0" font-size="10">atomicWriteJSON(installed_plugins.json)</text>
+
+          <!-- Step 5 return -->
+          <line x1="770" y1="345" x2="230" y2="345" stroke="#3fb950" stroke-width="1" stroke-dasharray="4,3"/>
+          <polygon points="232,345 240,341 240,349" fill="#3fb950"/>
+
+          <!-- Step 6: Update settings -->
+          <line x1="230" y1="370" x2="770" y2="370" stroke="#bc8cff" stroke-width="1.5"/>
+          <polygon points="768,370 760,366 760,374" fill="#bc8cff"/>
+          <text x="500" y="363" text-anchor="middle" fill="#c9d4e0" font-size="10">atomicWriteJSON(settings.json + enabledPlugins)</text>
+
+          <!-- Step 6 return -->
+          <line x1="770" y1="395" x2="230" y2="395" stroke="#3fb950" stroke-width="1" stroke-dasharray="4,3"/>
+          <polygon points="232,395 240,391 240,399" fill="#3fb950"/>
+
+          <!-- Step 7: Return -->
+          <line x1="230" y1="425" x2="70" y2="425" stroke="#bc8cff" stroke-width="1" stroke-dasharray="4,3"/>
+          <polygon points="72,425 80,421 80,429" fill="#bc8cff"/>
+          <text x="150" y="418" text-anchor="middle" fill="#8b949e" font-size="10">InstalledPlugin</text>
+        </svg>
+        <p class="diagram-caption">Figure 6 &mdash; Plugin installation sequence showing git clone, validation, and registry update</p>
+      </div>
+
+      <!-- Profile Switch Flow -->
+      <h3 id="seq-profile">Profile Switch Flow</h3>
+      <p>
+        Switching profiles saves the current state (if auto-save is enabled), then applies
+        the target profile's settings, plugins, and MCP server configuration atomically.
+      </p>
+
+      <div class="diagram-container">
+        <svg viewBox="0 0 800 400" xmlns="http://www.w3.org/2000/svg" font-family="Inter, sans-serif">
+          <rect width="800" height="400" fill="#0f1724" rx="12"/>
+          <text x="400" y="28" text-anchor="middle" fill="#8b949e" font-size="13" font-weight="600">PROFILE SWITCH SEQUENCE</text>
+
+          <!-- Lifelines -->
+          <text x="80" y="60" text-anchor="middle" fill="#d29922" font-size="11" font-weight="600">Entry Point</text>
+          <line x1="80" y1="70" x2="80" y2="380" stroke="#333" stroke-width="1" stroke-dasharray="4,4"/>
+          <rect x="68" y="65" width="24" height="315" fill="#d29922" opacity="0.08" rx="4"/>
+
+          <text x="280" y="60" text-anchor="middle" fill="#bc8cff" font-size="11" font-weight="600">ProfileManager</text>
+          <line x1="280" y1="70" x2="280" y2="380" stroke="#333" stroke-width="1" stroke-dasharray="4,4"/>
+          <rect x="268" y="65" width="24" height="315" fill="#bc8cff" opacity="0.08" rx="4"/>
+
+          <text x="500" y="60" text-anchor="middle" fill="#58a6ff" font-size="11" font-weight="600">ConfigManager</text>
+          <line x1="500" y1="70" x2="500" y2="380" stroke="#333" stroke-width="1" stroke-dasharray="4,4"/>
+          <rect x="488" y="65" width="24" height="315" fill="#58a6ff" opacity="0.08" rx="4"/>
+
+          <text x="700" y="60" text-anchor="middle" fill="#3fb950" font-size="11" font-weight="600">file-ops</text>
+          <line x1="700" y1="70" x2="700" y2="380" stroke="#333" stroke-width="1" stroke-dasharray="4,4"/>
+          <rect x="688" y="65" width="24" height="315" fill="#3fb950" opacity="0.08" rx="4"/>
+
+          <!-- Step 1 -->
+          <line x1="80" y1="95" x2="280" y2="95" stroke="#d29922" stroke-width="1.5"/>
+          <polygon points="278,95 270,91 270,99" fill="#d29922"/>
+          <text x="180" y="88" text-anchor="middle" fill="#c9d4e0" font-size="10">activate(name)</text>
+
+          <!-- Step 2: Read target profile -->
+          <line x1="280" y1="125" x2="700" y2="125" stroke="#bc8cff" stroke-width="1.5"/>
+          <polygon points="698,125 690,121 690,129" fill="#bc8cff"/>
+          <text x="490" y="118" text-anchor="middle" fill="#c9d4e0" font-size="10">readJSON(profiles/{id}.json)</text>
+
+          <line x1="700" y1="150" x2="280" y2="150" stroke="#3fb950" stroke-width="1" stroke-dasharray="4,3"/>
+          <polygon points="282,150 290,146 290,154" fill="#3fb950"/>
+          <text x="490" y="143" text-anchor="middle" fill="#8b949e" font-size="9">Profile data</text>
+
+          <!-- Step 3: Auto-save current -->
+          <rect x="225" y="168" width="110" height="24" rx="4" fill="#d29922" opacity="0.1" stroke="#d29922"/>
+          <text x="280" y="184" text-anchor="middle" fill="#d29922" font-size="9">[auto-save current]</text>
+
+          <!-- Step 4: Apply settings -->
+          <line x1="280" y1="210" x2="500" y2="210" stroke="#bc8cff" stroke-width="1.5"/>
+          <polygon points="498,210 490,206 490,214" fill="#bc8cff"/>
+          <text x="390" y="203" text-anchor="middle" fill="#c9d4e0" font-size="10">updateSettings(profile.settings)</text>
+
+          <!-- Step 5: Apply MCP config -->
+          <line x1="280" y1="250" x2="500" y2="250" stroke="#bc8cff" stroke-width="1.5"/>
+          <polygon points="498,250 490,246 490,254" fill="#bc8cff"/>
+          <text x="390" y="243" text-anchor="middle" fill="#c9d4e0" font-size="10">applyMcpServers(profile.mcps)</text>
+
+          <!-- Step 6: Update active.json -->
+          <line x1="280" y1="290" x2="700" y2="290" stroke="#bc8cff" stroke-width="1.5"/>
+          <polygon points="698,290 690,286 690,294" fill="#bc8cff"/>
+          <text x="490" y="283" text-anchor="middle" fill="#c9d4e0" font-size="10">atomicWrite(profiles/active.json)</text>
+
+          <line x1="700" y1="315" x2="280" y2="315" stroke="#3fb950" stroke-width="1" stroke-dasharray="4,3"/>
+          <polygon points="282,315 290,311 290,319" fill="#3fb950"/>
+
+          <!-- Step 7: Return -->
+          <line x1="280" y1="345" x2="80" y2="345" stroke="#bc8cff" stroke-width="1" stroke-dasharray="4,3"/>
+          <polygon points="82,345 90,341 90,349" fill="#bc8cff"/>
+          <text x="180" y="338" text-anchor="middle" fill="#8b949e" font-size="10">void (success)</text>
+        </svg>
+        <p class="diagram-caption">Figure 7 &mdash; Profile switch sequence with auto-save and atomic update</p>
+      </div>
+    </section>
+
+    <!-- ================================================================== -->
+    <!-- SECTION: Profile System                                            -->
+    <!-- ================================================================== -->
+    <section id="profiles">
+      <h2>Profile System</h2>
+      <p>
+        Profiles provide named snapshots of Claude Code configuration. A profile captures:
+        settings (model, permissions, hooks), enabled plugins and their configuration, and
+        MCP server registrations. Users can switch between profiles to rapidly change their
+        working context.
+      </p>
+
+      <h3>Profile Storage</h3>
+      <pre><code>~/.claude/plugins/profiles/
+├── active.json                  # { "id": "abc123", "name": "development" }
+├── abc123.json                  # Profile "development"
+├── def456.json                  # Profile "production-review"
+└── ghi789.json                  # Profile "minimal"</code></pre>
+
+      <h3>Profile Schema</h3>
+      <pre><code>interface Profile {
+  id: string;                    // UUID v4
+  name: string;                  // Human-readable name
+  description?: string;          // Optional description
+  createdAt: string;             // ISO 8601 timestamp
+  updatedAt: string;             // ISO 8601 timestamp
+  settings: {
+    model?: string;              // e.g., "claude-sonnet-4-20250514"
+    permissions?: PermissionSet;
+    hooks?: HookConfig[];
+    env?: Record&lt;string, string&gt;;
+  };
+  enabledPlugins: string[];      // Plugin IDs
+  mcpServers: Record&lt;string, McpServerConfig&gt;;
+}</code></pre>
+
+      <div class="callout callout-info">
+        <strong>Profile Isolation</strong>
+        Profiles do not copy plugin files &mdash; they only reference plugin IDs. When switching
+        profiles, the system enables/disables plugins and updates MCP server configs, but
+        the actual plugin cache remains shared.
+      </div>
+
+      <h3>Active Profile Tracking</h3>
+      <p>
+        The <code>active.json</code> file is a simple pointer that stores the ID and name
+        of the currently active profile. If no profile is active, this file either does not
+        exist or contains <code>null</code>. The dashboard header displays the active profile
+        name, and the CLI shows it with an indicator in <code>claude-config list profiles</code>.
+      </p>
+    </section>
+
+    <!-- ================================================================== -->
+    <!-- SECTION: Security Considerations                                   -->
+    <!-- ================================================================== -->
+    <section id="security">
+      <h2>Security Considerations</h2>
+
+      <div class="card-grid">
+        <div class="card">
+          <h4>Credential Exclusion</h4>
+          <p>
+            The <code>.credentials.json</code> file is <strong>never</strong> included in
+            export operations by default. An explicit <code>--include-secrets</code> flag is required
+            to include credentials, and the CLI/dashboard display a prominent warning before
+            proceeding.
+          </p>
+        </div>
+        <div class="card">
+          <h4>Environment Variable Masking</h4>
+          <p>
+            MCP server environment variables (which may contain API keys) are masked in
+            dashboard display using the pattern <code>sk-...XXXX</code>. Full values are
+            only shown after explicit user action (click-to-reveal).
+          </p>
+        </div>
+        <div class="card">
+          <h4>Path Traversal Prevention</h4>
+          <p>
+            All file operations in <code>file-ops.ts</code> validate that resolved paths
+            remain within the <code>~/.claude/</code> directory tree. Paths containing
+            <code>..</code> segments or symlinks pointing outside the boundary are rejected.
+          </p>
+        </div>
+        <div class="card">
+          <h4>Import Schema Validation</h4>
+          <p>
+            Imported configuration JSON is validated against the expected schema before any
+            changes are applied. Invalid structures, unexpected fields, and type mismatches
+            are rejected with descriptive error messages.
+          </p>
+        </div>
+      </div>
+
+      <h3>Threat Model Summary</h3>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Threat</th><th>Mitigation</th><th>Component</th></tr></thead>
+          <tbody>
+            <tr><td>Credential leakage via export</td><td>Credentials excluded by default; requires explicit opt-in flag</td><td>ProfileManager</td></tr>
+            <tr><td>Directory traversal via malicious import</td><td>Path validation rejects paths outside ~/.claude/</td><td>file-ops.ts</td></tr>
+            <tr><td>Malicious plugin manifest</td><td>Plugin manifest validated against strict schema after clone</td><td>PluginManager</td></tr>
+            <tr><td>Concurrent config corruption</td><td>Atomic writes via temp-file + rename; advisory locks</td><td>file-ops.ts</td></tr>
+            <tr><td>API key exposure in dashboard</td><td>Env var values masked by default; click-to-reveal</td><td>Dashboard</td></tr>
+            <tr><td>Malicious git repository</td><td>Shallow clone (--depth 1); manifest validation before registration</td><td>marketplace.ts</td></tr>
+            <tr><td>Settings injection via MCP tool</td><td>All MCP mutation tools validate input against typed schemas</td><td>MCP Server</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ================================================================== -->
+    <!-- SECTION: Concurrency Model                                         -->
+    <!-- ================================================================== -->
+    <section id="concurrency">
+      <h2>Concurrency Model</h2>
+      <p>
+        Multiple entry points (CLI, dashboard, MCP server, plugin hook) may attempt to
+        read or write configuration files simultaneously. The concurrency model is designed
+        to prevent data corruption while remaining simple and dependency-free.
+      </p>
+
+      <h3>Atomic File Operations</h3>
+      <p>
+        All write operations in <code>file-ops.ts</code> follow the write-to-temp-then-rename
+        pattern:
+      </p>
+      <ol>
+        <li>Write the new content to a temporary file in the same directory (e.g., <code>settings.json.tmp.{random}</code>)</li>
+        <li>Call <code>fsync</code> to flush to disk</li>
+        <li>Rename the temp file to the target path (atomic on POSIX; best-effort on Windows)</li>
+        <li>If rename fails, clean up the temp file and throw</li>
+      </ol>
+
+      <h3>Advisory Locking</h3>
+      <p>
+        For operations that require read-modify-write cycles (e.g., adding a plugin to
+        <code>installed_plugins.json</code>), an advisory lock file is used:
+      </p>
+      <pre><code>async function withLock&lt;T&gt;(lockPath: string, fn: () => Promise&lt;T&gt;): Promise&lt;T&gt; {
+  const lockFile = lockPath + '.lock';
+  await acquireLock(lockFile, { retries: 5, retryDelay: 100 });
+  try {
+    return await fn();
+  } finally {
+    await releaseLock(lockFile);
+  }
+}</code></pre>
+
+      <div class="callout callout-warn">
+        <strong>Windows Compatibility Note</strong>
+        On Windows, file rename is not guaranteed atomic if the target exists. The implementation
+        uses <code>fs.rename</code> which on Windows performs a non-atomic replace. For most
+        use cases this is acceptable, as simultaneous writes from multiple entry points are
+        rare in practice. The advisory lock provides the primary concurrency protection.
+      </div>
+    </section>
+
+    <!-- ================================================================== -->
+    <!-- SECTION: Design Decisions                                          -->
+    <!-- ================================================================== -->
+    <section id="design-decisions">
+      <h2>Key Design Decisions</h2>
+
+      <div class="card">
+        <h4>1. Monorepo with Turborepo</h4>
+        <p>
+          Chosen over a single-package architecture to enforce clear separation of concerns.
+          The CLI, dashboard, and MCP server have distinct deployment targets and dependency
+          trees. Turborepo provides efficient caching and parallel builds without the
+          complexity of Nx or Lerna.
+        </p>
+      </div>
+
+      <div class="card">
+        <h4>2. Pure Core Package</h4>
+        <p>
+          <code>@ccm/core</code> has zero UI dependencies and no framework-specific code.
+          This ensures it can be consumed by any entry point &mdash; Node.js CLI, Next.js
+          server components, MCP server process, or directly by the Claude Code plugin
+          runtime &mdash; without dependency conflicts.
+        </p>
+      </div>
+
+      <div class="card">
+        <h4>3. stdio Transport for MCP Server</h4>
+        <p>
+          The MCP server uses stdio rather than HTTP/SSE transport. This is the standard
+          transport for Claude Code MCP servers and keeps the server lightweight &mdash;
+          no HTTP server, no port management, no CORS. The process is spawned by Claude Code
+          and communicates via stdin/stdout JSON-RPC messages.
+        </p>
+      </div>
+
+      <div class="card">
+        <h4>4. Profiles in plugins/profiles/ Subdirectory</h4>
+        <p>
+          Profile data is stored under <code>~/.claude/plugins/profiles/</code> rather than
+          directly in <code>~/.claude/</code>. This avoids adding new files to the root of
+          the Claude configuration directory, which could interfere with Claude Code's own
+          file discovery. The <code>plugins/</code> prefix signals that this data belongs
+          to the config manager plugin.
+        </p>
+      </div>
+
+      <div class="card">
+        <h4>5. Thin API Routes</h4>
+        <p>
+          Dashboard API routes contain no business logic. They parse request parameters,
+          instantiate the appropriate <code>@ccm/core</code> manager, call the corresponding
+          method, and serialize the result. This ensures that behavior is identical regardless
+          of whether the user interacts via the dashboard, CLI, or MCP server.
+        </p>
+      </div>
+
+      <div class="card">
+        <h4>6. Git-Based Plugin Distribution</h4>
+        <p>
+          Plugins are distributed as git repositories rather than npm packages. This allows
+          for simpler publishing (just push to a repo), version tracking via commit hashes,
+          and easy updates via <code>git pull</code>. Marketplace repositories serve as
+          curated indexes pointing to individual plugin repos.
+        </p>
+      </div>
+    </section>
+
+    <!-- ================================================================== -->
+    <!-- SECTION: Error Handling                                            -->
+    <!-- ================================================================== -->
+    <section id="error-handling">
+      <h2>Error Handling Strategy</h2>
+
+      <h3>Error Classification</h3>
+      <p>
+        All errors thrown by <code>@ccm/core</code> are instances of typed error classes
+        that extend a base <code>CcmError</code>:
+      </p>
+
+      <pre><code>class CcmError extends Error {
+  constructor(
+    message: string,
+    public readonly code: string,
+    public readonly recoverable: boolean = false
+  ) { super(message); }
+}
+
+class FileNotFoundError extends CcmError { ... }
+class ValidationError extends CcmError { ... }
+class LockAcquisitionError extends CcmError { ... }
+class PluginInstallError extends CcmError { ... }
+class GitOperationError extends CcmError { ... }</code></pre>
+
+      <h3>Error Propagation by Entry Point</h3>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Entry Point</th><th>Error Handling</th></tr></thead>
+          <tbody>
+            <tr><td><strong>CLI</strong></td><td>Catches CcmError, formats with chalk (red for fatal, yellow for recoverable), exits with appropriate code</td></tr>
+            <tr><td><strong>Dashboard API</strong></td><td>Catches CcmError, returns JSON <code>{ error: { code, message } }</code> with appropriate HTTP status</td></tr>
+            <tr><td><strong>MCP Server</strong></td><td>Catches CcmError, returns MCP error response with code and message in the tool result</td></tr>
+            <tr><td><strong>Plugin Hook</strong></td><td>Logs to Claude Code plugin log; non-fatal errors are swallowed to avoid disrupting the host</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout callout-danger">
+        <strong>Unrecoverable Errors</strong>
+        If the <code>~/.claude/</code> directory is missing, inaccessible, or has incorrect
+        permissions, core managers throw a non-recoverable <code>FileNotFoundError</code> with
+        a descriptive message guiding the user to check their Claude Code installation.
+      </div>
+    </section>
+
+    <!-- ================================================================== -->
+    <!-- SECTION: Testing Strategy                                          -->
+    <!-- ================================================================== -->
+    <section id="testing-strategy">
+      <h2>Testing Strategy</h2>
+
+      <h3>Test Pyramid</h3>
+      <div class="diagram-container">
+        <svg viewBox="0 0 500 280" xmlns="http://www.w3.org/2000/svg" font-family="Inter, sans-serif">
+          <rect width="500" height="280" fill="#0f1724" rx="12"/>
+
+          <!-- Pyramid -->
+          <polygon points="250,40 80,240 420,240" fill="none" stroke="#30363d" stroke-width="1.5"/>
+
+          <!-- Layers -->
+          <line x1="145" y1="140" x2="355" y2="140" stroke="#30363d" stroke-width="1"/>
+          <line x1="115" y1="190" x2="385" y2="190" stroke="#30363d" stroke-width="1"/>
+
+          <!-- E2E label -->
+          <rect x="200" y="60" width="100" height="28" rx="4" fill="#f85149" opacity="0.15"/>
+          <text x="250" y="78" text-anchor="middle" fill="#f85149" font-size="11" font-weight="600">E2E Tests</text>
+          <text x="250" y="100" text-anchor="middle" fill="#6e7681" font-size="9">Playwright, few</text>
+
+          <!-- Integration label -->
+          <rect x="175" y="148" width="150" height="28" rx="4" fill="#d29922" opacity="0.15"/>
+          <text x="250" y="166" text-anchor="middle" fill="#d29922" font-size="11" font-weight="600">Integration Tests</text>
+          <text x="250" y="185" text-anchor="middle" fill="#6e7681" font-size="9">Real FS, temp dirs</text>
+
+          <!-- Unit label -->
+          <rect x="150" y="200" width="200" height="28" rx="4" fill="#3fb950" opacity="0.15"/>
+          <text x="250" y="218" text-anchor="middle" fill="#3fb950" font-size="11" font-weight="600">Unit Tests</text>
+          <text x="250" y="236" text-anchor="middle" fill="#6e7681" font-size="9">Vitest, mocked FS, many</text>
+
+          <!-- Counts -->
+          <text x="250" y="263" text-anchor="middle" fill="#8b949e" font-size="10">Coverage: core 80%L/75%B/85%F | mcp 70%L/65%B/75%F | cli 70%L/60%B/75%F | dashboard 70%L/60%B/70%F</text>
+        </svg>
+        <p class="diagram-caption">Figure 8 &mdash; Testing pyramid with coverage targets</p>
+      </div>
+
+      <h3>Testing by Package</h3>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Package</th><th>Framework</th><th>Strategy</th><th>Coverage Target</th></tr></thead>
+          <tbody>
+            <tr><td><code>@ccm/core</code></td><td>Vitest</td><td>Unit tests with mocked filesystem (memfs); integration tests with real temp directories</td><td>80% line / 75% branch / 85% function</td></tr>
+            <tr><td><code>@ccm/mcp</code></td><td>Vitest</td><td>Tool handler tests with mocked core managers; stdio transport integration tests</td><td>70% line / 65% branch / 75% function</td></tr>
+            <tr><td><code>@ccm/cli</code></td><td>Vitest</td><td>Command handler tests with mocked core; snapshot tests for output formatting</td><td>70% line / 60% branch / 75% function</td></tr>
+            <tr><td><code>@ccm/dashboard</code></td><td>Vitest + Testing Library</td><td>Component tests for shared components; API route tests with mocked core</td><td>70% line / 60% branch / 70% function</td></tr>
+            <tr><td><code>E2E</code></td><td>Playwright</td><td>Critical user journeys: install plugin, switch profile, export/import</td><td>N/A</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>CI Pipeline</h3>
+      <pre><code># turbo.json pipeline (simplified)
+{
+  "pipeline": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**"]
+    },
+    "test": {
+      "dependsOn": ["build"],
+      "outputs": ["coverage/**"]
+    },
+    "test:e2e": {
+      "dependsOn": ["build"],
+      "outputs": []
+    },
+    "lint": {},
+    "typecheck": {
+      "dependsOn": ["^build"]
+    }
+  }
+}</code></pre>
+    </section>
+
+    <!-- ================================================================== -->
+    <!-- SECTION: Future Considerations                                     -->
+    <!-- ================================================================== -->
+    <section id="future">
+      <h2>Future Considerations</h2>
+
+      <div class="card-grid">
+        <div class="card">
+          <span class="badge badge-blue">Phase 2</span>
+          <h4>Profile Sync</h4>
+          <p>
+            Cloud-based profile synchronization allowing users to share profiles across
+            machines. Would require an authentication layer and a storage backend
+            (likely a simple JSON blob store).
+          </p>
+        </div>
+        <div class="card">
+          <span class="badge badge-blue">Phase 2</span>
+          <h4>Plugin Dependency Resolution</h4>
+          <p>
+            Currently plugins are independent. Future versions may support declaring
+            dependencies between plugins, requiring a topological sort during
+            enable/disable operations.
+          </p>
+        </div>
+        <div class="card">
+          <span class="badge badge-purple">Phase 3</span>
+          <h4>Marketplace Web UI</h4>
+          <p>
+            A browsable marketplace interface within the dashboard, showing plugin
+            ratings, descriptions, and one-click install. Requires a marketplace
+            index API.
+          </p>
+        </div>
+        <div class="card">
+          <span class="badge badge-purple">Phase 3</span>
+          <h4>Configuration Diff View</h4>
+          <p>
+            Visual diff between profiles or between current config and a profile,
+            allowing users to understand what will change before switching.
+          </p>
+        </div>
+        <div class="card">
+          <span class="badge badge-green">Optimization</span>
+          <h4>File Watcher for Live Updates</h4>
+          <p>
+            Dashboard could use <code>fs.watch</code> or chokidar to detect external
+            changes to <code>~/.claude/</code> files and update the UI in real time
+            via Server-Sent Events.
+          </p>
+        </div>
+        <div class="card">
+          <span class="badge badge-green">Optimization</span>
+          <h4>Plugin Cache Pruning</h4>
+          <p>
+            Automatic cleanup of unused plugin cache entries. After uninstalling a plugin,
+            the cached repository clone could be removed to reclaim disk space.
+          </p>
+        </div>
+      </div>
+
+      <hr>
+
+      <div class="callout callout-success">
+        <strong>Architecture Stability</strong>
+        The core architecture (monorepo, shared types, core business logic, thin entry points)
+        is designed to be stable across these future phases. New features should primarily
+        involve adding new manager methods to <code>@ccm/core</code> and exposing them through
+        existing entry points, rather than requiring structural changes.
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <hr>
+    <footer style="text-align: center; color: var(--text-muted); font-size: 13px; padding: 20px 0;">
+      <p>claude-config-manager Architecture Specification &mdash; v1.0.0 &mdash; 2026-03-25</p>
+      <p>Generated as part of the Claude Code plugin development process.</p>
+    </footer>
+
+  </main>
+</div>
+</body>
+</html>
