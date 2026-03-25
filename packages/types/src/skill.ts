@@ -13,4 +13,5 @@ export interface SkillDefinition {
   content?: string;
   tags?: string[];
   version?: string;
+  pluginName?: string;
 }

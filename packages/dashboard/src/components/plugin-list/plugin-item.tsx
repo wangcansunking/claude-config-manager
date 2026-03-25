@@ -1,7 +1,6 @@
 'use client';
 
 import { Tag } from '../shared/tag';
-import { Button } from '../shared/button';
 
 export interface Plugin {
   name: string;

@@ -7,7 +7,7 @@ import { importProfile } from '@/lib/api-client';
 export function ImportPanel() {
   const [fileContent, setFileContent] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
-  const [preview, setPreview] = useState<unknown>(null);
+  const [preview, setPreview] = useState<Record<string, unknown> | null>(null);
   const [dragging, setDragging] = useState(false);
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState<string | null>(null);
@@ -20,7 +20,7 @@ export function ImportPanel() {
       const text = e.target?.result as string;
       setFileContent(text);
       try {
-        const parsed = JSON.parse(text);
+        const parsed = JSON.parse(text) as Record<string, unknown>;
         setPreview(parsed);
       } catch {
         setPreview({ raw: text.slice(0, 200) });

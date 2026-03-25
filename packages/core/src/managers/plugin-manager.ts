@@ -83,7 +83,6 @@ export class PluginManager {
     const entries: PluginListEntry[] = [];
     for (const [fullName, installs] of Object.entries(plugins)) {
       const parts = fullName.split('@');
-      const pluginName = parts[0] ?? fullName;
       const marketplace = parts[1] ?? '';
       // Use the first (most recent) install entry
       const install = installs[0];
@@ -114,7 +113,6 @@ export class PluginManager {
     if (!install) return null;
 
     const parts = fullName.split('@');
-    const pluginName = parts[0] ?? fullName;
     const marketplace = parts[1] ?? '';
 
     return {
