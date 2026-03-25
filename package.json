@@ -12,6 +12,9 @@
     "type-check": "turbo type-check",
     "clean": "turbo clean"
   },
+  "bin": {
+    "claude-config": "./packages/cli/dist/index.js"
+  },
   "devDependencies": {
     "turbo": "^2.0.0",
     "typescript": "^5.5.0",
