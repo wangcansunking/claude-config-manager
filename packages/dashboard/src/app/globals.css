@@ -7,3 +7,21 @@ body {
   color: #ffffff;
   font-family: system-ui, -apple-system, sans-serif;
 }
+
+/* Button variant hover styles */
+.btn-primary { background-color: #6c5ce7; color: #ffffff; }
+.btn-primary:hover:not(:disabled) { background-color: #5a4dd6; }
+.btn-secondary { background-color: #2a2a35; color: #b2bec3; }
+.btn-secondary:hover:not(:disabled) { background-color: #353540; }
+.btn-danger { background-color: #ff4757; color: #ffffff; }
+.btn-danger:hover:not(:disabled) { background-color: #e03547; }
+.btn-ghost { background-color: transparent; color: #b2bec3; }
+.btn-ghost:hover:not(:disabled) { background-color: #2a2a35; }
+
+/* Search box focus */
+.search-input { border-color: #2a2a35; }
+.search-input:focus { border-color: #6c5ce7; }
+
+/* Profile form input focus */
+.profile-input { border-color: #2a2a35; }
+.profile-input:focus { border-color: #6c5ce7; }

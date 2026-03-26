@@ -34,17 +34,11 @@ export function SearchBox({ value, onChange, placeholder = 'Search...' }: Search
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full pl-9 pr-4 py-2 rounded-lg text-sm outline-none transition-colors"
+        className="w-full pl-9 pr-4 py-2 rounded-lg text-sm outline-none transition-colors search-input"
         style={{
           backgroundColor: '#2a2a35',
-          border: '1px solid #2a2a35',
+          border: '1px solid',
           color: '#ffffff',
-        }}
-        onFocus={(e) => {
-          e.currentTarget.style.borderColor = '#6c5ce7';
-        }}
-        onBlur={(e) => {
-          e.currentTarget.style.borderColor = '#2a2a35';
         }}
       />
     </div>

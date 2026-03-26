@@ -10,7 +10,7 @@ interface HeaderProps {
 
 export function Header({ title, subtitle, children }: HeaderProps) {
   return (
-    <div className="flex items-start justify-between mb-6">
+    <div className="sticky top-0 z-10 bg-[#0f0f14] pb-4 flex items-start justify-between mb-6">
       <div>
         <h1 className="text-2xl font-bold" style={{ color: '#ffffff' }}>
           {title}

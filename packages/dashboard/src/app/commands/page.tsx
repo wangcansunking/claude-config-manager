@@ -56,15 +56,9 @@ export default function CommandsPage() {
           {commands.map((cmd, i) => (
             <div
               key={cmd.name}
-              className="flex items-start gap-4 px-5 py-4 cursor-pointer transition-colors"
+              className="flex items-start gap-4 px-5 py-4 cursor-pointer transition-colors hover:bg-[#252530]"
               style={{ borderBottom: i < commands.length - 1 ? '1px solid #2a2a35' : 'none' }}
               onClick={() => setSelected(cmd)}
-              onMouseEnter={(e) => {
-                (e.currentTarget as HTMLDivElement).style.backgroundColor = '#252530';
-              }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLDivElement).style.backgroundColor = 'transparent';
-              }}
             >
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">

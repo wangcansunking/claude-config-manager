@@ -14,11 +14,11 @@ interface ButtonProps {
   type?: 'button' | 'submit' | 'reset';
 }
 
-const variantStyles: Record<ButtonVariant, { bg: string; color: string; hoverBg: string }> = {
-  primary:   { bg: '#6c5ce7', color: '#ffffff', hoverBg: '#5a4dd6' },
-  secondary: { bg: '#2a2a35', color: '#b2bec3', hoverBg: '#353540' },
-  danger:    { bg: '#ff4757', color: '#ffffff', hoverBg: '#e03547' },
-  ghost:     { bg: 'transparent', color: '#b2bec3', hoverBg: '#2a2a35' },
+const variantClasses: Record<ButtonVariant, string> = {
+  primary: 'btn-primary',
+  secondary: 'btn-secondary',
+  danger: 'btn-danger',
+  ghost: 'btn-ghost',
 };
 
 const sizeStyles: Record<ButtonSize, string> = {
@@ -34,25 +34,12 @@ export function Button({
   disabled = false,
   type = 'button',
 }: ButtonProps) {
-  const styles = variantStyles[variant];
-
   return (
     <button
       type={type}
       onClick={onClick}
       disabled={disabled}
-      className={`inline-flex items-center justify-center font-medium rounded-lg transition-colors ${sizeStyles[size]} ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-      style={{ backgroundColor: styles.bg, color: styles.color }}
-      onMouseEnter={(e) => {
-        if (!disabled) {
-          e.currentTarget.style.backgroundColor = styles.hoverBg;
-        }
-      }}
-      onMouseLeave={(e) => {
-        if (!disabled) {
-          e.currentTarget.style.backgroundColor = styles.bg;
-        }
-      }}
+      className={`inline-flex items-center justify-center font-medium rounded-lg transition-colors ${sizeStyles[size]} ${variantClasses[variant]} ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
     >
       {children}
     </button>

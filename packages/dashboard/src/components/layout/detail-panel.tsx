@@ -83,16 +83,7 @@ export function DetailPanel({
           </div>
           <button
             onClick={onClose}
-            className="shrink-0 ml-3 p-1 rounded transition-colors"
-            style={{ color: '#636e72' }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#2a2a35';
-              e.currentTarget.style.color = '#ffffff';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent';
-              e.currentTarget.style.color = '#636e72';
-            }}
+            className="shrink-0 ml-3 p-1 rounded transition-colors text-[#636e72] hover:bg-[#2a2a35] hover:text-white"
             aria-label="Close panel"
           >
             <svg

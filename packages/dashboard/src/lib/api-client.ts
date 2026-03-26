@@ -117,6 +117,13 @@ export function createProfile(name: string) {
   });
 }
 
+export function updateProfile(name: string, patch: Record<string, unknown>) {
+  return request<unknown>(`/profiles/${encodeURIComponent(name)}`, {
+    method: 'PATCH',
+    body: JSON.stringify(patch),
+  });
+}
+
 export function activateProfile(name: string) {
   return request<void>(`/profiles/${encodeURIComponent(name)}/activate`, { method: 'POST' });
 }

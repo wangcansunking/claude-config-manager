@@ -58,16 +58,18 @@ export default function PluginsPage() {
 
   return (
     <div>
-      <Header title="Plugins">
-        <Button variant="primary" size="md">Install New</Button>
-      </Header>
+      <div className="sticky top-0 z-10 bg-[#0f0f14]">
+        <Header title="Plugins">
+          <Button variant="primary" size="md">Install New</Button>
+        </Header>
 
-      <div className="mb-4">
-        <SearchBox
-          value={search}
-          onChange={setSearch}
-          placeholder="Search plugins..."
-        />
+        <div className="mb-4">
+          <SearchBox
+            value={search}
+            onChange={setSearch}
+            placeholder="Search plugins..."
+          />
+        </div>
       </div>
 
       {loading ? (

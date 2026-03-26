@@ -20,15 +20,9 @@ interface PluginItemProps {
 export function PluginItem({ plugin, onClick }: PluginItemProps) {
   return (
     <div
-      className="flex items-center gap-4 px-5 py-4 cursor-pointer transition-colors"
+      className="flex items-center gap-4 px-5 py-4 cursor-pointer transition-colors hover:bg-[#252530]"
       style={{ borderBottom: '1px solid #2a2a35' }}
       onClick={onClick}
-      onMouseEnter={(e) => {
-        (e.currentTarget as HTMLDivElement).style.backgroundColor = '#252530';
-      }}
-      onMouseLeave={(e) => {
-        (e.currentTarget as HTMLDivElement).style.backgroundColor = 'transparent';
-      }}
     >
       {/* Icon */}
       <div

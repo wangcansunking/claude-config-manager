@@ -17,13 +17,20 @@ interface Skill {
 }
 
 function getPluginName(filePath: string): string {
-  // Extract plugin name from path like: .../plugins/my-plugin/skills/skill.md
+  // Extract plugin name from path like:
+  // ~/.claude/plugins/cache/<marketplace>/<plugin-name>/<version>/skills/...
   const parts = filePath.replace(/\\/g, '/').split('/');
-  const pluginsIdx = parts.indexOf('plugins');
-  if (pluginsIdx !== -1 && parts[pluginsIdx + 1]) {
-    return parts[pluginsIdx + 1];
+  const cacheIdx = parts.indexOf('cache');
+  if (cacheIdx !== -1 && parts[cacheIdx + 2]) {
+    // parts[cacheIdx+1] = marketplace, parts[cacheIdx+2] = plugin name
+    return parts[cacheIdx + 2];
   }
-  return 'Built-in';
+  // Fallback: look for "skills" and take 2 segments before it
+  const skillsIdx = parts.indexOf('skills');
+  if (skillsIdx >= 2) {
+    return parts[skillsIdx - 2];
+  }
+  return 'Custom';
 }
 
 export default function SkillsPage() {
@@ -66,10 +73,12 @@ export default function SkillsPage() {
 
   return (
     <div>
-      <Header title="Skills" />
+      <div className="sticky top-0 z-10 bg-[#0f0f14]">
+        <Header title="Skills" />
 
-      <div className="mb-4">
-        <SearchBox value={search} onChange={setSearch} placeholder="Search skills..." />
+        <div className="mb-4">
+          <SearchBox value={search} onChange={setSearch} placeholder="Search skills..." />
+        </div>
       </div>
 
       {loading ? (
@@ -95,15 +104,9 @@ export default function SkillsPage() {
               >
                 {/* Section header */}
                 <button
-                  className="w-full flex items-center justify-between px-5 py-3 text-left transition-colors"
+                  className="w-full flex items-center justify-between px-5 py-3 text-left transition-colors hover:bg-[#252530]"
                   style={{ borderBottom: isCollapsed ? 'none' : '1px solid #2a2a35' }}
                   onClick={() => toggleSection(plugin)}
-                  onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#252530';
-                  }}
-                  onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'transparent';
-                  }}
                 >
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-semibold" style={{ color: '#ffffff' }}>
@@ -131,17 +134,11 @@ export default function SkillsPage() {
                     {pluginSkills.map((skill, i) => (
                       <div
                         key={skill.name}
-                        className="flex items-start gap-4 px-5 py-3 cursor-pointer transition-colors"
+                        className="flex items-start gap-4 px-5 py-3 cursor-pointer transition-colors hover:bg-[#252530]"
                         style={{
                           borderBottom: i < pluginSkills.length - 1 ? '1px solid #2a2a35' : 'none',
                         }}
                         onClick={() => setSelected(skill)}
-                        onMouseEnter={(e) => {
-                          (e.currentTarget as HTMLDivElement).style.backgroundColor = '#252530';
-                        }}
-                        onMouseLeave={(e) => {
-                          (e.currentTarget as HTMLDivElement).style.backgroundColor = 'transparent';
-                        }}
                       >
                         <code
                           className="text-sm font-mono shrink-0"

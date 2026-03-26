@@ -139,6 +139,23 @@ export class ProfileManager {
     return profile;
   }
 
+  async update(name: string, patch: Partial<Omit<Profile, 'name' | 'createdAt'>>): Promise<Profile> {
+    const filePath = this.profilePath(name);
+    if (!(await fileExists(filePath))) {
+      throw new NotFoundError('Profile', name);
+    }
+    const existing = (await readJsonFile(filePath)) as Profile;
+    const updated: Profile = {
+      ...existing,
+      ...patch,
+      name: existing.name,
+      createdAt: existing.createdAt,
+      updatedAt: new Date().toISOString(),
+    };
+    await writeJsonFile(filePath, updated);
+    return updated;
+  }
+
   async activate(name: string): Promise<void> {
     const filePath = this.profilePath(name);
     if (!(await fileExists(filePath))) {
