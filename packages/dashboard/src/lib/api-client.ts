@@ -92,6 +92,12 @@ export function removeEnvVar(key: string) {
   return request<void>(`/settings/env/${encodeURIComponent(key)}`, { method: 'DELETE' });
 }
 
+// ---- Sessions ---------------------------------------------------------------
+
+export function fetchSessions() {
+  return request<unknown[]>('/sessions');
+}
+
 // ---- Skills -----------------------------------------------------------------
 
 export function fetchSkills() {

@@ -1,12 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { Header } from '@/components/layout/header';
 import { StatCard } from '@/components/shared/stat-card';
 import { Tag } from '@/components/shared/tag';
 import { Button } from '@/components/shared/button';
 import { StatusBadge } from '@/components/shared/status-badge';
-import { fetchStats, fetchPlugins, fetchMcpServers } from '@/lib/api-client';
+import { useStats, usePlugins, useMcpServers } from '@/lib/use-data';
 
 interface Plugin {
   name: string;
@@ -35,33 +34,18 @@ interface Stats {
   mcpServers: number;
   skills: number;
   profiles: number;
+  sessions: number;
 }
 
 export default function OverviewPage() {
-  const [stats, setStats] = useState<Stats | null>(null);
-  const [plugins, setPlugins] = useState<Plugin[]>([]);
-  const [mcpServers, setMcpServers] = useState<McpServer[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: stats, isLoading: statsLoading } = useStats();
+  const { data: pluginsRaw, isLoading: pluginsLoading } = usePlugins();
+  const { data: mcpServersRaw, isLoading: mcpLoading } = useMcpServers();
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const [s, p, m] = await Promise.all([
-          fetchStats(),
-          fetchPlugins(),
-          fetchMcpServers(),
-        ]);
-        setStats(s);
-        setPlugins(p as Plugin[]);
-        setMcpServers(m as McpServer[]);
-      } catch (err) {
-        console.error('Failed to load overview data', err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    load();
-  }, []);
+  const loading = statsLoading || pluginsLoading || mcpLoading;
+  const plugins = (pluginsRaw ?? []) as Plugin[];
+  const mcpServers = (mcpServersRaw ?? []) as McpServer[];
+  const typedStats = stats as Stats | undefined;
 
   return (
     <div>
@@ -75,11 +59,12 @@ export default function OverviewPage() {
       ) : (
         <>
           {/* Stats Grid */}
-          <div className="grid grid-cols-4 gap-4 mb-8">
-            <StatCard title="Plugins" value={stats?.plugins ?? 0} color="purple" />
-            <StatCard title="MCP Servers" value={stats?.mcpServers ?? 0} color="blue" />
-            <StatCard title="Skills" value={stats?.skills ?? 0} color="green" />
-            <StatCard title="Profiles" value={stats?.profiles ?? 0} color="orange" />
+          <div className="grid grid-cols-5 gap-4 mb-8">
+            <StatCard title="Plugins" value={typedStats?.plugins ?? 0} color="purple" />
+            <StatCard title="MCP Servers" value={typedStats?.mcpServers ?? 0} color="blue" />
+            <StatCard title="Skills" value={typedStats?.skills ?? 0} color="green" />
+            <StatCard title="Profiles" value={typedStats?.profiles ?? 0} color="orange" />
+            <StatCard title="Sessions" value={typedStats?.sessions ?? 0} color="blue" />
           </div>
 
           {/* Installed Plugins */}

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Sidebar } from '@/components/layout/sidebar';
+import { RealtimeSync } from '@/components/layout/realtime-sync';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -15,6 +16,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
+        <RealtimeSync />
         <div style={{ display: 'flex', minHeight: '100vh' }}>
           <Sidebar />
           <main

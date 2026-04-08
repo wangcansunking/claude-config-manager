@@ -5,3 +5,4 @@ export * from './managers/plugin-manager';
 export * from './managers/mcp-manager';
 export * from './managers/skill-scanner';
 export * from './managers/profile-manager';
+export * from './managers/session-manager';

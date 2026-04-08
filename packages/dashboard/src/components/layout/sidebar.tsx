@@ -17,7 +17,8 @@ const primaryNavItems: NavItem[] = [
   { label: 'MCP Servers', icon: '🔌', href: '/mcp-servers' },
   { label: 'Skills', icon: '⚡', href: '/skills' },
   { label: 'Commands', icon: '📝', href: '/commands' },
-  { label: 'Settings', icon: '⚙️', href: '/settings' },
+  { label: 'Settings', icon: '⚙\uFE0F', href: '/settings' },
+  { label: 'Sessions', icon: '🖥\uFE0F', href: '/sessions' },
 ];
 
 const secondaryNavItems: NavItem[] = [
@@ -76,6 +77,7 @@ export function Sidebar() {
             <li key={item.href}>
               <Link
                 href={item.href}
+                prefetch={true}
                 className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
                   isActive(item.href)
                     ? 'bg-accent-purple text-white'
@@ -97,6 +99,7 @@ export function Sidebar() {
             <li key={item.href}>
               <Link
                 href={item.href}
+                prefetch={true}
                 className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
                   isActive(item.href)
                     ? 'bg-accent-purple text-white'
