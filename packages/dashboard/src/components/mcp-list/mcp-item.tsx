@@ -12,6 +12,7 @@ export interface McpServer {
   name: string;
   config: McpServerConfig;
   enabled?: boolean;
+  source?: 'user' | 'system';
 }
 
 interface McpItemProps {

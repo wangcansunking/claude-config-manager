@@ -1,38 +1,45 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Header } from '@/components/layout/header';
 import { DetailPanel } from '@/components/layout/detail-panel';
 import { Button } from '@/components/shared/button';
 import { Tag } from '@/components/shared/tag';
 import { McpItem } from '@/components/mcp-list/mcp-item';
 import type { McpServer } from '@/components/mcp-list/mcp-item';
-import { fetchMcpServers, removeMcpServer } from '@/lib/api-client';
+import { removeMcpServer } from '@/lib/api-client';
+import { useMcpServers } from '@/lib/use-data';
+
+function SectionHeading({ icon, label, count }: { icon: string; label: string; count: number }) {
+  return (
+    <div className="flex items-center gap-2 mb-3">
+      <span className="text-base">{icon}</span>
+      <h3 className="text-sm font-semibold" style={{ color: label === 'User' ? '#a29bfe' : '#636e72' }}>
+        {label}
+      </h3>
+      <span
+        className="text-xs px-2 py-0.5 rounded-full"
+        style={{ backgroundColor: '#2a2a35', color: '#b2bec3' }}
+      >
+        {count}
+      </span>
+    </div>
+  );
+}
 
 export default function McpServersPage() {
-  const [servers, setServers] = useState<McpServer[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: serversRaw, isLoading: loading, mutate } = useMcpServers();
+  const servers = (serversRaw ?? []) as McpServer[];
   const [selected, setSelected] = useState<McpServer | null>(null);
 
-  useEffect(() => {
-    loadServers();
-  }, []);
-
-  async function loadServers() {
-    try {
-      const data = await fetchMcpServers();
-      setServers(data as McpServer[]);
-    } catch (err) {
-      console.error('Failed to load MCP servers', err);
-    } finally {
-      setLoading(false);
-    }
-  }
+  // Split by source
+  const userServers = servers.filter((s) => s.source === 'user' || !s.source);
+  const systemServers = servers.filter((s) => s.source === 'system');
 
   async function handleRemove(name: string) {
     try {
       await removeMcpServer(name);
-      setServers((prev) => prev.filter((s) => s.name !== name));
+      mutate();
       setSelected(null);
     } catch (err) {
       console.error('Failed to remove MCP server', err);
@@ -57,17 +64,44 @@ export default function McpServersPage() {
           </p>
         </div>
       ) : (
-        <div
-          className="rounded-xl overflow-hidden"
-          style={{ backgroundColor: '#1e1e28', border: '1px solid #2a2a35' }}
-        >
-          {servers.map((server) => (
-            <McpItem
-              key={server.name}
-              server={server}
-              onClick={() => setSelected(server)}
-            />
-          ))}
+        <div className="space-y-6">
+          {/* User Servers Section */}
+          {userServers.length > 0 && (
+            <div className="mb-8">
+              <SectionHeading icon={'\ud83d\udc64'} label="User" count={userServers.length} />
+              <div
+                className="rounded-xl overflow-hidden"
+                style={{ backgroundColor: '#1e1e28', border: '1px solid #2a2a35' }}
+              >
+                {userServers.map((server) => (
+                  <McpItem
+                    key={server.name}
+                    server={server}
+                    onClick={() => setSelected(server)}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* System Servers Section */}
+          {systemServers.length > 0 && (
+            <div>
+              <SectionHeading icon={'\ud83d\udd27'} label="System" count={systemServers.length} />
+              <div
+                className="rounded-xl overflow-hidden"
+                style={{ backgroundColor: '#1e1e28', border: '1px solid #2a2a35' }}
+              >
+                {systemServers.map((server) => (
+                  <McpItem
+                    key={server.name}
+                    server={server}
+                    onClick={() => setSelected(server)}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -136,7 +170,7 @@ export default function McpServersPage() {
                   {Object.entries(selected.config.env).map(([key]) => (
                     <div key={key} className="flex justify-between gap-4">
                       <code className="text-xs font-mono" style={{ color: '#fdcb6e' }}>{key}</code>
-                      <code className="text-xs font-mono" style={{ color: '#636e72' }}>••••••••</code>
+                      <code className="text-xs font-mono" style={{ color: '#636e72' }}>--------</code>
                     </div>
                   ))}
                 </div>

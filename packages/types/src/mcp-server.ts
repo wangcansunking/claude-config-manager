@@ -16,4 +16,5 @@ export interface McpServerEntry {
   name: string;
   config: McpServerConfig;
   enabled?: boolean;
+  source: 'user' | 'system';
 }

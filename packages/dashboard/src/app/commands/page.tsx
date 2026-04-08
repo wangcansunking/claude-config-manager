@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Header } from '@/components/layout/header';
 import { DetailPanel } from '@/components/layout/detail-panel';
 import { Tag } from '@/components/shared/tag';
-import { fetchCommands } from '@/lib/api-client';
+import { useCommands } from '@/lib/use-data';
 
 interface Command {
   name: string;
@@ -12,26 +12,74 @@ interface Command {
   filePath: string;
   content?: string;
   args?: string[];
+  source?: 'user' | 'system';
+}
+
+function SectionHeading({ icon, label, count }: { icon: string; label: string; count: number }) {
+  return (
+    <div className="flex items-center gap-2 mb-3">
+      <span className="text-base">{icon}</span>
+      <h3 className="text-sm font-semibold" style={{ color: label === 'User' ? '#a29bfe' : '#636e72' }}>
+        {label}
+      </h3>
+      <span
+        className="text-xs px-2 py-0.5 rounded-full"
+        style={{ backgroundColor: '#2a2a35', color: '#b2bec3' }}
+      >
+        {count}
+      </span>
+    </div>
+  );
+}
+
+function CommandRow({ cmd, isLast, onClick }: { cmd: Command; isLast: boolean; onClick: () => void }) {
+  return (
+    <div
+      className="flex items-start gap-4 px-5 py-4 cursor-pointer transition-colors hover:bg-[#252530]"
+      style={{ borderBottom: isLast ? 'none' : '1px solid #2a2a35' }}
+      onClick={onClick}
+    >
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-1">
+          <code
+            className="text-sm font-mono font-semibold"
+            style={{ color: '#a29bfe' }}
+          >
+            /{cmd.name}
+          </code>
+          {cmd.args && cmd.args.length > 0 && (
+            <span className="text-xs font-mono" style={{ color: '#636e72' }}>
+              {cmd.args.map((a) => `[${a}]`).join(' ')}
+            </span>
+          )}
+        </div>
+        {cmd.description && (
+          <p className="text-sm" style={{ color: '#b2bec3' }}>
+            {cmd.description}
+          </p>
+        )}
+      </div>
+      <svg
+        className="w-4 h-4 shrink-0 mt-0.5"
+        style={{ color: '#636e72' }}
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+      </svg>
+    </div>
+  );
 }
 
 export default function CommandsPage() {
-  const [commands, setCommands] = useState<Command[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: commandsRaw, isLoading: loading } = useCommands();
+  const commands = (commandsRaw ?? []) as Command[];
   const [selected, setSelected] = useState<Command | null>(null);
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const data = await fetchCommands();
-        setCommands(data as Command[]);
-      } catch (err) {
-        console.error('Failed to load commands', err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    load();
-  }, []);
+  // Split by source
+  const userCommands = commands.filter((c) => c.source === 'user');
+  const systemCommands = commands.filter((c) => c.source !== 'user');
 
   return (
     <div>
@@ -49,48 +97,46 @@ export default function CommandsPage() {
           </p>
         </div>
       ) : (
-        <div
-          className="rounded-xl overflow-hidden"
-          style={{ backgroundColor: '#1e1e28', border: '1px solid #2a2a35' }}
-        >
-          {commands.map((cmd, i) => (
-            <div
-              key={cmd.name}
-              className="flex items-start gap-4 px-5 py-4 cursor-pointer transition-colors hover:bg-[#252530]"
-              style={{ borderBottom: i < commands.length - 1 ? '1px solid #2a2a35' : 'none' }}
-              onClick={() => setSelected(cmd)}
-            >
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <code
-                    className="text-sm font-mono font-semibold"
-                    style={{ color: '#a29bfe' }}
-                  >
-                    /{cmd.name}
-                  </code>
-                  {cmd.args && cmd.args.length > 0 && (
-                    <span className="text-xs font-mono" style={{ color: '#636e72' }}>
-                      {cmd.args.map((a) => `[${a}]`).join(' ')}
-                    </span>
-                  )}
-                </div>
-                {cmd.description && (
-                  <p className="text-sm" style={{ color: '#b2bec3' }}>
-                    {cmd.description}
-                  </p>
-                )}
-              </div>
-              <svg
-                className="w-4 h-4 shrink-0 mt-0.5"
-                style={{ color: '#636e72' }}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+        <div className="space-y-6">
+          {/* User Commands Section */}
+          {userCommands.length > 0 && (
+            <div className="mb-8">
+              <SectionHeading icon={'\ud83d\udc64'} label="User" count={userCommands.length} />
+              <div
+                className="rounded-xl overflow-hidden"
+                style={{ backgroundColor: '#1e1e28', border: '1px solid #2a2a35' }}
               >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
+                {userCommands.map((cmd, i) => (
+                  <CommandRow
+                    key={cmd.name}
+                    cmd={cmd}
+                    isLast={i === userCommands.length - 1}
+                    onClick={() => setSelected(cmd)}
+                  />
+                ))}
+              </div>
             </div>
-          ))}
+          )}
+
+          {/* System Commands Section */}
+          {systemCommands.length > 0 && (
+            <div>
+              <SectionHeading icon={'\ud83d\udd27'} label="System" count={systemCommands.length} />
+              <div
+                className="rounded-xl overflow-hidden"
+                style={{ backgroundColor: '#1e1e28', border: '1px solid #2a2a35' }}
+              >
+                {systemCommands.map((cmd, i) => (
+                  <CommandRow
+                    key={cmd.name}
+                    cmd={cmd}
+                    isLast={i === systemCommands.length - 1}
+                    onClick={() => setSelected(cmd)}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 

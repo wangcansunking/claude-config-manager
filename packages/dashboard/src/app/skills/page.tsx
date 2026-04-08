@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Header } from '@/components/layout/header';
 import { DetailPanel } from '@/components/layout/detail-panel';
 import { SearchBox } from '@/components/shared/search-box';
 import { Tag } from '@/components/shared/tag';
-import { fetchSkills } from '@/lib/api-client';
+import { useSkills } from '@/lib/use-data';
 
 interface Skill {
   name: string;
@@ -14,6 +14,7 @@ interface Skill {
   content?: string;
   tags?: string[];
   version?: string;
+  source?: 'user' | 'system';
 }
 
 function getPluginName(filePath: string): string {
@@ -33,34 +34,41 @@ function getPluginName(filePath: string): string {
   return 'Custom';
 }
 
+function SectionHeading({ icon, label, count }: { icon: string; label: string; count: number }) {
+  return (
+    <div className="flex items-center gap-2 mb-3">
+      <span className="text-base">{icon}</span>
+      <h3 className="text-sm font-semibold" style={{ color: label === 'User' ? '#a29bfe' : '#636e72' }}>
+        {label}
+      </h3>
+      <span
+        className="text-xs px-2 py-0.5 rounded-full"
+        style={{ backgroundColor: '#2a2a35', color: '#b2bec3' }}
+      >
+        {count}
+      </span>
+    </div>
+  );
+}
+
 export default function SkillsPage() {
-  const [skills, setSkills] = useState<Skill[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: skillsRaw, isLoading: loading } = useSkills();
+  const skills = (skillsRaw ?? []) as Skill[];
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<Skill | null>(null);
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
-
-  useEffect(() => {
-    async function load() {
-      try {
-        const data = await fetchSkills();
-        setSkills(data as Skill[]);
-      } catch (err) {
-        console.error('Failed to load skills', err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    load();
-  }, []);
 
   const filtered = skills.filter((s) =>
     s.name.toLowerCase().includes(search.toLowerCase()) ||
     (s.description ?? '').toLowerCase().includes(search.toLowerCase())
   );
 
-  // Group by plugin
-  const grouped = filtered.reduce<Record<string, Skill[]>>((acc, skill) => {
+  // Split by source
+  const userSkills = filtered.filter((s) => s.source === 'user');
+  const systemSkills = filtered.filter((s) => s.source !== 'user');
+
+  // Group system skills by plugin
+  const systemGrouped = systemSkills.reduce<Record<string, Skill[]>>((acc, skill) => {
     const plugin = getPluginName(skill.filePath);
     if (!acc[plugin]) acc[plugin] = [];
     acc[plugin].push(skill);
@@ -69,6 +77,41 @@ export default function SkillsPage() {
 
   function toggleSection(plugin: string) {
     setCollapsed((prev) => ({ ...prev, [plugin]: !prev[plugin] }));
+  }
+
+  function renderSkillRow(skill: Skill, i: number, total: number) {
+    return (
+      <div
+        key={skill.name}
+        className="flex items-start gap-4 px-5 py-3 cursor-pointer transition-colors hover:bg-[#252530]"
+        style={{
+          borderBottom: i < total - 1 ? '1px solid #2a2a35' : 'none',
+        }}
+        onClick={() => setSelected(skill)}
+      >
+        <code
+          className="text-sm font-mono shrink-0"
+          style={{ color: '#a29bfe' }}
+        >
+          {skill.name}
+        </code>
+        <div className="flex-1 min-w-0">
+          {skill.description && (
+            <p className="text-xs" style={{ color: '#b2bec3' }}>
+              {skill.description}
+            </p>
+          )}
+          {skill.tags && skill.tags.length > 0 && (
+            <div className="flex gap-1.5 mt-1 flex-wrap">
+              {skill.tags.map((tag) => (
+                <Tag key={tag} label={tag} variant="gray" />
+              ))}
+            </div>
+          )}
+        </div>
+        <Tag label="skill" variant="purple" />
+      </div>
+    );
   }
 
   return (
@@ -93,81 +136,71 @@ export default function SkillsPage() {
           </p>
         </div>
       ) : (
-        <div className="space-y-4">
-          {Object.entries(grouped).map(([plugin, pluginSkills]) => {
-            const isCollapsed = collapsed[plugin];
-            return (
+        <div className="space-y-6">
+          {/* User Skills Section */}
+          {userSkills.length > 0 && (
+            <div className="mb-8">
+              <SectionHeading icon={'\ud83d\udc64'} label="User" count={userSkills.length} />
               <div
-                key={plugin}
                 className="rounded-xl overflow-hidden"
                 style={{ backgroundColor: '#1e1e28', border: '1px solid #2a2a35' }}
               >
-                {/* Section header */}
-                <button
-                  className="w-full flex items-center justify-between px-5 py-3 text-left transition-colors hover:bg-[#252530]"
-                  style={{ borderBottom: isCollapsed ? 'none' : '1px solid #2a2a35' }}
-                  onClick={() => toggleSection(plugin)}
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold" style={{ color: '#ffffff' }}>
-                      {plugin}
-                    </span>
-                    <Tag label={`${pluginSkills.length}`} variant="purple" />
-                  </div>
-                  <svg
-                    className="w-4 h-4 transition-transform"
-                    style={{
-                      color: '#636e72',
-                      transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)',
-                    }}
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-
-                {/* Skills list */}
-                {!isCollapsed && (
-                  <div>
-                    {pluginSkills.map((skill, i) => (
-                      <div
-                        key={skill.name}
-                        className="flex items-start gap-4 px-5 py-3 cursor-pointer transition-colors hover:bg-[#252530]"
-                        style={{
-                          borderBottom: i < pluginSkills.length - 1 ? '1px solid #2a2a35' : 'none',
-                        }}
-                        onClick={() => setSelected(skill)}
-                      >
-                        <code
-                          className="text-sm font-mono shrink-0"
-                          style={{ color: '#a29bfe' }}
-                        >
-                          {skill.name}
-                        </code>
-                        <div className="flex-1 min-w-0">
-                          {skill.description && (
-                            <p className="text-xs" style={{ color: '#b2bec3' }}>
-                              {skill.description}
-                            </p>
-                          )}
-                          {skill.tags && skill.tags.length > 0 && (
-                            <div className="flex gap-1.5 mt-1 flex-wrap">
-                              {skill.tags.map((tag) => (
-                                <Tag key={tag} label={tag} variant="gray" />
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                        <Tag label="skill" variant="purple" />
-                      </div>
-                    ))}
-                  </div>
-                )}
+                {userSkills.map((skill, i) => renderSkillRow(skill, i, userSkills.length))}
               </div>
-            );
-          })}
+            </div>
+          )}
+
+          {/* System Skills Section */}
+          {systemSkills.length > 0 && (
+            <div>
+              <SectionHeading icon={'\ud83d\udd27'} label="System" count={systemSkills.length} />
+              <div className="space-y-4">
+                {Object.entries(systemGrouped).map(([plugin, pluginSkills]) => {
+                  const isCollapsed = collapsed[plugin];
+                  return (
+                    <div
+                      key={plugin}
+                      className="rounded-xl overflow-hidden"
+                      style={{ backgroundColor: '#1e1e28', border: '1px solid #2a2a35' }}
+                    >
+                      {/* Section header */}
+                      <button
+                        className="w-full flex items-center justify-between px-5 py-3 text-left transition-colors hover:bg-[#252530]"
+                        style={{ borderBottom: isCollapsed ? 'none' : '1px solid #2a2a35' }}
+                        onClick={() => toggleSection(plugin)}
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-semibold" style={{ color: '#ffffff' }}>
+                            {plugin}
+                          </span>
+                          <Tag label={`${pluginSkills.length}`} variant="purple" />
+                        </div>
+                        <svg
+                          className="w-4 h-4 transition-transform"
+                          style={{
+                            color: '#636e72',
+                            transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)',
+                          }}
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </button>
+
+                      {/* Skills list */}
+                      {!isCollapsed && (
+                        <div>
+                          {pluginSkills.map((skill, i) => renderSkillRow(skill, i, pluginSkills.length))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       )}
 

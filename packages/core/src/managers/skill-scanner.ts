@@ -43,22 +43,15 @@ async function readDirSafe(dirPath: string): Promise<string[]> {
   }
 }
 
-async function readDirFiles(dirPath: string): Promise<string[]> {
-  try {
-    const entries = await readdir(dirPath, { withFileTypes: true });
-    return entries.filter((e) => e.isFile()).map((e) => e.name);
-  } catch {
-    return [];
-  }
-}
-
 export class SkillScanner {
   private readonly pluginsJsonPath: string;
-  private readonly commandsPath: string;
+  private readonly userSkillsPath: string;
+  private readonly userCommandsPath: string;
 
   constructor(claudeHome: string) {
     this.pluginsJsonPath = join(claudeHome, 'plugins', 'installed_plugins.json');
-    this.commandsPath = join(claudeHome, 'commands');
+    this.userSkillsPath = join(claudeHome, 'skills');
+    this.userCommandsPath = join(claudeHome, 'commands');
   }
 
   private async readInstalledPlugins(): Promise<InstalledPluginsJson> {
@@ -89,6 +82,37 @@ export class SkillScanner {
           description,
           filePath: skillFilePath,
           content,
+          source: 'system',
+        });
+      } catch {
+        // Skip unreadable files
+      }
+    }
+
+    return skills;
+  }
+
+  /**
+   * Scan ~/.claude/skills/ for user-created skills
+   * Structure: ~/.claude/skills/<name>/Skill.md
+   */
+  private async scanUserSkills(): Promise<SkillDefinition[]> {
+    const subDirs = await readDirSafe(this.userSkillsPath);
+    const skills: SkillDefinition[] = [];
+
+    for (const subDir of subDirs) {
+      const skillFilePath = join(this.userSkillsPath, subDir, 'Skill.md');
+      if (!(await fileExists(skillFilePath))) continue;
+      try {
+        const content = await readFile(skillFilePath, 'utf-8');
+        const { name, description } = parseFrontmatter(content);
+        skills.push({
+          name: name ?? subDir,
+          description,
+          filePath: skillFilePath,
+          content,
+          pluginName: 'user',
+          source: 'user',
         });
       } catch {
         // Skip unreadable files
@@ -102,13 +126,17 @@ export class SkillScanner {
     const { plugins } = await this.readInstalledPlugins();
     const allSkills: SkillDefinition[] = [];
 
+    // 1. User skills from ~/.claude/skills/
+    const userSkills = await this.scanUserSkills();
+    allSkills.push(...userSkills);
+
+    // 2. Plugin skills (system)
     for (const [pluginName, installs] of Object.entries(plugins)) {
       const install = installs[0];
       if (!install) continue;
       const skills = await this.scanPlugin(install.installPath);
-      // Annotate with plugin name
       for (const skill of skills) {
-        allSkills.push({ ...skill, pluginName });
+        allSkills.push({ ...skill, pluginName, source: 'system' });
       }
     }
 
@@ -130,25 +158,74 @@ export class SkillScanner {
     }
   }
 
+  /**
+   * Scan commands from both user (~/.claude/commands/) and plugin dirs.
+   * User commands: ~/.claude/commands/<name>/Skill.md or ~/.claude/commands/<name>.md
+   * Plugin commands: <plugin>/commands/<name>/Skill.md
+   */
   async scanCommands(): Promise<CommandDefinition[]> {
-    const files = await readDirFiles(this.commandsPath);
     const commands: CommandDefinition[] = [];
 
-    for (const file of files) {
-      if (!file.endsWith('.md')) continue;
-      const filePath = join(this.commandsPath, file);
-      try {
-        const content = await readFile(filePath, 'utf-8');
-        const { name, description } = parseFrontmatter(content);
-        const baseName = file.replace(/\.md$/, '');
-        commands.push({
-          name: name ?? baseName,
-          description,
-          filePath,
-          content,
-        });
-      } catch {
-        // Skip unreadable files
+    // 1. User commands from ~/.claude/commands/
+    const userCommands = await this.scanCommandsDir(this.userCommandsPath, 'user');
+    commands.push(...userCommands);
+
+    // 2. Plugin commands (system)
+    const { plugins } = await this.readInstalledPlugins();
+    for (const [_pluginName, installs] of Object.entries(plugins)) {
+      const install = installs[0];
+      if (!install) continue;
+      const commandsDir = join(install.installPath, 'commands');
+      const pluginCommands = await this.scanCommandsDir(commandsDir, 'system');
+      commands.push(...pluginCommands);
+    }
+
+    return commands;
+  }
+
+  private async scanCommandsDir(
+    dirPath: string,
+    source: 'user' | 'system'
+  ): Promise<CommandDefinition[]> {
+    const commands: CommandDefinition[] = [];
+
+    // Check for subdirectories with Skill.md
+    const subDirs = await readDirSafe(dirPath);
+    for (const subDir of subDirs) {
+      const skillFilePath = join(dirPath, subDir, 'Skill.md');
+      if (await fileExists(skillFilePath)) {
+        try {
+          const content = await readFile(skillFilePath, 'utf-8');
+          const { name, description } = parseFrontmatter(content);
+          commands.push({
+            name: name ?? subDir,
+            description,
+            filePath: skillFilePath,
+            content,
+            source,
+          });
+        } catch {
+          // skip
+        }
+        continue;
+      }
+
+      // Also check for direct .md files in subdirs
+      const mdPath = join(dirPath, subDir + '.md');
+      if (await fileExists(mdPath)) {
+        try {
+          const content = await readFile(mdPath, 'utf-8');
+          const { name, description } = parseFrontmatter(content);
+          commands.push({
+            name: name ?? subDir,
+            description,
+            filePath: mdPath,
+            content,
+            source,
+          });
+        } catch {
+          // skip
+        }
       }
     }
 
