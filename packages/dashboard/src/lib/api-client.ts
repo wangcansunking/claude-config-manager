@@ -98,6 +98,14 @@ export function fetchSessions() {
   return request<unknown[]>('/sessions');
 }
 
+export function fetchSessionHistory(historyFile: string, limit?: number) {
+  const params = new URLSearchParams({ file: historyFile });
+  if (limit) params.set('limit', String(limit));
+  return request<{ role: string; text: string; timestamp: string }[]>(
+    `/sessions/history?${params.toString()}`,
+  );
+}
+
 // ---- Skills -----------------------------------------------------------------
 
 export function fetchSkills() {

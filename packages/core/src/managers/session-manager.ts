@@ -1,5 +1,7 @@
 import { join } from 'path';
-import { readdir } from 'fs/promises';
+import { readdir, stat } from 'fs/promises';
+import { createReadStream } from 'fs';
+import { createInterface } from 'readline';
 import { readJsonFile, fileExists } from '../utils/file-ops';
 
 export interface SessionInfo {
@@ -17,6 +19,14 @@ export interface SessionInfo {
     hasClaudeMd: boolean;
     hasProjectSettings: boolean;
   };
+  projectDir?: string;
+  historyFile?: string;
+}
+
+export interface SessionHistoryEntry {
+  role: string;
+  text: string;
+  timestamp: string;
 }
 
 export class SessionManager {
@@ -63,9 +73,184 @@ export class SessionManager {
     return sessions;
   }
 
+  async listAllSessions(): Promise<SessionInfo[]> {
+    // 1. Get active sessions from sessions/*.json
+    const activeSessions = await this.listSessions();
+    const activeIds = new Set(activeSessions.map((s) => s.sessionId));
+
+    // 2. Get historical sessions from projects/*/
+    const projectsDir = join(this.claudeHome, 'projects');
+    const historicalSessions: SessionInfo[] = [];
+
+    if (await fileExists(projectsDir)) {
+      let projectDirs: string[];
+      try {
+        projectDirs = await readdir(projectsDir);
+      } catch {
+        projectDirs = [];
+      }
+
+      for (const dirName of projectDirs) {
+        const decodedPath = this.decodeProjectDirName(dirName);
+        const dirPath = join(projectsDir, dirName);
+
+        let dirStat;
+        try {
+          dirStat = await stat(dirPath);
+        } catch {
+          continue;
+        }
+        if (!dirStat.isDirectory()) continue;
+
+        let entries: string[];
+        try {
+          entries = await readdir(dirPath);
+        } catch {
+          continue;
+        }
+
+        for (const entry of entries) {
+          if (!entry.endsWith('.jsonl')) continue;
+          const sessionId = entry.replace(/\.jsonl$/, '');
+
+          // Skip if already in active sessions
+          if (activeIds.has(sessionId)) {
+            // Enrich the active session with project info
+            const active = activeSessions.find((s) => s.sessionId === sessionId);
+            if (active) {
+              active.projectDir = decodedPath;
+              active.historyFile = join(dirPath, entry);
+            }
+            continue;
+          }
+
+          // Parse the first line of the jsonl to get metadata
+          const historyFile = join(dirPath, entry);
+          const meta = await this.parseSessionMeta(historyFile);
+
+          historicalSessions.push({
+            pid: meta.pid ?? 0,
+            sessionId,
+            cwd: meta.cwd ?? decodedPath,
+            startedAt: meta.startedAt ?? 0,
+            alive: false,
+            projectDir: decodedPath,
+            historyFile,
+          });
+        }
+      }
+    }
+
+    return [...activeSessions, ...historicalSessions];
+  }
+
+  async getSessionHistory(
+    historyFile: string,
+    limit: number = 20,
+  ): Promise<SessionHistoryEntry[]> {
+    if (!(await fileExists(historyFile))) return [];
+
+    const entries: SessionHistoryEntry[] = [];
+
+    try {
+      const rl = createInterface({
+        input: createReadStream(historyFile, { encoding: 'utf-8' }),
+        crlfDelay: Infinity,
+      });
+
+      for await (const line of rl) {
+        if (!line.trim()) continue;
+        try {
+          const obj = JSON.parse(line) as {
+            type?: string;
+            message?: { role?: string; content?: string | Array<{ type: string; text?: string }> };
+            timestamp?: string;
+          };
+
+          // We want user messages (type === 'user')
+          if (obj.type === 'user' && obj.message?.role === 'user') {
+            let text = '';
+            if (typeof obj.message.content === 'string') {
+              text = obj.message.content;
+            } else if (Array.isArray(obj.message.content)) {
+              text = obj.message.content
+                .filter((c) => c.type === 'text' && c.text)
+                .map((c) => c.text!)
+                .join('\n');
+            }
+
+            if (text) {
+              entries.push({
+                role: 'user',
+                text,
+                timestamp: obj.timestamp ?? '',
+              });
+            }
+          }
+        } catch {
+          // skip malformed lines
+        }
+      }
+    } catch {
+      // file read error
+    }
+
+    // Return last N entries
+    return entries.slice(-limit);
+  }
+
   async getActiveSessions(): Promise<SessionInfo[]> {
     const all = await this.listSessions();
     return all.filter((s) => s.alive);
+  }
+
+  private decodeProjectDirName(dirName: string): string {
+    // On Windows: C--repos-claude-go -> C:\repos\claude-go
+    // On Unix: -home-user-project -> /home/user/project
+    // The encoding replaces path separators and colons with dashes
+    if (/^[A-Z]--/.test(dirName)) {
+      // Windows path: starts with drive letter
+      const drive = dirName[0];
+      const rest = dirName.slice(2).replace(/-/g, '\\');
+      return `${drive}:${rest}`;
+    }
+    // Unix path: starts with dash (for leading /)
+    return dirName.replace(/-/g, '/');
+  }
+
+  private async parseSessionMeta(
+    historyFile: string,
+  ): Promise<{ pid?: number; cwd?: string; startedAt?: number }> {
+    try {
+      const rl = createInterface({
+        input: createReadStream(historyFile, { encoding: 'utf-8' }),
+        crlfDelay: Infinity,
+      });
+
+      for await (const line of rl) {
+        if (!line.trim()) continue;
+        try {
+          const obj = JSON.parse(line) as {
+            timestamp?: string;
+            cwd?: string;
+            sessionId?: string;
+          };
+          const startedAt = obj.timestamp
+            ? new Date(obj.timestamp).getTime()
+            : 0;
+          rl.close();
+          return {
+            cwd: obj.cwd,
+            startedAt,
+          };
+        } catch {
+          break;
+        }
+      }
+    } catch {
+      // ignore
+    }
+    return {};
   }
 
   private isProcessAlive(pid: number): boolean {
