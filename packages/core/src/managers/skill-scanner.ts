@@ -1,6 +1,6 @@
 import { join } from 'path';
 import { readdir, readFile } from 'fs/promises';
-import { readJsonFile, fileExists } from '../utils/file-ops';
+import { readJsonFile, fileExists } from '../utils/file-ops.js';
 import { FileNotFoundError } from '@ccm/types';
 import type { SkillDefinition, CommandDefinition } from '@ccm/types';
 

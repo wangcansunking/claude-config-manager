@@ -1,5 +1,5 @@
 import { join, dirname } from 'path';
-import { readJsonFile, writeJsonFile, fileExists } from '../utils/file-ops';
+import { readJsonFile, writeJsonFile, fileExists } from '../utils/file-ops.js';
 import { ConflictError, NotFoundError } from '@ccm/types';
 import type { McpServerConfig, McpServerEntry } from '@ccm/types';
 

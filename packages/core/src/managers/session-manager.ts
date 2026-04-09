@@ -1,8 +1,8 @@
 import { join } from 'path';
-import { readdir, stat } from 'fs/promises';
+import { readdir, stat, readFile } from 'fs/promises';
 import { createReadStream } from 'fs';
 import { createInterface } from 'readline';
-import { readJsonFile, fileExists } from '../utils/file-ops';
+import { readJsonFile, fileExists } from '../utils/file-ops.js';
 
 export interface SessionInfo {
   pid: number;
@@ -10,6 +10,7 @@ export interface SessionInfo {
   cwd: string;
   startedAt: number;
   alive: boolean;
+  lastMessage?: string;
   ide?: {
     name: string;
     transport: string;
@@ -32,18 +33,90 @@ export interface SessionHistoryEntry {
 export class SessionManager {
   constructor(private claudeHome: string) {}
 
-  async listSessions(): Promise<SessionInfo[]> {
+  // List ALL sessions by combining:
+  // 1. Active sessions from sessions dir
+  // 2. All sessions from history.jsonl (primary index)
+  // 3. Session dirs from projects dir
+  async listAllSessions(): Promise<SessionInfo[]> {
+    const sessionMap = new Map<string, SessionInfo>();
+
+    // 1. Parse history.jsonl — the most complete session index
+    await this.parseHistoryIndex(sessionMap);
+
+    // 2. Enrich with active session data (PID, alive status)
+    await this.enrichWithActiveSessions(sessionMap);
+
+    // 3. Enrich with project dir info + history file paths
+    await this.enrichWithProjectDirs(sessionMap);
+
+    // 4. Sort: alive first, then by startedAt descending
+    const sessions = Array.from(sessionMap.values());
+    sessions.sort((a, b) => {
+      if (a.alive !== b.alive) return a.alive ? -1 : 1;
+      return b.startedAt - a.startedAt;
+    });
+
+    return sessions;
+  }
+
+  // Parse history.jsonl to discover all sessions
+  private async parseHistoryIndex(sessionMap: Map<string, SessionInfo>): Promise<void> {
+    const historyPath = join(this.claudeHome, 'history.jsonl');
+    if (!(await fileExists(historyPath))) return;
+
+    try {
+      const content = await readFile(historyPath, 'utf-8');
+      for (const line of content.split('\n')) {
+        if (!line.trim()) continue;
+        try {
+          const entry = JSON.parse(line) as {
+            display?: string;
+            timestamp?: number;
+            project?: string;
+            sessionId?: string;
+          };
+          if (!entry.sessionId) continue;
+
+          const existing = sessionMap.get(entry.sessionId);
+          if (existing) {
+            // Update with latest timestamp and message
+            if (entry.timestamp && entry.timestamp > existing.startedAt) {
+              // Keep startedAt as earliest, but track last activity
+            }
+            if (entry.display) {
+              existing.lastMessage = entry.display;
+            }
+          } else {
+            sessionMap.set(entry.sessionId, {
+              pid: 0,
+              sessionId: entry.sessionId,
+              cwd: entry.project ?? '',
+              startedAt: entry.timestamp ?? 0,
+              alive: false,
+              lastMessage: entry.display,
+              projectDir: entry.project,
+            });
+          }
+        } catch {
+          // skip malformed lines
+        }
+      }
+    } catch {
+      // can't read history
+    }
+  }
+
+  // Read active sessions from sessions dir
+  private async enrichWithActiveSessions(sessionMap: Map<string, SessionInfo>): Promise<void> {
     const sessionsDir = join(this.claudeHome, 'sessions');
-    if (!(await fileExists(sessionsDir))) return [];
+    if (!(await fileExists(sessionsDir))) return;
 
     let files: string[];
     try {
       files = await readdir(sessionsDir);
     } catch {
-      return [];
+      return;
     }
-
-    const sessions: SessionInfo[] = [];
 
     for (const file of files) {
       if (!file.endsWith('.json')) continue;
@@ -59,94 +132,107 @@ export class SessionManager {
         const ide = await this.getIdeInfo(data.pid);
         const projectConfig = await this.getProjectConfig(data.cwd);
 
-        sessions.push({
-          ...data,
-          alive,
-          ide,
-          projectConfig,
-        });
+        const existing = sessionMap.get(data.sessionId);
+        if (existing) {
+          existing.pid = data.pid;
+          existing.alive = alive;
+          existing.cwd = data.cwd;
+          existing.startedAt = data.startedAt;
+          existing.ide = ide;
+          existing.projectConfig = projectConfig;
+        } else {
+          sessionMap.set(data.sessionId, {
+            ...data,
+            alive,
+            ide,
+            projectConfig,
+          });
+        }
       } catch {
-        // skip invalid session files
+        // skip
       }
     }
-
-    return sessions;
   }
 
-  async listAllSessions(): Promise<SessionInfo[]> {
-    // 1. Get active sessions from sessions/*.json
-    const activeSessions = await this.listSessions();
-    const activeIds = new Set(activeSessions.map((s) => s.sessionId));
-
-    // 2. Get historical sessions from projects/*/
+  // Scan projects dir for history files
+  private async enrichWithProjectDirs(sessionMap: Map<string, SessionInfo>): Promise<void> {
     const projectsDir = join(this.claudeHome, 'projects');
-    const historicalSessions: SessionInfo[] = [];
+    if (!(await fileExists(projectsDir))) return;
 
-    if (await fileExists(projectsDir)) {
-      let projectDirs: string[];
+    let projectDirs: string[];
+    try {
+      projectDirs = await readdir(projectsDir);
+    } catch {
+      return;
+    }
+
+    for (const dirName of projectDirs) {
+      const decodedPath = this.decodeProjectDirName(dirName);
+      const dirPath = join(projectsDir, dirName);
+
+      let dirStat;
       try {
-        projectDirs = await readdir(projectsDir);
+        dirStat = await stat(dirPath);
       } catch {
-        projectDirs = [];
+        continue;
+      }
+      if (!dirStat.isDirectory()) continue;
+
+      let entries: string[];
+      try {
+        entries = await readdir(dirPath);
+      } catch {
+        continue;
       }
 
-      for (const dirName of projectDirs) {
-        const decodedPath = this.decodeProjectDirName(dirName);
-        const dirPath = join(projectsDir, dirName);
+      // .jsonl files are conversation logs
+      for (const entry of entries) {
+        if (!entry.endsWith('.jsonl')) continue;
+        const sessionId = entry.replace(/\.jsonl$/, '');
+        const historyFile = join(dirPath, entry);
 
-        let dirStat;
-        try {
-          dirStat = await stat(dirPath);
-        } catch {
-          continue;
-        }
-        if (!dirStat.isDirectory()) continue;
-
-        let entries: string[];
-        try {
-          entries = await readdir(dirPath);
-        } catch {
-          continue;
-        }
-
-        for (const entry of entries) {
-          if (!entry.endsWith('.jsonl')) continue;
-          const sessionId = entry.replace(/\.jsonl$/, '');
-
-          // Skip if already in active sessions
-          if (activeIds.has(sessionId)) {
-            // Enrich the active session with project info
-            const active = activeSessions.find((s) => s.sessionId === sessionId);
-            if (active) {
-              active.projectDir = decodedPath;
-              active.historyFile = join(dirPath, entry);
-            }
-            continue;
+        const existing = sessionMap.get(sessionId);
+        if (existing) {
+          existing.historyFile = historyFile;
+          if (!existing.projectDir) existing.projectDir = decodedPath;
+          // Load project config if not already loaded
+          if (!existing.projectConfig) {
+            existing.projectConfig = await this.getProjectConfig(existing.cwd || decodedPath);
           }
+        }
+      }
 
-          // Parse the first line of the jsonl to get metadata
-          const historyFile = join(dirPath, entry);
-          const meta = await this.parseSessionMeta(historyFile);
+      // Session ID subdirectories (some sessions only have dirs, not .jsonl)
+      for (const entry of entries) {
+        if (entry.endsWith('.jsonl')) continue;
+        const entryPath = join(dirPath, entry);
+        let entryStat;
+        try {
+          entryStat = await stat(entryPath);
+        } catch {
+          continue;
+        }
+        if (!entryStat.isDirectory()) continue;
+        // Skip 'memory' and other non-UUID dirs
+        if (!/^[0-9a-f]{8}-/.test(entry)) continue;
 
-          historicalSessions.push({
-            pid: meta.pid ?? 0,
-            sessionId,
-            cwd: meta.cwd ?? decodedPath,
-            startedAt: meta.startedAt ?? 0,
+        if (!sessionMap.has(entry)) {
+          sessionMap.set(entry, {
+            pid: 0,
+            sessionId: entry,
+            cwd: decodedPath,
+            startedAt: entryStat.mtimeMs,
             alive: false,
             projectDir: decodedPath,
-            historyFile,
           });
         }
       }
     }
-
-    return [...activeSessions, ...historicalSessions];
   }
 
   async getSessionHistory(
     historyFile: string,
-    limit: number = 20,
+    limit: number = 50,
   ): Promise<SessionHistoryEntry[]> {
     if (!(await fileExists(historyFile))) return [];
 
@@ -167,7 +253,6 @@ export class SessionManager {
             timestamp?: string;
           };
 
-          // We want user messages (type === 'user')
           if (obj.type === 'user' && obj.message?.role === 'user') {
             let text = '';
             if (typeof obj.message.content === 'string') {
@@ -195,65 +280,25 @@ export class SessionManager {
       // file read error
     }
 
-    // Return last N entries
     return entries.slice(-limit);
   }
 
   async getActiveSessions(): Promise<SessionInfo[]> {
-    const all = await this.listSessions();
+    const all = await this.listAllSessions();
     return all.filter((s) => s.alive);
   }
 
   private decodeProjectDirName(dirName: string): string {
-    // On Windows: C--repos-claude-go -> C:\repos\claude-go
-    // On Unix: -home-user-project -> /home/user/project
-    // The encoding replaces path separators and colons with dashes
     if (/^[A-Z]--/.test(dirName)) {
-      // Windows path: starts with drive letter
       const drive = dirName[0];
       const rest = dirName.slice(2).replace(/-/g, '\\');
       return `${drive}:${rest}`;
     }
-    // Unix path: starts with dash (for leading /)
     return dirName.replace(/-/g, '/');
   }
 
-  private async parseSessionMeta(
-    historyFile: string,
-  ): Promise<{ pid?: number; cwd?: string; startedAt?: number }> {
-    try {
-      const rl = createInterface({
-        input: createReadStream(historyFile, { encoding: 'utf-8' }),
-        crlfDelay: Infinity,
-      });
-
-      for await (const line of rl) {
-        if (!line.trim()) continue;
-        try {
-          const obj = JSON.parse(line) as {
-            timestamp?: string;
-            cwd?: string;
-            sessionId?: string;
-          };
-          const startedAt = obj.timestamp
-            ? new Date(obj.timestamp).getTime()
-            : 0;
-          rl.close();
-          return {
-            cwd: obj.cwd,
-            startedAt,
-          };
-        } catch {
-          break;
-        }
-      }
-    } catch {
-      // ignore
-    }
-    return {};
-  }
-
   private isProcessAlive(pid: number): boolean {
+    if (!pid) return false;
     try {
       process.kill(pid, 0);
       return true;
@@ -265,6 +310,7 @@ export class SessionManager {
   private async getIdeInfo(
     pid: number,
   ): Promise<{ name: string; transport: string } | undefined> {
+    if (!pid) return undefined;
     const lockFile = join(this.claudeHome, 'ide', `${pid}.lock`);
     try {
       const data = (await readJsonFile(lockFile)) as {
@@ -283,6 +329,7 @@ export class SessionManager {
   private async getProjectConfig(
     cwd: string,
   ): Promise<SessionInfo['projectConfig']> {
+    if (!cwd) return { hasMcpJson: false, hasClaudeMd: false, hasProjectSettings: false };
     return {
       hasMcpJson: await fileExists(join(cwd, '.mcp.json')),
       hasClaudeMd: await fileExists(join(cwd, 'CLAUDE.md')),

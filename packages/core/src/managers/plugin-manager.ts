@@ -1,5 +1,5 @@
 import { join } from 'path';
-import { readJsonFile, writeJsonFile } from '../utils/file-ops';
+import { readJsonFile, writeJsonFile } from '../utils/file-ops.js';
 import { FileNotFoundError } from '@ccm/types';
 import type { InstalledPlugin, PluginListEntry } from '@ccm/types';
 

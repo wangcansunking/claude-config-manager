@@ -7,11 +7,15 @@
   "scripts": {
     "build": "turbo build",
     "dev": "turbo dev",
+    "start": "cd packages/dashboard && npx next start -p 3399",
+    "build:dashboard": "turbo build --filter=@ccm/dashboard",
     "test": "turbo test",
     "test:e2e": "turbo test:e2e",
     "lint": "turbo lint",
     "type-check": "turbo type-check",
-    "clean": "turbo clean"
+    "clean": "turbo clean",
+    "prepublishOnly": "turbo build",
+    "postinstall": "turbo build || true"
   },
   "bin": {
     "claude-config": "./packages/cli/dist/index.js"

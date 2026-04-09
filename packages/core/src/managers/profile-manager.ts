@@ -1,6 +1,6 @@
 import { join } from 'path';
 import { readdir } from 'fs/promises';
-import { readJsonFile, writeJsonFile, fileExists } from '../utils/file-ops';
+import { readJsonFile, writeJsonFile, fileExists } from '../utils/file-ops.js';
 import { FileNotFoundError, NotFoundError, ValidationError } from '@ccm/types';
 import type { Profile, ProfileExport } from '@ccm/types';
 
