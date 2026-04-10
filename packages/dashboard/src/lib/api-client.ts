@@ -112,6 +112,16 @@ export function fetchSkills() {
   return request<unknown[]>('/skills');
 }
 
+export async function updateSkillContent(filePath: string, content: string) {
+  const res = await fetch('/api/skills/update', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ filePath, content }),
+  });
+  if (!res.ok) throw new Error('Failed to save');
+  return res.json();
+}
+
 // ---- Commands ---------------------------------------------------------------
 
 export function fetchCommands() {
