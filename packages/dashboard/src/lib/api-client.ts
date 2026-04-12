@@ -122,6 +122,44 @@ export async function updateSkillContent(filePath: string, content: string) {
   return res.json();
 }
 
+// ---- MCP Registry -----------------------------------------------------------
+
+export async function searchMcpRegistry(query: string) {
+  const res = await fetch(`/api/mcp-registry?q=${encodeURIComponent(query)}`);
+  if (!res.ok) throw new Error('Search failed');
+  return res.json() as Promise<{
+    results: {
+      name: string;
+      description: string;
+      source: 'mcp-registry' | 'npm' | 'smithery';
+      version?: string;
+      installCommand?: string;
+      repositoryUrl?: string;
+      npmUrl?: string;
+      score?: number;
+    }[];
+    smitheryAvailable: boolean;
+  }>;
+}
+
+export async function installMcpFromRegistry(
+  name: string,
+  command: string,
+  args: string[],
+  env?: Record<string, string>,
+) {
+  const res = await fetch('/api/mcp-registry/install', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, command, args, env }),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({ error: 'Install failed' }));
+    throw new Error(data.error ?? 'Install failed');
+  }
+  return res.json();
+}
+
 // ---- Commands ---------------------------------------------------------------
 
 export function fetchCommands() {
@@ -168,4 +206,38 @@ export function importProfile(data: string, strategy: 'merge' | 'replace' = 'rep
     method: 'POST',
     body: JSON.stringify({ data, strategy }),
   });
+}
+
+// ---- Marketplaces -----------------------------------------------------------
+
+export function fetchMarketplaces() {
+  return request<{ name: string; source: { source: string; repo: string }; installLocation: string; lastUpdated: string }[]>(
+    '/marketplaces',
+  );
+}
+
+export function addMarketplace(name: string, repo: string) {
+  return request<{ success: boolean }>('/marketplaces', {
+    method: 'POST',
+    body: JSON.stringify({ name, repo }),
+  });
+}
+
+export function removeMarketplace(name: string) {
+  return request<{ success: boolean }>(`/marketplaces/${encodeURIComponent(name)}`, {
+    method: 'DELETE',
+  });
+}
+
+export function fetchAvailablePlugins(marketplace: string) {
+  return request<{
+    name: string;
+    description: string;
+    version: string;
+    installed: boolean;
+    enabled: boolean;
+    marketplace: string;
+    category?: string;
+    homepage?: string;
+  }[]>(`/marketplaces/${encodeURIComponent(marketplace)}/plugins`);
 }

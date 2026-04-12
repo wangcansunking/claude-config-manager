@@ -1,36 +1,617 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Header } from '@/components/layout/header';
 import { DetailPanel } from '@/components/layout/detail-panel';
 import { Button } from '@/components/shared/button';
 import { Tag } from '@/components/shared/tag';
+import { SearchBox } from '@/components/shared/search-box';
 import { McpItem } from '@/components/mcp-list/mcp-item';
 import type { McpServer } from '@/components/mcp-list/mcp-item';
-import { removeMcpServer } from '@/lib/api-client';
+import { removeMcpServer, searchMcpRegistry, installMcpFromRegistry } from '@/lib/api-client';
 import { useMcpServers } from '@/lib/use-data';
 
-function SectionHeading({ icon, label, count }: { icon: string; label: string; count: number }) {
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+interface McpRegistryResult {
+  name: string;
+  description: string;
+  source: 'mcp-registry' | 'npm' | 'smithery';
+  version?: string;
+  installCommand?: string;
+  repositoryUrl?: string;
+  npmUrl?: string;
+  score?: number;
+}
+
+type SourceFilter = 'all' | 'mcp-registry' | 'npm' | 'smithery';
+
+// ---------------------------------------------------------------------------
+// CollapsibleSection (unchanged)
+// ---------------------------------------------------------------------------
+
+function CollapsibleSection({ icon, label, count, children }: { icon: string; label: string; count: number; children: React.ReactNode }) {
+  const [open, setOpen] = useState(true);
   return (
-    <div className="flex items-center gap-2 mb-3">
-      <span className="text-base">{icon}</span>
-      <h3 className="text-sm font-semibold" style={{ color: label === 'User' ? '#a29bfe' : '#636e72' }}>
-        {label}
-      </h3>
-      <span
-        className="text-xs px-2 py-0.5 rounded-full"
-        style={{ backgroundColor: '#2a2a35', color: '#b2bec3' }}
+    <div className="rounded-xl overflow-hidden" style={{ backgroundColor: '#1e1e28', border: '1px solid #2a2a35' }}>
+      <button
+        className="w-full flex items-center justify-between px-5 py-3 text-left transition-colors hover:bg-[#252530]"
+        style={{ borderBottom: open ? '1px solid #2a2a35' : 'none' }}
+        onClick={() => setOpen(!open)}
       >
-        {count}
-      </span>
+        <div className="flex items-center gap-2">
+          <span className="text-base">{icon}</span>
+          <span className="text-sm font-semibold" style={{ color: label === 'User' ? '#a29bfe' : '#636e72' }}>{label}</span>
+          <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: '#2a2a35', color: '#b2bec3' }}>{count}</span>
+        </div>
+        <svg className="w-4 h-4 transition-transform" style={{ color: '#636e72', transform: open ? 'rotate(0deg)' : 'rotate(-90deg)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+      {open && <div>{children}</div>}
     </div>
   );
 }
+
+// ---------------------------------------------------------------------------
+// Source badge helper
+// ---------------------------------------------------------------------------
+
+function sourceBadgeVariant(source: McpRegistryResult['source']): 'green' | 'blue' | 'orange' {
+  switch (source) {
+    case 'mcp-registry': return 'green';
+    case 'npm': return 'blue';
+    case 'smithery': return 'orange';
+  }
+}
+
+function sourceLabel(source: McpRegistryResult['source']): string {
+  switch (source) {
+    case 'mcp-registry': return 'Official Registry';
+    case 'npm': return 'npm';
+    case 'smithery': return 'Smithery';
+  }
+}
+
+// ---------------------------------------------------------------------------
+// RegistryResultCard
+// ---------------------------------------------------------------------------
+
+function RegistryResultCard({
+  result,
+  onInstall,
+}: {
+  result: McpRegistryResult;
+  onInstall: (r: McpRegistryResult) => void;
+}) {
+  return (
+    <div
+      className="rounded-xl p-5 transition-colors hover:bg-[#252530]"
+      style={{ backgroundColor: '#1e1e28', border: '1px solid #2a2a35' }}
+    >
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex-1 min-w-0">
+          {/* Name row */}
+          <div className="flex items-center gap-2 mb-1 flex-wrap">
+            <code className="text-sm font-mono font-semibold" style={{ color: '#a29bfe' }}>
+              {result.name}
+            </code>
+            <Tag label={sourceLabel(result.source)} variant={sourceBadgeVariant(result.source)} />
+            {result.version && (
+              <Tag label={`v${result.version}`} variant="gray" />
+            )}
+          </div>
+
+          {/* Description */}
+          {result.description && (
+            <p className="text-xs mt-1 line-clamp-2" style={{ color: '#b2bec3' }}>
+              {result.description}
+            </p>
+          )}
+
+          {/* Links */}
+          <div className="flex items-center gap-3 mt-2">
+            {result.repositoryUrl && (
+              <a
+                href={result.repositoryUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs underline transition-colors"
+                style={{ color: '#636e72' }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                Repository
+              </a>
+            )}
+            {result.npmUrl && (
+              <a
+                href={result.npmUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs underline transition-colors"
+                style={{ color: '#636e72' }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                npm
+              </a>
+            )}
+          </div>
+        </div>
+
+        {/* Install button */}
+        <Button variant="primary" size="sm" onClick={() => onInstall(result)}>
+          Install
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Loading skeleton for search results
+// ---------------------------------------------------------------------------
+
+function SearchSkeleton() {
+  return (
+    <div className="space-y-3">
+      {[1, 2, 3].map((i) => (
+        <div
+          key={i}
+          className="rounded-xl p-5 animate-pulse"
+          style={{ backgroundColor: '#1e1e28', border: '1px solid #2a2a35' }}
+        >
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1">
+              <div className="h-4 rounded w-48 mb-2" style={{ backgroundColor: '#2a2a35' }} />
+              <div className="h-3 rounded w-full mb-1" style={{ backgroundColor: '#2a2a35' }} />
+              <div className="h-3 rounded w-2/3" style={{ backgroundColor: '#2a2a35' }} />
+            </div>
+            <div className="h-8 w-16 rounded-lg" style={{ backgroundColor: '#2a2a35' }} />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Install dialog
+// ---------------------------------------------------------------------------
+
+function InstallDialog({
+  result,
+  onConfirm,
+  onCancel,
+  installing,
+  error,
+}: {
+  result: McpRegistryResult;
+  onConfirm: (name: string, command: string, args: string[], env: Record<string, string>) => void;
+  onCancel: () => void;
+  installing: boolean;
+  error: string | null;
+}) {
+  const defaultArgs = result.installCommand
+    ? result.installCommand.split(' ').slice(1)
+    : ['-y', result.name];
+
+  const [name, setName] = useState(result.name);
+  const [command, setCommand] = useState('npx');
+  const [args, setArgs] = useState(defaultArgs.join(' '));
+  const [envPairs, setEnvPairs] = useState<{ key: string; value: string }[]>([]);
+
+  const handleAddEnvVar = () => {
+    setEnvPairs((prev) => [...prev, { key: '', value: '' }]);
+  };
+
+  const handleEnvChange = (index: number, field: 'key' | 'value', val: string) => {
+    setEnvPairs((prev) => prev.map((p, i) => (i === index ? { ...p, [field]: val } : p)));
+  };
+
+  const handleRemoveEnv = (index: number) => {
+    setEnvPairs((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleConfirm = () => {
+    const env: Record<string, string> = {};
+    for (const pair of envPairs) {
+      if (pair.key.trim()) env[pair.key.trim()] = pair.value;
+    }
+    onConfirm(
+      name.trim(),
+      command.trim(),
+      args.trim().split(/\s+/).filter(Boolean),
+      env,
+    );
+  };
+
+  return (
+    <>
+      {/* Overlay */}
+      <div
+        className="fixed inset-0 z-50"
+        style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)' }}
+        onClick={onCancel}
+      />
+
+      {/* Dialog */}
+      <div
+        className="fixed z-50 rounded-xl p-6 shadow-2xl"
+        style={{
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: '480px',
+          maxWidth: '95vw',
+          maxHeight: '85vh',
+          overflowY: 'auto',
+          backgroundColor: '#1e1e28',
+          border: '1px solid #2a2a35',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 className="text-lg font-semibold mb-1" style={{ color: '#ffffff' }}>
+          Install MCP Server
+        </h2>
+        <p className="text-xs mb-5" style={{ color: '#636e72' }}>
+          This will add the server to your user-level MCP config (~/.claude/.mcp.json).
+        </p>
+
+        {/* Source badge */}
+        <div className="mb-4">
+          <Tag label={sourceLabel(result.source)} variant={sourceBadgeVariant(result.source)} />
+        </div>
+
+        {/* Name field */}
+        <div className="mb-4">
+          <label className="block text-xs font-medium mb-1" style={{ color: '#b2bec3' }}>
+            Server Name
+          </label>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="w-full px-3 py-2 rounded-lg text-sm font-mono outline-none"
+            style={{ backgroundColor: '#16161d', border: '1px solid #2a2a35', color: '#ffffff' }}
+          />
+        </div>
+
+        {/* Command field */}
+        <div className="mb-4">
+          <label className="block text-xs font-medium mb-1" style={{ color: '#b2bec3' }}>
+            Command
+          </label>
+          <input
+            type="text"
+            value={command}
+            onChange={(e) => setCommand(e.target.value)}
+            className="w-full px-3 py-2 rounded-lg text-sm font-mono outline-none"
+            style={{ backgroundColor: '#16161d', border: '1px solid #2a2a35', color: '#ffffff' }}
+          />
+        </div>
+
+        {/* Args field */}
+        <div className="mb-4">
+          <label className="block text-xs font-medium mb-1" style={{ color: '#b2bec3' }}>
+            Arguments (space-separated)
+          </label>
+          <input
+            type="text"
+            value={args}
+            onChange={(e) => setArgs(e.target.value)}
+            className="w-full px-3 py-2 rounded-lg text-sm font-mono outline-none"
+            style={{ backgroundColor: '#16161d', border: '1px solid #2a2a35', color: '#ffffff' }}
+          />
+        </div>
+
+        {/* Env vars */}
+        <div className="mb-4">
+          <div className="flex items-center justify-between mb-1">
+            <label className="text-xs font-medium" style={{ color: '#b2bec3' }}>
+              Environment Variables
+            </label>
+            <button
+              className="text-xs px-2 py-0.5 rounded transition-colors"
+              style={{ color: '#a29bfe', backgroundColor: 'rgba(108, 92, 231, 0.1)' }}
+              onClick={handleAddEnvVar}
+            >
+              + Add
+            </button>
+          </div>
+          {envPairs.length === 0 && (
+            <p className="text-xs" style={{ color: '#636e72' }}>No environment variables</p>
+          )}
+          {envPairs.map((pair, i) => (
+            <div key={i} className="flex items-center gap-2 mt-2">
+              <input
+                type="text"
+                placeholder="KEY"
+                value={pair.key}
+                onChange={(e) => handleEnvChange(i, 'key', e.target.value)}
+                className="flex-1 px-2 py-1.5 rounded text-xs font-mono outline-none"
+                style={{ backgroundColor: '#16161d', border: '1px solid #2a2a35', color: '#fdcb6e' }}
+              />
+              <input
+                type="text"
+                placeholder="value"
+                value={pair.value}
+                onChange={(e) => handleEnvChange(i, 'value', e.target.value)}
+                className="flex-1 px-2 py-1.5 rounded text-xs font-mono outline-none"
+                style={{ backgroundColor: '#16161d', border: '1px solid #2a2a35', color: '#b2bec3' }}
+              />
+              <button
+                className="text-xs px-1.5 py-1 rounded transition-colors"
+                style={{ color: '#ff4757' }}
+                onClick={() => handleRemoveEnv(i)}
+              >
+                x
+              </button>
+            </div>
+          ))}
+        </div>
+
+        {/* Preview */}
+        <div className="mb-5">
+          <label className="block text-xs font-medium mb-1" style={{ color: '#636e72' }}>
+            Config Preview
+          </label>
+          <pre
+            className="rounded-lg p-3 text-xs font-mono overflow-x-auto"
+            style={{ backgroundColor: '#16161d', color: '#b2bec3' }}
+          >
+            {JSON.stringify(
+              {
+                [name || 'server-name']: {
+                  command,
+                  ...(args.trim() ? { args: args.trim().split(/\s+/) } : {}),
+                  ...(envPairs.some((p) => p.key.trim())
+                    ? { env: Object.fromEntries(envPairs.filter((p) => p.key.trim()).map((p) => [p.key, p.value])) }
+                    : {}),
+                },
+              },
+              null,
+              2,
+            )}
+          </pre>
+        </div>
+
+        {/* Error message */}
+        {error && (
+          <div
+            className="rounded-lg px-3 py-2 mb-4 text-xs"
+            style={{ backgroundColor: 'rgba(255, 71, 87, 0.15)', color: '#ff4757' }}
+          >
+            {error}
+          </div>
+        )}
+
+        {/* Actions */}
+        <div className="flex items-center justify-end gap-3">
+          <Button variant="secondary" size="md" onClick={onCancel} disabled={installing}>
+            Cancel
+          </Button>
+          <Button
+            variant="primary"
+            size="md"
+            onClick={handleConfirm}
+            disabled={installing || !name.trim() || !command.trim()}
+          >
+            {installing ? 'Installing...' : 'Install'}
+          </Button>
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// MCP Store tab content
+// ---------------------------------------------------------------------------
+
+function McpStoreTab({ onInstalled }: { onInstalled: () => void }) {
+  const [search, setSearch] = useState('');
+  const [sourceFilter, setSourceFilter] = useState<SourceFilter>('all');
+  const [results, setResults] = useState<McpRegistryResult[]>([]);
+  const [smitheryAvailable, setSmitheryAvailable] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [searched, setSearched] = useState(false);
+  const [installTarget, setInstallTarget] = useState<McpRegistryResult | null>(null);
+  const [installing, setInstalling] = useState(false);
+  const [installError, setInstallError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Debounced search
+  const doSearch = useCallback(async (query: string) => {
+    if (!query.trim()) {
+      setResults([]);
+      setSearched(false);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    try {
+      const data = await searchMcpRegistry(query);
+      setResults(data.results);
+      setSmitheryAvailable(data.smitheryAvailable);
+      setSearched(true);
+    } catch {
+      // keep existing results on error
+      setSearched(true);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (!search.trim()) {
+      setResults([]);
+      setSearched(false);
+      return;
+    }
+    debounceRef.current = setTimeout(() => doSearch(search), 300);
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [search, doSearch]);
+
+  // Clear success message after 4s
+  useEffect(() => {
+    if (!successMessage) return;
+    const t = setTimeout(() => setSuccessMessage(null), 4000);
+    return () => clearTimeout(t);
+  }, [successMessage]);
+
+  // Filter by source
+  const filtered =
+    sourceFilter === 'all'
+      ? results
+      : results.filter((r) => r.source === sourceFilter);
+
+  const handleInstallConfirm = async (
+    name: string,
+    command: string,
+    args: string[],
+    env: Record<string, string>,
+  ) => {
+    setInstalling(true);
+    setInstallError(null);
+    try {
+      await installMcpFromRegistry(name, command, args, Object.keys(env).length > 0 ? env : undefined);
+      setInstallTarget(null);
+      setSuccessMessage(`Successfully installed "${name}"`);
+      onInstalled();
+    } catch (err) {
+      setInstallError(err instanceof Error ? err.message : 'Install failed');
+    } finally {
+      setInstalling(false);
+    }
+  };
+
+  const sourceFilters: { key: SourceFilter; label: string }[] = [
+    { key: 'all', label: 'All' },
+    { key: 'mcp-registry', label: 'Official Registry' },
+    { key: 'npm', label: 'npm' },
+    { key: 'smithery', label: 'Smithery' },
+  ];
+
+  return (
+    <div>
+      {/* Search box */}
+      <div className="mb-4">
+        <SearchBox
+          value={search}
+          onChange={setSearch}
+          placeholder="Search MCP servers..."
+        />
+      </div>
+
+      {/* Source filter chips */}
+      <div className="flex items-center gap-2 mb-4 flex-wrap">
+        {sourceFilters.map((f) => (
+          <button
+            key={f.key}
+            className="px-3 py-1 rounded-full text-xs font-medium transition-colors"
+            style={{
+              backgroundColor: sourceFilter === f.key ? '#6c5ce7' : '#2a2a35',
+              color: sourceFilter === f.key ? '#fff' : '#b2bec3',
+            }}
+            onClick={() => setSourceFilter(f.key)}
+          >
+            {f.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Smithery note */}
+      {!smitheryAvailable && searched && (
+        <p className="text-xs mb-4" style={{ color: '#636e72' }}>
+          Set SMITHERY_API_KEY environment variable to enable Smithery search.
+        </p>
+      )}
+
+      {/* Success toast */}
+      {successMessage && (
+        <div
+          className="rounded-lg px-4 py-3 mb-4 text-sm flex items-center gap-2"
+          style={{ backgroundColor: 'rgba(0, 184, 148, 0.15)', color: '#00b894' }}
+        >
+          <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+          {successMessage}
+        </div>
+      )}
+
+      {/* Results area */}
+      {loading ? (
+        <SearchSkeleton />
+      ) : !searched ? (
+        <div
+          className="rounded-xl p-10 text-center"
+          style={{ backgroundColor: '#1e1e28', border: '1px solid #2a2a35' }}
+        >
+          <p className="text-sm mb-2" style={{ color: '#636e72' }}>
+            Search for MCP servers across npm, Official MCP Registry, and Smithery.
+          </p>
+          <p className="text-xs" style={{ color: '#4a4a55' }}>
+            Type a search term above to get started.
+          </p>
+        </div>
+      ) : filtered.length === 0 ? (
+        <div
+          className="rounded-xl p-10 text-center"
+          style={{ backgroundColor: '#1e1e28', border: '1px solid #2a2a35' }}
+        >
+          <p className="text-sm" style={{ color: '#636e72' }}>
+            No results found for &ldquo;{search}&rdquo;
+            {sourceFilter !== 'all' ? ` in ${sourceLabel(sourceFilter)}` : ''}.
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          <p className="text-xs" style={{ color: '#636e72' }}>
+            {filtered.length} result{filtered.length !== 1 ? 's' : ''}
+          </p>
+          {filtered.map((r) => (
+            <RegistryResultCard
+              key={`${r.source}-${r.name}`}
+              result={r}
+              onInstall={setInstallTarget}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Install dialog */}
+      {installTarget && (
+        <InstallDialog
+          result={installTarget}
+          onConfirm={handleInstallConfirm}
+          onCancel={() => {
+            setInstallTarget(null);
+            setInstallError(null);
+          }}
+          installing={installing}
+          error={installError}
+        />
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Main page
+// ---------------------------------------------------------------------------
 
 export default function McpServersPage() {
   const { data: serversRaw, isLoading: loading, mutate } = useMcpServers();
   const servers = (serversRaw ?? []) as McpServer[];
   const [selected, setSelected] = useState<McpServer | null>(null);
+  const [tab, setTab] = useState<'installed' | 'store'>('installed');
 
   // Split by source
   const userServers = servers.filter((s) => s.source === 'user' || !s.source);
@@ -48,147 +629,162 @@ export default function McpServersPage() {
 
   return (
     <div>
-      <Header title="MCP Servers">
-        <Button variant="primary" size="md">Add Server</Button>
-      </Header>
+      <div className="sticky top-0 z-10 bg-[#0f0f14]">
+        <Header title="MCP Servers">
+          <Button variant="primary" size="md">Add Server</Button>
+        </Header>
 
-      {loading ? (
-        <p style={{ color: '#b2bec3' }}>Loading...</p>
-      ) : servers.length === 0 ? (
-        <div
-          className="rounded-xl p-10 text-center"
-          style={{ backgroundColor: '#1e1e28', border: '1px solid #2a2a35' }}
-        >
-          <p className="text-sm" style={{ color: '#636e72' }}>
-            No MCP servers configured. Click &ldquo;Add Server&rdquo; to get started.
-          </p>
+        {/* Tabs */}
+        <div className="flex items-center gap-1 mb-4">
+          <button
+            className="px-4 py-1.5 rounded-lg text-sm font-medium transition-colors"
+            style={{
+              backgroundColor: tab === 'installed' ? '#6c5ce7' : 'transparent',
+              color: tab === 'installed' ? '#fff' : '#636e72',
+            }}
+            onClick={() => setTab('installed')}
+          >
+            Installed
+          </button>
+          <button
+            className="px-4 py-1.5 rounded-lg text-sm font-medium transition-colors"
+            style={{
+              backgroundColor: tab === 'store' ? '#6c5ce7' : 'transparent',
+              color: tab === 'store' ? '#fff' : '#636e72',
+            }}
+            onClick={() => setTab('store')}
+          >
+            MCP Store
+          </button>
         </div>
-      ) : (
-        <div className="space-y-6">
-          {/* User Servers Section */}
-          {userServers.length > 0 && (
-            <div className="mb-8">
-              <SectionHeading icon={'\ud83d\udc64'} label="User" count={userServers.length} />
-              <div
-                className="rounded-xl overflow-hidden"
-                style={{ backgroundColor: '#1e1e28', border: '1px solid #2a2a35' }}
-              >
-                {userServers.map((server) => (
-                  <McpItem
-                    key={server.name}
-                    server={server}
-                    onClick={() => setSelected(server)}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
+      </div>
 
-          {/* System Servers Section */}
-          {systemServers.length > 0 && (
-            <div>
-              <SectionHeading icon={'\ud83d\udd27'} label="System" count={systemServers.length} />
-              <div
-                className="rounded-xl overflow-hidden"
-                style={{ backgroundColor: '#1e1e28', border: '1px solid #2a2a35' }}
-              >
-                {systemServers.map((server) => (
-                  <McpItem
-                    key={server.name}
-                    server={server}
-                    onClick={() => setSelected(server)}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Detail Panel */}
-      <DetailPanel
-        open={selected !== null}
-        onClose={() => setSelected(null)}
-        title={selected?.name ?? ''}
-        subtitle="MCP Server"
-        tags={selected ? [
-          { label: selected.enabled !== false ? 'Connected' : 'Disabled', variant: selected.enabled !== false ? 'green' : 'red' },
-        ] : []}
-        actions={selected ? (
-          <>
-            <Button variant="secondary" size="sm">Edit Config</Button>
-            <Button variant="secondary" size="sm">Restart</Button>
-            <Button
-              variant="danger"
-              size="sm"
-              onClick={() => handleRemove(selected.name)}
+      {tab === 'installed' ? (
+        /* ---- Installed tab ---- */
+        <>
+          {loading ? (
+            <p style={{ color: '#b2bec3' }}>Loading...</p>
+          ) : servers.length === 0 ? (
+            <div
+              className="rounded-xl p-10 text-center"
+              style={{ backgroundColor: '#1e1e28', border: '1px solid #2a2a35' }}
             >
-              Remove
-            </Button>
-          </>
-        ) : undefined}
-      >
-        {selected && (
-          <div className="space-y-5">
-            {/* Connection config */}
-            <section>
-              <h3 className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: '#636e72' }}>
-                Connection Config
-              </h3>
-              <div className="space-y-2">
-                <div className="flex justify-between gap-4">
-                  <span className="text-xs" style={{ color: '#636e72' }}>Command</span>
-                  <code className="text-xs font-mono" style={{ color: '#a29bfe' }}>
-                    {selected.config.command}
-                  </code>
-                </div>
-                {selected.config.args && selected.config.args.length > 0 && (
-                  <div className="flex justify-between gap-4">
-                    <span className="text-xs" style={{ color: '#636e72' }}>Args</span>
-                    <code className="text-xs font-mono text-right" style={{ color: '#b2bec3' }}>
-                      {selected.config.args.join(' ')}
-                    </code>
-                  </div>
-                )}
-                <div className="flex justify-between gap-4">
-                  <span className="text-xs" style={{ color: '#636e72' }}>Scope</span>
-                  <span className="text-xs" style={{ color: '#b2bec3' }}>Global</span>
-                </div>
-              </div>
-            </section>
-
-            {/* Environment Variables */}
-            {selected.config.env && Object.keys(selected.config.env).length > 0 && (
-              <section>
-                <h3 className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: '#636e72' }}>
-                  Environment Variables
-                </h3>
-                <div
-                  className="rounded-lg p-3 space-y-2"
-                  style={{ backgroundColor: '#16161d' }}
-                >
-                  {Object.entries(selected.config.env).map(([key]) => (
-                    <div key={key} className="flex justify-between gap-4">
-                      <code className="text-xs font-mono" style={{ color: '#fdcb6e' }}>{key}</code>
-                      <code className="text-xs font-mono" style={{ color: '#636e72' }}>--------</code>
-                    </div>
+              <p className="text-sm" style={{ color: '#636e72' }}>
+                No MCP servers configured. Click &ldquo;Add Server&rdquo; to get started, or browse
+                the <button className="underline" style={{ color: '#a29bfe' }} onClick={() => setTab('store')}>MCP Store</button>.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {/* User Servers Section */}
+              {userServers.length > 0 && (
+                <CollapsibleSection icon="👤" label="User" count={userServers.length}>
+                  {userServers.map((server) => (
+                    <McpItem key={server.name} server={server} onClick={() => setSelected(server)} />
                   ))}
-                </div>
-              </section>
-            )}
+                </CollapsibleSection>
+              )}
 
-            {/* Tools placeholder */}
-            <section>
-              <h3 className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: '#636e72' }}>
-                Tools Provided
-              </h3>
-              <div className="flex gap-2 flex-wrap">
-                <Tag label="Tools available when connected" variant="purple" />
+              {/* System Servers Section */}
+              {systemServers.length > 0 && (
+                <CollapsibleSection icon="🔧" label="System" count={systemServers.length}>
+                  {systemServers.map((server) => (
+                    <McpItem key={server.name} server={server} onClick={() => setSelected(server)} />
+                  ))}
+                </CollapsibleSection>
+              )}
+            </div>
+          )}
+
+          {/* Detail Panel */}
+          <DetailPanel
+            open={selected !== null}
+            onClose={() => setSelected(null)}
+            title={selected?.name ?? ''}
+            subtitle="MCP Server"
+            tags={selected ? [
+              { label: selected.enabled !== false ? 'Connected' : 'Disabled', variant: selected.enabled !== false ? 'green' : 'red' },
+            ] : []}
+            actions={selected ? (
+              <>
+                <Button variant="secondary" size="sm">Edit Config</Button>
+                <Button variant="secondary" size="sm">Restart</Button>
+                <Button
+                  variant="danger"
+                  size="sm"
+                  onClick={() => handleRemove(selected.name)}
+                >
+                  Remove
+                </Button>
+              </>
+            ) : undefined}
+          >
+            {selected && (
+              <div className="space-y-5">
+                {/* Connection config */}
+                <section>
+                  <h3 className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: '#636e72' }}>
+                    Connection Config
+                  </h3>
+                  <div className="space-y-2">
+                    <div className="flex justify-between gap-4">
+                      <span className="text-xs" style={{ color: '#636e72' }}>Command</span>
+                      <code className="text-xs font-mono" style={{ color: '#a29bfe' }}>
+                        {selected.config.command}
+                      </code>
+                    </div>
+                    {selected.config.args && selected.config.args.length > 0 && (
+                      <div className="flex justify-between gap-4">
+                        <span className="text-xs" style={{ color: '#636e72' }}>Args</span>
+                        <code className="text-xs font-mono text-right" style={{ color: '#b2bec3' }}>
+                          {selected.config.args.join(' ')}
+                        </code>
+                      </div>
+                    )}
+                    <div className="flex justify-between gap-4">
+                      <span className="text-xs" style={{ color: '#636e72' }}>Scope</span>
+                      <span className="text-xs" style={{ color: '#b2bec3' }}>Global</span>
+                    </div>
+                  </div>
+                </section>
+
+                {/* Environment Variables */}
+                {selected.config.env && Object.keys(selected.config.env).length > 0 && (
+                  <section>
+                    <h3 className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: '#636e72' }}>
+                      Environment Variables
+                    </h3>
+                    <div
+                      className="rounded-lg p-3 space-y-2"
+                      style={{ backgroundColor: '#16161d' }}
+                    >
+                      {Object.entries(selected.config.env).map(([key]) => (
+                        <div key={key} className="flex justify-between gap-4">
+                          <code className="text-xs font-mono" style={{ color: '#fdcb6e' }}>{key}</code>
+                          <code className="text-xs font-mono" style={{ color: '#636e72' }}>--------</code>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                )}
+
+                {/* Tools placeholder */}
+                <section>
+                  <h3 className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: '#636e72' }}>
+                    Tools Provided
+                  </h3>
+                  <div className="flex gap-2 flex-wrap">
+                    <Tag label="Tools available when connected" variant="purple" />
+                  </div>
+                </section>
               </div>
-            </section>
-          </div>
-        )}
-      </DetailPanel>
+            )}
+          </DetailPanel>
+        </>
+      ) : (
+        /* ---- MCP Store tab ---- */
+        <McpStoreTab onInstalled={() => mutate()} />
+      )}
     </div>
   );
 }
