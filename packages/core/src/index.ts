@@ -6,3 +6,4 @@ export * from './managers/mcp-manager.js';
 export * from './managers/skill-scanner.js';
 export * from './managers/profile-manager.js';
 export * from './managers/session-manager.js';
+export * from './managers/marketplace-manager.js';
