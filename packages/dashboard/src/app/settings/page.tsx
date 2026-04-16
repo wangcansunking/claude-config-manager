@@ -6,7 +6,8 @@ import { Button } from '@/components/shared/button';
 import { ModelSelector } from '@/components/settings/model-selector';
 import { EnvVarsEditor } from '@/components/settings/env-vars-editor';
 import { HooksEditor } from '@/components/settings/hooks-editor';
-import { fetchSettings, updateSettings, fetchEnvVars, setEnvVar, removeEnvVar } from '@/lib/api-client';
+import { updateSettings, fetchEnvVars, setEnvVar, removeEnvVar } from '@/lib/api-client';
+import { useSettings } from '@/lib/use-data';
 
 interface HookEntry {
   command: string;
@@ -22,34 +23,42 @@ interface Settings {
 }
 
 export default function SettingsPage() {
-  const [settings, setSettings] = useState<Settings>({});
+  const { data: settingsRaw, isLoading: settingsLoading, mutate: mutateSettings } = useSettings();
+  const settings = (settingsRaw ?? {}) as Settings;
   const [envVars, setEnvVars] = useState<Record<string, string>>({});
-  const [loading, setLoading] = useState(true);
+  const [envLoading, setEnvLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [model, setModel] = useState('');
 
+  const loading = settingsLoading || envLoading;
+
+  // Load env vars (not covered by SWR hooks since fetchEnvVars is separate)
   useEffect(() => {
-    async function load() {
+    async function loadEnv() {
       try {
-        const [s, env] = await Promise.all([fetchSettings(), fetchEnvVars()]);
-        const typed = s as Settings;
-        setSettings(typed);
-        setModel((typed.model as string) ?? '');
+        const env = await fetchEnvVars();
         setEnvVars(env as Record<string, string>);
       } catch (err) {
-        console.error('Failed to load settings', err);
+        console.error('Failed to load env vars', err);
       } finally {
-        setLoading(false);
+        setEnvLoading(false);
       }
     }
-    load();
+    loadEnv();
   }, []);
+
+  // Sync model from settings when settings load
+  useEffect(() => {
+    if (settings.model !== undefined) {
+      setModel((settings.model as string) ?? '');
+    }
+  }, [settings.model]);
 
   async function handleSaveModel() {
     setSaving(true);
     try {
       await updateSettings({ model });
-      setSettings((prev) => ({ ...prev, model }));
+      mutateSettings();
     } catch (err) {
       console.error('Failed to save model', err);
     } finally {

@@ -25,3 +25,27 @@ body {
 /* Profile form input focus */
 .profile-input { border-color: #2a2a35; }
 .profile-input:focus { border-color: #6c5ce7; }
+
+/* Skill markdown rendering */
+.skill-markdown h1 { font-size: 1.5rem; font-weight: 700; color: #ffffff; margin: 1.5rem 0 0.75rem; padding-bottom: 0.5rem; border-bottom: 1px solid #2a2a35; }
+.skill-markdown h2 { font-size: 1.25rem; font-weight: 600; color: #ffffff; margin: 1.25rem 0 0.5rem; }
+.skill-markdown h3 { font-size: 1.1rem; font-weight: 600; color: #e8ecf1; margin: 1rem 0 0.5rem; }
+.skill-markdown h4 { font-size: 1rem; font-weight: 600; color: #b2bec3; margin: 0.75rem 0 0.25rem; }
+.skill-markdown p { color: #b2bec3; line-height: 1.7; margin: 0.5rem 0; font-size: 0.875rem; }
+.skill-markdown ul, .skill-markdown ol { color: #b2bec3; padding-left: 1.5rem; margin: 0.5rem 0; font-size: 0.875rem; }
+.skill-markdown li { margin: 0.25rem 0; line-height: 1.6; }
+.skill-markdown ul { list-style: disc; }
+.skill-markdown ol { list-style: decimal; }
+.skill-markdown code { background: #1e1e28; color: #a29bfe; padding: 0.15rem 0.4rem; border-radius: 4px; font-size: 0.8125rem; }
+.skill-markdown pre { background: #16161d; border: 1px solid #2a2a35; border-radius: 8px; padding: 1rem; overflow-x: auto; margin: 0.75rem 0; }
+.skill-markdown pre code { background: none; padding: 0; color: #b2bec3; font-size: 0.8125rem; line-height: 1.6; }
+.skill-markdown blockquote { border-left: 3px solid #6c5ce7; padding-left: 1rem; margin: 0.75rem 0; color: #636e72; font-style: italic; }
+.skill-markdown strong { color: #ffffff; font-weight: 600; }
+.skill-markdown em { color: #b2bec3; }
+.skill-markdown a { color: #a29bfe; text-decoration: underline; }
+.skill-markdown a:hover { color: #6c5ce7; }
+.skill-markdown hr { border: none; border-top: 1px solid #2a2a35; margin: 1.5rem 0; }
+.skill-markdown table { width: 100%; border-collapse: collapse; margin: 0.75rem 0; font-size: 0.875rem; }
+.skill-markdown th { text-align: left; padding: 0.5rem; border-bottom: 2px solid #2a2a35; color: #ffffff; font-weight: 600; }
+.skill-markdown td { padding: 0.5rem; border-bottom: 1px solid #2a2a35; color: #b2bec3; }
+.skill-markdown img { max-width: 100%; border-radius: 8px; }

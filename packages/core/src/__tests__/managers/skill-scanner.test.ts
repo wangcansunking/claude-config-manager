@@ -174,17 +174,19 @@ describe('SkillScanner', () => {
       expect(commands).toEqual([]);
     });
 
-    it('reads markdown files from the commands directory', async () => {
+    it('reads Skill.md from command subdirectories', async () => {
       const commandsDir = join(tempDir, 'commands');
-      await mkdir(commandsDir, { recursive: true });
+      const cmdDir = join(commandsDir, 'my-command');
+      await mkdir(cmdDir, { recursive: true });
       await writeFile(
-        join(commandsDir, 'my-command.md'),
+        join(cmdDir, 'Skill.md'),
         '---\nname: my-command\ndescription: A custom command\n---\n# My Command\n',
       );
       const commands = await scanner.scanCommands();
       expect(commands).toHaveLength(1);
       expect(commands[0]?.name).toBe('my-command');
       expect(commands[0]?.description).toBe('A custom command');
+      expect(commands[0]?.source).toBe('user');
     });
   });
 });

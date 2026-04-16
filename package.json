@@ -6,6 +6,7 @@
   "workspaces": ["packages/*"],
   "scripts": {
     "build": "turbo build",
+    "bundle": "npm run bundle --workspace=@ccm/mcp",
     "dev": "turbo dev",
     "start": "cd packages/dashboard && npx next start -p 3399",
     "build:dashboard": "turbo build --filter=@ccm/dashboard",

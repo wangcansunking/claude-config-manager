@@ -1,21 +1,45 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { join } from 'path';
+import { readFile } from 'fs/promises';
+import { homedir } from 'os';
 
 const DASHBOARD_PORT = 3399;
-const DASHBOARD_URL = `http://localhost:${DASHBOARD_PORT}`;
+const LOCK_FILE = join(homedir(), '.claude', 'ccm-dashboard.pid');
+
+async function getDashboardStatus(): Promise<{ running: boolean; pid?: number; port?: number }> {
+  try {
+    const content = await readFile(LOCK_FILE, 'utf-8');
+    const data = JSON.parse(content) as { pid: number; port: number };
+    // Check if process is alive
+    try {
+      process.kill(data.pid, 0);
+      return { running: true, pid: data.pid, port: data.port };
+    } catch {
+      return { running: false };
+    }
+  } catch {
+    return { running: false };
+  }
+}
 
 export async function handleOpenDashboard() {
+  const status = await getDashboardStatus();
+  const port = status.port ?? DASHBOARD_PORT;
+  const url = `http://localhost:${port}`;
+
+  if (status.running) {
+    return {
+      content: [{ type: 'text' as const, text: `Dashboard is running at ${url} (PID ${status.pid})` }],
+    };
+  }
+
   return {
-    content: [
-      {
-        type: 'text' as const,
-        text: `The Claude Config Manager dashboard is available at ${DASHBOARD_URL}\n\nOpen this URL in your browser to access the dashboard interface.`,
-      },
-    ],
+    content: [{ type: 'text' as const, text: `Dashboard is not running. Start it with: claude-config start\nOr it will auto-start on next session if installed as a plugin.\nExpected URL: ${url}` }],
   };
 }
 
 export async function handleDashboardStatus() {
-  const status = { running: false, port: DASHBOARD_PORT };
+  const status = await getDashboardStatus();
   return {
     content: [{ type: 'text' as const, text: JSON.stringify(status, null, 2) }],
   };

@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Header } from '@/components/layout/header';
 import { Button } from '@/components/shared/button';
 import { ConfirmationDialog } from '@/components/shared/confirmation-dialog';
 import { ProfileCard } from '@/components/profile-grid/profile-card';
 import type { Profile } from '@/components/profile-grid/profile-card';
-import { fetchProfiles, createProfile, activateProfile, deleteProfile, exportProfile, updateProfile, fetchPlugins, fetchMcpServers } from '@/lib/api-client';
+import { createProfile, activateProfile, deleteProfile, exportProfile, updateProfile, fetchPlugins, fetchMcpServers } from '@/lib/api-client';
+import { useProfiles } from '@/lib/use-data';
 
 interface AvailablePlugin {
   name: string;
@@ -34,8 +35,8 @@ interface EditState {
 }
 
 export default function ProfilesPage() {
-  const [profiles, setProfiles] = useState<Profile[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: profilesRaw, isLoading: loading, mutate } = useProfiles();
+  const profiles = (profilesRaw ?? []) as Profile[];
   const [showNewForm, setShowNewForm] = useState(false);
   const [newName, setNewName] = useState('');
   const [creating, setCreating] = useState(false);
@@ -45,28 +46,13 @@ export default function ProfilesPage() {
   const [availablePlugins, setAvailablePlugins] = useState<AvailablePlugin[]>([]);
   const [availableMcpServers, setAvailableMcpServers] = useState<AvailableMcpServer[]>([]);
 
-  useEffect(() => {
-    loadProfiles();
-  }, []);
-
-  async function loadProfiles() {
-    try {
-      const data = await fetchProfiles();
-      setProfiles(data as Profile[]);
-    } catch (err) {
-      console.error('Failed to load profiles', err);
-    } finally {
-      setLoading(false);
-    }
-  }
-
   async function handleCreate() {
     const name = newName.trim();
     if (!name) return;
     setCreating(true);
     try {
-      const created = await createProfile(name);
-      setProfiles((prev) => [...prev, created as Profile]);
+      await createProfile(name);
+      mutate();
       setNewName('');
       setShowNewForm(false);
     } catch (err) {
@@ -79,9 +65,7 @@ export default function ProfilesPage() {
   async function handleActivate(name: string) {
     try {
       await activateProfile(name);
-      setProfiles((prev) =>
-        prev.map((p) => ({ ...p, active: p.name === name }))
-      );
+      mutate();
     } catch (err) {
       console.error('Failed to activate profile', err);
     }
@@ -90,7 +74,7 @@ export default function ProfilesPage() {
   async function handleDelete(name: string) {
     try {
       await deleteProfile(name);
-      setProfiles((prev) => prev.filter((p) => p.name !== name));
+      mutate();
       setDeleteTarget(null);
     } catch (err) {
       console.error('Failed to delete profile', err);
@@ -213,10 +197,8 @@ export default function ProfilesPage() {
         settings: updatedSettings,
       };
 
-      const updated = await updateProfile(editingProfile, patch);
-      setProfiles((prev) =>
-        prev.map((p) => (p.name === editingProfile ? (updated as Profile) : p))
-      );
+      await updateProfile(editingProfile, patch);
+      mutate();
       setEditingProfile(null);
       setEditState(null);
     } catch (err) {

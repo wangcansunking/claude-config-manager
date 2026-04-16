@@ -4,6 +4,7 @@ export interface CommandDefinition {
   filePath: string;
   content?: string;
   args?: string[];
+  source: 'user' | 'system';
 }
 
 export interface SkillDefinition {
@@ -14,4 +15,5 @@ export interface SkillDefinition {
   tags?: string[];
   version?: string;
   pluginName?: string;
+  source: 'user' | 'system';
 }

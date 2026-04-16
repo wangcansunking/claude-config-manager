@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { Header } from '@/components/layout/header';
-import { DetailPanel } from '@/components/layout/detail-panel';
+import { SearchBox } from '@/components/shared/search-box';
 import { Tag } from '@/components/shared/tag';
 import { useSessions, useSessionHistory } from '@/lib/use-data';
 
@@ -23,47 +23,65 @@ interface SessionInfo {
   cwd: string;
   startedAt: number;
   alive: boolean;
+  lastMessage?: string;
   ide?: IdeInfo;
   projectConfig?: ProjectConfig;
   projectDir?: string;
   historyFile?: string;
 }
 
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
 function formatRelativeTime(timestamp: number): string {
   if (!timestamp) return 'unknown';
   const now = Date.now();
   const diffMs = now - timestamp;
   const diffSec = Math.floor(diffMs / 1000);
+  if (diffSec < 30) return 'just now';
   if (diffSec < 60) return `${diffSec}s ago`;
   const diffMin = Math.floor(diffSec / 60);
   if (diffMin < 60) return `${diffMin}m ago`;
   const diffHr = Math.floor(diffMin / 60);
   if (diffHr < 24) return `${diffHr}h ago`;
   const diffDay = Math.floor(diffHr / 24);
-  return `${diffDay}d ago`;
+  if (diffDay < 30) return `${diffDay}d ago`;
+  // Older than 30 days — show date
+  const d = new Date(timestamp);
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  return `${months[d.getMonth()]} ${d.getDate()}`;
 }
 
-function truncateId(id: string, len = 12): string {
-  if (id.length <= len) return id;
-  return id.slice(0, len) + '...';
-}
-
-function truncatePath(path: string, maxLen = 50): string {
+function truncatePath(path: string, maxLen = 60): string {
   if (path.length <= maxLen) return path;
   return '...' + path.slice(path.length - maxLen + 3);
 }
+
+function truncateMessage(msg: string, maxLen = 120): string {
+  if (!msg) return '';
+  const oneLine = msg.replace(/\n/g, ' ').trim();
+  if (oneLine.length <= maxLen) return oneLine;
+  return oneLine.slice(0, maxLen) + '...';
+}
+
+// ---------------------------------------------------------------------------
+// CollapsibleSection
+// ---------------------------------------------------------------------------
 
 function CollapsibleSection({
   icon,
   label,
   count,
   defaultOpen,
+  labelColor,
   children,
 }: {
   icon: string;
   label: string;
   count: number;
   defaultOpen?: boolean;
+  labelColor?: string;
   children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(defaultOpen ?? true);
@@ -81,7 +99,7 @@ function CollapsibleSection({
           <span className="text-base">{icon}</span>
           <span
             className="text-sm font-semibold"
-            style={{ color: label === 'Running' ? '#00b894' : '#636e72' }}
+            style={{ color: labelColor ?? '#636e72' }}
           >
             {label}
           </span>
@@ -115,6 +133,10 @@ function CollapsibleSection({
   );
 }
 
+// ---------------------------------------------------------------------------
+// SessionRow
+// ---------------------------------------------------------------------------
+
 function SessionRow({
   session,
   isLast,
@@ -139,14 +161,17 @@ function SessionRow({
       />
 
       <div className="flex-1 min-w-0">
-        {/* Top row: PID + session ID + tags */}
-        <div className="flex items-center gap-2 mb-1">
-          <span className="font-mono text-sm font-semibold" style={{ color: '#ffffff' }}>
-            {session.pid ? `PID ${session.pid}` : 'No PID'}
+        {/* Top row: session ID + PID + IDE + config icons */}
+        <div className="flex items-center gap-2 mb-1 flex-wrap">
+          <span
+            className="font-mono text-sm font-semibold"
+            style={{ color: '#a29bfe' }}
+          >
+            {session.sessionId}
           </span>
-          <span className="font-mono text-xs" style={{ color: '#636e72' }}>
-            {truncateId(session.sessionId)}
-          </span>
+          {session.pid > 0 && (
+            <Tag label={`PID ${session.pid}`} variant="gray" />
+          )}
           {session.ide && (
             <Tag
               label={`${session.ide.name} (${session.ide.transport})`}
@@ -163,6 +188,11 @@ function SessionRow({
               🔌
             </span>
           )}
+          {session.projectConfig?.hasProjectSettings && (
+            <span className="text-xs" style={{ color: '#b2bec3' }} title="Project Settings">
+              ⚙️
+            </span>
+          )}
         </div>
 
         {/* Working directory */}
@@ -170,10 +200,20 @@ function SessionRow({
           {session.cwd}
         </p>
 
-        {/* Started at */}
-        <span className="text-xs" style={{ color: '#636e72' }}>
-          Started {formatRelativeTime(session.startedAt)}
-        </span>
+        {/* Time + last message */}
+        <div className="flex items-center gap-3 mt-1">
+          <span className="text-xs shrink-0" style={{ color: '#636e72' }}>
+            {formatRelativeTime(session.startedAt)}
+          </span>
+          {session.lastMessage && (
+            <span
+              className="text-sm truncate"
+              style={{ color: '#b2bec3' }}
+            >
+              💬 {truncateMessage(session.lastMessage)}
+            </span>
+          )}
+        </div>
       </div>
 
       <svg
@@ -194,177 +234,330 @@ function SessionRow({
   );
 }
 
-function SessionDetailContent({ session }: { session: SessionInfo }) {
+// ---------------------------------------------------------------------------
+// SessionSlidePanel — wide slide-from-right panel (60% width)
+// ---------------------------------------------------------------------------
+
+function SessionSlidePanel({
+  session,
+  onClose,
+}: {
+  session: SessionInfo | null;
+  onClose: () => void;
+}) {
+  const open = session !== null;
+
+  // Close on Escape
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    },
+    [onClose],
+  );
+
+  useEffect(() => {
+    if (!open) return;
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [open, handleKeyDown]);
+
+  return (
+    <>
+      {/* Dimmed overlay */}
+      {open && (
+        <div
+          className="fixed inset-0 z-40"
+          style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
+          onClick={onClose}
+        />
+      )}
+
+      {/* Panel */}
+      <div
+        className="fixed top-0 right-0 z-50 h-full flex flex-col"
+        style={{
+          width: '60%',
+          minWidth: '480px',
+          maxWidth: '900px',
+          backgroundColor: '#1e1e28',
+          borderLeft: '1px solid #2a2a35',
+          transform: open ? 'translateX(0)' : 'translateX(100%)',
+          transition: 'transform 0.25s ease-in-out',
+          boxShadow: open ? '-8px 0 32px rgba(0, 0, 0, 0.4)' : 'none',
+        }}
+      >
+        {session && <SessionPanelContent session={session} onClose={onClose} />}
+      </div>
+    </>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// SessionPanelContent — inner content for the slide panel
+// ---------------------------------------------------------------------------
+
+function SessionPanelContent({
+  session,
+  onClose,
+}: {
+  session: SessionInfo;
+  onClose: () => void;
+}) {
   const { data: history, isLoading: historyLoading } = useSessionHistory(
     session.historyFile ?? null,
   );
 
+  const [historySearch, setHistorySearch] = useState('');
+
+  const filteredHistory = useMemo(() => {
+    if (!history) return [];
+    if (!historySearch.trim()) return history;
+    const q = historySearch.toLowerCase();
+    return history.filter(
+      (entry: { text: string; timestamp?: string }) =>
+        entry.text.toLowerCase().includes(q),
+    );
+  }, [history, historySearch]);
+
   return (
-    <div className="space-y-5">
-      {/* Metadata */}
-      <section>
-        <h3
-          className="text-xs font-semibold uppercase tracking-wider mb-3"
-          style={{ color: '#636e72' }}
-        >
-          Metadata
-        </h3>
-        <div className="space-y-2">
-          <div className="flex justify-between gap-4">
-            <span className="text-xs" style={{ color: '#636e72' }}>
-              PID
-            </span>
-            <code className="text-xs font-mono" style={{ color: '#a29bfe' }}>
-              {session.pid || 'N/A'}
-            </code>
-          </div>
-          <div className="flex justify-between gap-4">
-            <span className="text-xs" style={{ color: '#636e72' }}>
-              Session ID
-            </span>
-            <code
-              className="text-xs font-mono text-right break-all"
-              style={{ color: '#b2bec3' }}
-            >
-              {session.sessionId}
-            </code>
-          </div>
-          <div className="flex justify-between gap-4">
-            <span className="text-xs" style={{ color: '#636e72' }}>
-              Working Directory
-            </span>
-            <code
-              className="text-xs font-mono text-right break-all"
-              style={{ color: '#b2bec3' }}
-            >
-              {session.cwd}
-            </code>
-          </div>
-          <div className="flex justify-between gap-4">
-            <span className="text-xs" style={{ color: '#636e72' }}>
-              Started At
-            </span>
-            <span className="text-xs" style={{ color: '#b2bec3' }}>
-              {session.startedAt
-                ? new Date(session.startedAt).toLocaleString()
-                : 'Unknown'}
-            </span>
-          </div>
+    <>
+      {/* Header bar */}
+      <div
+        className="flex items-center justify-between px-6 py-4 shrink-0"
+        style={{ borderBottom: '1px solid #2a2a35', backgroundColor: '#16161d' }}
+      >
+        <div className="flex items-center gap-3 min-w-0">
+          {/* Status dot */}
+          <span
+            className="inline-block w-3 h-3 rounded-full shrink-0"
+            style={{
+              backgroundColor: session.alive ? '#00b894' : '#636e72',
+            }}
+          />
+          <span className="text-base font-semibold" style={{ color: '#ffffff' }}>
+            {session.pid > 0 ? `PID ${session.pid}` : 'Session'}
+          </span>
+          <Tag
+            label={session.alive ? 'Running' : 'Terminated'}
+            variant={session.alive ? 'green' : 'gray'}
+          />
           {session.ide && (
-            <div className="flex justify-between gap-4">
-              <span className="text-xs" style={{ color: '#636e72' }}>
-                IDE
-              </span>
-              <span className="text-xs" style={{ color: '#b2bec3' }}>
-                {session.ide.name} ({session.ide.transport})
-              </span>
-            </div>
-          )}
-          {session.projectDir && (
-            <div className="flex justify-between gap-4">
-              <span className="text-xs" style={{ color: '#636e72' }}>
-                Project Directory
-              </span>
-              <code
-                className="text-xs font-mono text-right break-all"
-                style={{ color: '#b2bec3' }}
-              >
-                {session.projectDir}
-              </code>
-            </div>
+            <Tag
+              label={`${session.ide.name} (${session.ide.transport})`}
+              variant="purple"
+            />
           )}
         </div>
-      </section>
+        <button
+          className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors hover:bg-[#2a2a35]"
+          style={{ color: '#b2bec3' }}
+          onClick={onClose}
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
 
-      {/* Project Config */}
-      {session.projectConfig && (
+      {/* Scrollable body */}
+      <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
+        {/* ---- Metadata Section ---- */}
         <section>
           <h3
             className="text-xs font-semibold uppercase tracking-wider mb-3"
             style={{ color: '#636e72' }}
           >
-            Project Config
+            Metadata
           </h3>
-          <div className="flex flex-wrap gap-2">
-            {session.projectConfig.hasClaudeMd && (
-              <Tag label="CLAUDE.md" variant="blue" />
+          <div
+            className="rounded-lg p-4 space-y-3"
+            style={{ backgroundColor: '#16161d' }}
+          >
+            <MetaRow label="Session ID">
+              <code className="text-xs font-mono break-all" style={{ color: '#a29bfe' }}>
+                {session.sessionId}
+              </code>
+            </MetaRow>
+            {session.pid > 0 && (
+              <MetaRow label="PID">
+                <code className="text-xs font-mono" style={{ color: '#a29bfe' }}>
+                  {session.pid}
+                </code>
+              </MetaRow>
             )}
-            {session.projectConfig.hasMcpJson && (
-              <Tag label=".mcp.json" variant="purple" />
+            <MetaRow label="Working Directory">
+              <code className="text-xs font-mono break-all" style={{ color: '#b2bec3' }}>
+                {session.cwd}
+              </code>
+            </MetaRow>
+            {session.projectDir && session.projectDir !== session.cwd && (
+              <MetaRow label="Project Directory">
+                <code className="text-xs font-mono break-all" style={{ color: '#b2bec3' }}>
+                  {session.projectDir}
+                </code>
+              </MetaRow>
             )}
-            {session.projectConfig.hasProjectSettings && (
-              <Tag label="Project Settings" variant="orange" />
-            )}
-            {!session.projectConfig.hasClaudeMd &&
-              !session.projectConfig.hasMcpJson &&
-              !session.projectConfig.hasProjectSettings && (
-                <span className="text-xs" style={{ color: '#636e72' }}>
-                  No project config files found
+            <MetaRow label="Started">
+              <span className="text-xs" style={{ color: '#b2bec3' }}>
+                {session.startedAt
+                  ? `${new Date(session.startedAt).toLocaleString()} (${formatRelativeTime(session.startedAt)})`
+                  : 'Unknown'}
+              </span>
+            </MetaRow>
+            {session.ide && (
+              <MetaRow label="IDE">
+                <span className="text-xs" style={{ color: '#b2bec3' }}>
+                  {session.ide.name}
+                  <span style={{ color: '#636e72' }}> via </span>
+                  {session.ide.transport}
                 </span>
-              )}
+              </MetaRow>
+            )}
+            {session.projectConfig && (
+              <MetaRow label="Project Config">
+                <div className="flex flex-wrap gap-2">
+                  {session.projectConfig.hasClaudeMd && (
+                    <Tag label="CLAUDE.md" variant="blue" />
+                  )}
+                  {session.projectConfig.hasMcpJson && (
+                    <Tag label=".mcp.json" variant="purple" />
+                  )}
+                  {session.projectConfig.hasProjectSettings && (
+                    <Tag label="Project Settings" variant="orange" />
+                  )}
+                  {!session.projectConfig.hasClaudeMd &&
+                    !session.projectConfig.hasMcpJson &&
+                    !session.projectConfig.hasProjectSettings && (
+                      <span className="text-xs" style={{ color: '#636e72' }}>
+                        None detected
+                      </span>
+                    )}
+                </div>
+              </MetaRow>
+            )}
           </div>
         </section>
-      )}
 
-      {/* Instruction History */}
-      <section>
-        <h3
-          className="text-xs font-semibold uppercase tracking-wider mb-3"
-          style={{ color: '#636e72' }}
-        >
-          Instruction History
-        </h3>
+        {/* ---- Instruction History Section ---- */}
+        <section>
+          <h3
+            className="text-xs font-semibold uppercase tracking-wider mb-3"
+            style={{ color: '#636e72' }}
+          >
+            Instruction History
+          </h3>
 
-        {!session.historyFile ? (
-          <p className="text-xs" style={{ color: '#636e72' }}>
-            No history file available for this session.
-          </p>
-        ) : historyLoading ? (
-          <p className="text-xs" style={{ color: '#b2bec3' }}>
-            Loading history...
-          </p>
-        ) : !history || history.length === 0 ? (
-          <p className="text-xs" style={{ color: '#636e72' }}>
-            No user messages found in session history.
-          </p>
-        ) : (
-          <div className="space-y-3">
-            {history.map((entry, i) => (
-              <div
-                key={i}
-                className="rounded-lg p-3"
-                style={{ backgroundColor: '#16161d' }}
-              >
-                <div className="flex items-center justify-between mb-1">
-                  <Tag label="user" variant="blue" />
-                  {entry.timestamp && (
-                    <span className="text-xs" style={{ color: '#636e72' }}>
-                      {new Date(entry.timestamp).toLocaleString()}
-                    </span>
-                  )}
-                </div>
-                <p
-                  className="text-xs whitespace-pre-wrap break-words mt-2"
-                  style={{ color: '#b2bec3' }}
-                >
-                  {entry.text.length > 500
-                    ? entry.text.slice(0, 500) + '...'
-                    : entry.text}
-                </p>
+          {!session.historyFile ? (
+            <p className="text-xs" style={{ color: '#636e72' }}>
+              No history file available for this session.
+            </p>
+          ) : historyLoading ? (
+            <div className="flex items-center gap-2 py-4">
+              <span
+                className="inline-block w-4 h-4 rounded-full border-2 animate-spin"
+                style={{
+                  borderColor: '#2a2a35',
+                  borderTopColor: '#a29bfe',
+                }}
+              />
+              <span className="text-xs" style={{ color: '#b2bec3' }}>
+                Loading history...
+              </span>
+            </div>
+          ) : !history || history.length === 0 ? (
+            <p className="text-xs" style={{ color: '#636e72' }}>
+              No user messages found in session history.
+            </p>
+          ) : (
+            <>
+              {/* History search */}
+              <div className="mb-3">
+                <SearchBox
+                  value={historySearch}
+                  onChange={setHistorySearch}
+                  placeholder="Filter instructions..."
+                />
               </div>
-            ))}
-          </div>
-        )}
-      </section>
+
+              {/* History count */}
+              <p className="text-xs mb-3" style={{ color: '#636e72' }}>
+                {filteredHistory.length} of {history.length} message{history.length !== 1 ? 's' : ''}
+              </p>
+
+              {/* Scrollable instruction list */}
+              <div className="space-y-2">
+                {filteredHistory.length === 0 ? (
+                  <p className="text-xs py-4 text-center" style={{ color: '#636e72' }}>
+                    No messages match your filter.
+                  </p>
+                ) : (
+                  filteredHistory.map(
+                    (entry: { text: string; timestamp?: string; role?: string }, i: number) => (
+                      <div
+                        key={i}
+                        className="rounded-lg p-3"
+                        style={{ backgroundColor: '#16161d' }}
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <Tag label={entry.role ?? 'user'} variant="blue" />
+                          {entry.timestamp && (
+                            <span className="text-xs" style={{ color: '#636e72' }}>
+                              {new Date(entry.timestamp).toLocaleString()}
+                            </span>
+                          )}
+                        </div>
+                        <p
+                          className="text-xs whitespace-pre-wrap break-words mt-2"
+                          style={{ color: '#b2bec3' }}
+                        >
+                          {entry.text.length > 800
+                            ? entry.text.slice(0, 800) + '...'
+                            : entry.text}
+                        </p>
+                      </div>
+                    ),
+                  )
+                )}
+              </div>
+            </>
+          )}
+        </section>
+      </div>
+    </>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// MetaRow — simple label/value row used in the metadata section
+// ---------------------------------------------------------------------------
+
+function MetaRow({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-start justify-between gap-6">
+      <span className="text-xs shrink-0" style={{ color: '#636e72' }}>
+        {label}
+      </span>
+      <div className="text-right">{children}</div>
     </div>
   );
 }
+
+// ---------------------------------------------------------------------------
+// Main Page
+// ---------------------------------------------------------------------------
 
 export default function SessionsPage() {
   const { data: sessionsRaw, isLoading } = useSessions();
   const sessions = (sessionsRaw ?? []) as SessionInfo[];
   const [selected, setSelected] = useState<SessionInfo | null>(null);
   const [search, setSearch] = useState('');
+  const [tab, setTab] = useState<'all' | 'recent'>('all');
 
   // Filter sessions by search
   const filtered = useMemo(() => {
@@ -375,11 +568,12 @@ export default function SessionsPage() {
         s.cwd.toLowerCase().includes(q) ||
         s.sessionId.toLowerCase().includes(q) ||
         String(s.pid).includes(q) ||
+        (s.lastMessage ?? '').toLowerCase().includes(q) ||
         (s.projectDir ?? '').toLowerCase().includes(q),
     );
   }, [sessions, search]);
 
-  // Split into running and grouped-by-project
+  // Running sessions (alive) sorted most recent first
   const running = useMemo(
     () =>
       filtered
@@ -388,6 +582,7 @@ export default function SessionsPage() {
     [filtered],
   );
 
+  // Non-alive sessions grouped by projectDir/cwd
   const projectGroups = useMemo(() => {
     const terminated = filtered
       .filter((s) => !s.alive)
@@ -406,51 +601,88 @@ export default function SessionsPage() {
     });
   }, [filtered]);
 
+  // Last 10 active sessions (sorted by most recent startedAt)
+  const recentSessions = useMemo(
+    () =>
+      [...filtered]
+        .sort((a, b) => b.startedAt - a.startedAt)
+        .slice(0, 10),
+    [filtered],
+  );
+
   const totalCount = sessions.length;
 
   return (
     <div>
-      <Header
-        title="Sessions"
-        subtitle={
-          !isLoading
-            ? `${running.length} running, ${totalCount} total`
-            : 'Loading sessions...'
-        }
-      >
-        {/* Search box */}
-        <div className="relative">
-          <svg
-            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4"
-            style={{ color: '#636e72' }}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-            />
-          </svg>
-          <input
-            type="text"
-            placeholder="Search by cwd, ID, PID..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 pr-3 py-2 rounded-lg text-sm w-64 outline-none transition-colors"
+      <div className="sticky top-0 z-10 bg-[#0f0f14]">
+        <Header
+          title="Sessions"
+          subtitle={
+            !isLoading
+              ? `${running.length} running, ${totalCount} total`
+              : 'Loading sessions...'
+          }
+        />
+
+        {/* Tabs */}
+        <div className="flex items-center gap-1 mb-4">
+          <button
+            className="px-4 py-1.5 rounded-lg text-sm font-medium transition-colors"
             style={{
-              backgroundColor: '#1e1e28',
-              border: '1px solid #2a2a35',
-              color: '#ffffff',
+              backgroundColor: tab === 'recent' ? '#6c5ce7' : 'transparent',
+              color: tab === 'recent' ? '#fff' : '#636e72',
             }}
-          />
+            onClick={() => setTab('recent')}
+          >
+            Recent (10)
+          </button>
+          <button
+            className="px-4 py-1.5 rounded-lg text-sm font-medium transition-colors"
+            style={{
+              backgroundColor: tab === 'all' ? '#6c5ce7' : 'transparent',
+              color: tab === 'all' ? '#fff' : '#636e72',
+            }}
+            onClick={() => setTab('all')}
+          >
+            All Sessions
+          </button>
+          <div className="flex-1" />
+          <div className="w-72">
+            <SearchBox
+              value={search}
+              onChange={setSearch}
+              placeholder="Search sessions..."
+            />
+          </div>
         </div>
-      </Header>
+      </div>
 
       {isLoading ? (
         <p style={{ color: '#b2bec3' }}>Loading...</p>
+      ) : tab === 'recent' ? (
+        /* Recent tab — flat list of last 10 */
+        recentSessions.length === 0 ? (
+          <div
+            className="rounded-xl p-8 text-center"
+            style={{ backgroundColor: '#1e1e28', border: '1px solid #2a2a35' }}
+          >
+            <p className="text-sm" style={{ color: '#636e72' }}>No recent sessions.</p>
+          </div>
+        ) : (
+          <div
+            className="rounded-xl overflow-hidden"
+            style={{ backgroundColor: '#1e1e28', border: '1px solid #2a2a35' }}
+          >
+            {recentSessions.map((session, i) => (
+              <SessionRow
+                key={session.sessionId}
+                session={session}
+                isLast={i === recentSessions.length - 1}
+                onClick={() => setSelected(session)}
+              />
+            ))}
+          </div>
+        )
       ) : filtered.length === 0 ? (
         <div
           className="rounded-xl p-8 text-center"
@@ -474,6 +706,7 @@ export default function SessionsPage() {
               label="Running"
               count={running.length}
               defaultOpen={true}
+              labelColor="#00b894"
             >
               {running.map((session, i) => (
                 <SessionRow
@@ -508,29 +741,11 @@ export default function SessionsPage() {
         </div>
       )}
 
-      {/* Detail Panel */}
-      <DetailPanel
-        open={selected !== null}
+      {/* Wide slide-from-right detail panel */}
+      <SessionSlidePanel
+        session={selected}
         onClose={() => setSelected(null)}
-        title={
-          selected
-            ? `${selected.pid ? `PID ${selected.pid}` : 'Session'}`
-            : ''
-        }
-        subtitle={selected?.sessionId}
-        tags={
-          selected
-            ? [
-                {
-                  label: selected.alive ? 'Running' : 'Terminated',
-                  variant: selected.alive ? 'green' : 'gray',
-                },
-              ]
-            : []
-        }
-      >
-        {selected && <SessionDetailContent session={selected} />}
-      </DetailPanel>
+      />
     </div>
   );
 }

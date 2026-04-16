@@ -1,11 +1,11 @@
 {
   "name": "claude-config-manager",
   "version": "1.0.0-draft",
-  "description": "Dashboard for managing Claude Code configurations, plugins, MCP servers, and profiles",
+  "description": "Manage Claude Code profiles, export/import configs, and browse MCP/plugin registries",
   "mcpServers": {
     "claude-config-manager": {
       "command": "node",
-      "args": ["packages/mcp/dist/bin.js"]
+      "args": ["dist/mcp-server.mjs"]
     }
   },
   "skills": ["skills/"],

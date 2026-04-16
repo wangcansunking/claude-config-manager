@@ -68,6 +68,24 @@ export async function handleImportProfile(
   };
 }
 
+export async function handleUpdateProfile(
+  managers: ProfileToolManagers,
+  args: { name: string; description?: string; plugins?: string; mcpServers?: string; settings?: string },
+) {
+  const patch: Record<string, unknown> = {};
+  if (args.description !== undefined) patch.description = args.description;
+  if (args.plugins) patch.plugins = JSON.parse(args.plugins);
+  if (args.mcpServers) patch.mcpServers = JSON.parse(args.mcpServers);
+  if (args.settings) patch.settings = JSON.parse(args.settings);
+
+  await managers.profileManager.update(args.name, patch);
+  return {
+    content: [
+      { type: 'text' as const, text: `Profile "${args.name}" updated successfully.` },
+    ],
+  };
+}
+
 export async function handleDeleteProfile(
   managers: ProfileToolManagers,
   args: { name: string },
@@ -125,6 +143,19 @@ export function registerProfileTools(server: McpServer, managers: ProfileToolMan
         .describe('Import strategy: merge with existing or replace (default: replace)'),
     },
     async (args) => handleImportProfile(managers, args),
+  );
+
+  server.tool(
+    'ccm_update_profile',
+    'Update an existing configuration profile — modify description, plugins, MCP servers, or settings',
+    {
+      name: z.string().describe('Name of the profile to update'),
+      description: z.string().optional().describe('New description'),
+      plugins: z.string().optional().describe('JSON string of plugins array to set'),
+      mcpServers: z.string().optional().describe('JSON string of mcpServers object to set'),
+      settings: z.string().optional().describe('JSON string of settings object to set'),
+    },
+    async (args) => handleUpdateProfile(managers, args),
   );
 
   server.tool(
