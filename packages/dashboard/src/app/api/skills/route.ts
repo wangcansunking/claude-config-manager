@@ -5,7 +5,9 @@ export async function GET() {
   try {
     const home = getClaudeHome();
     const skills = await new SkillScanner(home).scan();
-    return NextResponse.json(skills);
+    // Strip content from response to reduce payload size
+    const lightweight = skills.map(({ content: _content, ...rest }) => rest);
+    return NextResponse.json(lightweight);
   } catch (err) {
     console.error('[GET /api/skills]', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

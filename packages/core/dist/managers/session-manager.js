@@ -3,6 +3,7 @@ import { readdir, stat, readFile } from 'fs/promises';
 import { createReadStream } from 'fs';
 import { createInterface } from 'readline';
 import { readJsonFile, fileExists } from '../utils/file-ops.js';
+import { getCached, setCache } from '../utils/cache.js';
 export class SessionManager {
     claudeHome;
     constructor(claudeHome) {
@@ -13,6 +14,9 @@ export class SessionManager {
     // 2. All sessions from history.jsonl (primary index)
     // 3. Session dirs from projects dir
     async listAllSessions() {
+        const cached = getCached('all-sessions', 10000);
+        if (cached)
+            return cached;
         const sessionMap = new Map();
         // 1. Parse history.jsonl — the most complete session index
         await this.parseHistoryIndex(sessionMap);
@@ -27,6 +31,7 @@ export class SessionManager {
                 return a.alive ? -1 : 1;
             return b.startedAt - a.startedAt;
         });
+        setCache('all-sessions', sessions);
         return sessions;
     }
     // Parse history.jsonl to discover all sessions

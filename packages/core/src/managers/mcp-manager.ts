@@ -1,5 +1,6 @@
 import { join, dirname } from 'path';
 import { readJsonFile, writeJsonFile, fileExists } from '../utils/file-ops.js';
+import { getCached, setCache, invalidateCache } from '../utils/cache.js';
 import { ConflictError, NotFoundError } from '@ccm/types';
 import type { McpServerConfig, McpServerEntry } from '@ccm/types';
 
@@ -110,8 +111,14 @@ export class McpManager {
   }
 
   async list(): Promise<McpServerEntry[]> {
+    const cached = getCached<McpServerEntry[]>('mcp-list');
+    if (cached) return cached;
+
     const servers = await this.readAllMcpServers();
-    return Object.entries(servers).map(([name, { config, source }]) => ({ name, config, source }));
+    const entries = Object.entries(servers).map(([name, { config, source }]) => ({ name, config, source }));
+
+    setCache('mcp-list', entries);
+    return entries;
   }
 
   async add(name: string, config: McpServerConfig): Promise<void> {
@@ -128,6 +135,7 @@ export class McpManager {
     await writeJsonFile(this.mcpJsonPath, {
       mcpServers: { ...mcpJson, [name]: config },
     });
+    invalidateCache('mcp');
   }
 
   async remove(name: string): Promise<void> {
@@ -137,6 +145,7 @@ export class McpManager {
     }
     const { [name]: _removed, ...remaining } = userServers;
     await writeJsonFile(this.mcpJsonPath, { mcpServers: remaining });
+    invalidateCache('mcp');
   }
 
   async getDetail(name: string): Promise<McpServerEntry | null> {

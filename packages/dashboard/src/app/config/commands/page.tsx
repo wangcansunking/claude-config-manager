@@ -1,12 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
 import { Header } from '@/components/layout/header';
 import { Tag } from '@/components/shared/tag';
+import { MarkdownViewer } from '@/components/shared/markdown-viewer';
 import { useCommands } from '@/lib/use-data';
-import { updateSkillContent } from '@/lib/api-client';
+import { fetchSkillContent, updateSkillContent } from '@/lib/api-client';
 
 interface Command {
   name: string;
@@ -84,6 +83,8 @@ export default function CommandsPage() {
   const { data: commandsRaw, isLoading: loading, mutate } = useCommands();
   const commands = (commandsRaw ?? []) as Command[];
   const [selected, setSelected] = useState<Command | null>(null);
+  const [selectedContent, setSelectedContent] = useState<string | null>(null);
+  const [contentLoading, setContentLoading] = useState(false);
   const [editing, setEditing] = useState(false);
   const [editContent, setEditContent] = useState('');
 
@@ -91,11 +92,25 @@ export default function CommandsPage() {
   const userCommands = commands.filter((c) => c.source === 'user');
   const systemCommands = commands.filter((c) => c.source !== 'user');
 
+  async function handleSelectCommand(cmd: Command) {
+    setSelected(cmd);
+    setSelectedContent(null);
+    setContentLoading(true);
+    try {
+      const { content } = await fetchSkillContent(cmd.filePath);
+      setSelectedContent(content);
+    } catch {
+      setSelectedContent('*Failed to load content*');
+    } finally {
+      setContentLoading(false);
+    }
+  }
+
   async function handleSave() {
     if (!selected) return;
     try {
       await updateSkillContent(selected.filePath, editContent);
-      setSelected({ ...selected, content: editContent });
+      setSelectedContent(editContent);
       setEditing(false);
       mutate();
     } catch (err) {
@@ -124,7 +139,7 @@ export default function CommandsPage() {
           {userCommands.length > 0 && (
             <CollapsibleSection icon="👤" label="User" count={userCommands.length}>
               {userCommands.map((cmd, i) => (
-                <CommandRow key={cmd.name} cmd={cmd} isLast={i === userCommands.length - 1} onClick={() => setSelected(cmd)} />
+                <CommandRow key={cmd.name} cmd={cmd} isLast={i === userCommands.length - 1} onClick={() => handleSelectCommand(cmd)} />
               ))}
             </CollapsibleSection>
           )}
@@ -133,7 +148,7 @@ export default function CommandsPage() {
           {systemCommands.length > 0 && (
             <CollapsibleSection icon="🔧" label="System" count={systemCommands.length}>
               {systemCommands.map((cmd, i) => (
-                <CommandRow key={cmd.name} cmd={cmd} isLast={i === systemCommands.length - 1} onClick={() => setSelected(cmd)} />
+                <CommandRow key={cmd.name} cmd={cmd} isLast={i === systemCommands.length - 1} onClick={() => handleSelectCommand(cmd)} />
               ))}
             </CollapsibleSection>
           )}
@@ -166,9 +181,9 @@ export default function CommandsPage() {
               <code className="text-xs font-mono hidden lg:block" style={{ color: 'var(--text-muted)' }}>
                 {selected.filePath}
               </code>
-              {selected.source === 'user' && !editing && (
+              {selected.source === 'user' && !editing && !contentLoading && (
                 <button
-                  onClick={() => { setEditing(true); setEditContent(selected.content ?? ''); }}
+                  onClick={() => { setEditing(true); setEditContent(selectedContent ?? ''); }}
                   className="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors hover:bg-bg-hover"
                   style={{ color: 'var(--accent-light)' }}
                 >
@@ -178,7 +193,7 @@ export default function CommandsPage() {
               <button
                 className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors hover:bg-bg-hover"
                 style={{ color: 'var(--text-secondary)' }}
-                onClick={() => { setSelected(null); setEditing(false); }}
+                onClick={() => { setSelected(null); setEditing(false); setSelectedContent(null); }}
               >
                 ✕
               </button>
@@ -200,12 +215,15 @@ export default function CommandsPage() {
                   <button onClick={handleSave} className="px-4 py-2 rounded-lg text-sm btn-primary">Save</button>
                 </div>
               </div>
-            ) : (
-              <div className="max-w-4xl mx-auto skill-markdown">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                  {selected.content ?? '*No content available*'}
-                </ReactMarkdown>
+            ) : contentLoading ? (
+              <div className="max-w-4xl mx-auto text-center py-12">
+                <p style={{ color: 'var(--text-muted)' }}>Loading content...</p>
               </div>
+            ) : (
+              <MarkdownViewer
+                content={selectedContent ?? '*No content available*'}
+                className="max-w-4xl mx-auto skill-markdown"
+              />
             )}
           </div>
         </div>

@@ -1,5 +1,6 @@
 import { join, dirname } from 'path';
 import { readJsonFile, writeJsonFile, fileExists } from '../utils/file-ops.js';
+import { getCached, setCache, invalidateCache } from '../utils/cache.js';
 import { ConflictError, NotFoundError } from '@ccm/types';
 export class McpManager {
     claudeHome;
@@ -99,8 +100,13 @@ export class McpManager {
         return merged;
     }
     async list() {
+        const cached = getCached('mcp-list');
+        if (cached)
+            return cached;
         const servers = await this.readAllMcpServers();
-        return Object.entries(servers).map(([name, { config, source }]) => ({ name, config, source }));
+        const entries = Object.entries(servers).map(([name, { config, source }]) => ({ name, config, source }));
+        setCache('mcp-list', entries);
+        return entries;
     }
     async add(name, config) {
         const userServers = await this.readMcpJsonAt(this.mcpJsonPath);
@@ -116,6 +122,7 @@ export class McpManager {
         await writeJsonFile(this.mcpJsonPath, {
             mcpServers: { ...mcpJson, [name]: config },
         });
+        invalidateCache('mcp');
     }
     async remove(name) {
         const userServers = await this.readMcpJsonAt(this.mcpJsonPath);
@@ -124,6 +131,7 @@ export class McpManager {
         }
         const { [name]: _removed, ...remaining } = userServers;
         await writeJsonFile(this.mcpJsonPath, { mcpServers: remaining });
+        invalidateCache('mcp');
     }
     async getDetail(name) {
         const servers = await this.readAllMcpServers();

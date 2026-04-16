@@ -112,6 +112,10 @@ export function fetchSkills() {
   return request<unknown[]>('/skills');
 }
 
+export function fetchSkillContent(filePath: string) {
+  return request<{ content: string }>(`/skills/content?path=${encodeURIComponent(filePath)}`);
+}
+
 export async function updateSkillContent(filePath: string, content: string) {
   const res = await fetch('/api/skills/update', {
     method: 'POST',

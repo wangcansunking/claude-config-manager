@@ -5,3 +5,5 @@ coverage/
 *.tsbuildinfo
 .env*.local
 .superpowers/
+.playwright-mcp/
+test-screenshots/

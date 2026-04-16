@@ -1,6 +1,7 @@
 import { join } from 'path';
 import { readdir, readFile } from 'fs/promises';
 import { readJsonFile, fileExists } from '../utils/file-ops.js';
+import { getCached, setCache } from '../utils/cache.js';
 import { FileNotFoundError } from '@ccm/types';
 function parseFrontmatter(content) {
     const match = /^---\s*\n([\s\S]*?)\n---/.exec(content);
@@ -106,6 +107,9 @@ export class SkillScanner {
         return skills;
     }
     async scan() {
+        const cached = getCached('skill-scan', 10000);
+        if (cached)
+            return cached;
         const { plugins } = await this.readInstalledPlugins();
         const allSkills = [];
         // 1. User skills from ~/.claude/skills/
@@ -121,6 +125,7 @@ export class SkillScanner {
                 allSkills.push({ ...skill, pluginName, source: 'system' });
             }
         }
+        setCache('skill-scan', allSkills);
         return allSkills;
     }
     async getSkillContent(skillPath) {
@@ -142,6 +147,9 @@ export class SkillScanner {
      * Plugin commands: <plugin>/commands/<name>/Skill.md
      */
     async scanCommands() {
+        const cached = getCached('command-scan', 10000);
+        if (cached)
+            return cached;
         const commands = [];
         // 1. User commands from ~/.claude/commands/
         const userCommands = await this.scanCommandsDir(this.userCommandsPath, 'user');
@@ -156,6 +164,7 @@ export class SkillScanner {
             const pluginCommands = await this.scanCommandsDir(commandsDir, 'system');
             commands.push(...pluginCommands);
         }
+        setCache('command-scan', commands);
         return commands;
     }
     async scanCommandsDir(dirPath, source) {

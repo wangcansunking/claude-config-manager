@@ -1,6 +1,7 @@
 import { join } from 'path';
 import { readdir, readFile } from 'fs/promises';
 import { readJsonFile, fileExists } from '../utils/file-ops.js';
+import { getCached, setCache } from '../utils/cache.js';
 import { FileNotFoundError } from '@ccm/types';
 import type { SkillDefinition, CommandDefinition } from '@ccm/types';
 
@@ -123,6 +124,9 @@ export class SkillScanner {
   }
 
   async scan(): Promise<SkillDefinition[]> {
+    const cached = getCached<SkillDefinition[]>('skill-scan', 10000);
+    if (cached) return cached;
+
     const { plugins } = await this.readInstalledPlugins();
     const allSkills: SkillDefinition[] = [];
 
@@ -140,6 +144,7 @@ export class SkillScanner {
       }
     }
 
+    setCache('skill-scan', allSkills);
     return allSkills;
   }
 
@@ -164,6 +169,9 @@ export class SkillScanner {
    * Plugin commands: <plugin>/commands/<name>/Skill.md
    */
   async scanCommands(): Promise<CommandDefinition[]> {
+    const cached = getCached<CommandDefinition[]>('command-scan', 10000);
+    if (cached) return cached;
+
     const commands: CommandDefinition[] = [];
 
     // 1. User commands from ~/.claude/commands/
@@ -180,6 +188,7 @@ export class SkillScanner {
       commands.push(...pluginCommands);
     }
 
+    setCache('command-scan', commands);
     return commands;
   }
 

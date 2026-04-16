@@ -3,6 +3,7 @@ import { readdir, stat, readFile } from 'fs/promises';
 import { createReadStream } from 'fs';
 import { createInterface } from 'readline';
 import { readJsonFile, fileExists } from '../utils/file-ops.js';
+import { getCached, setCache } from '../utils/cache.js';
 
 export interface SessionInfo {
   pid: number;
@@ -38,6 +39,9 @@ export class SessionManager {
   // 2. All sessions from history.jsonl (primary index)
   // 3. Session dirs from projects dir
   async listAllSessions(): Promise<SessionInfo[]> {
+    const cached = getCached<SessionInfo[]>('all-sessions', 10000);
+    if (cached) return cached;
+
     const sessionMap = new Map<string, SessionInfo>();
 
     // 1. Parse history.jsonl — the most complete session index
@@ -56,6 +60,7 @@ export class SessionManager {
       return b.startedAt - a.startedAt;
     });
 
+    setCache('all-sessions', sessions);
     return sessions;
   }
 

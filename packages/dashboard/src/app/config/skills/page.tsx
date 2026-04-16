@@ -1,13 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
 import { Header } from '@/components/layout/header';
 import { SearchBox } from '@/components/shared/search-box';
 import { Tag } from '@/components/shared/tag';
+import { MarkdownViewer } from '@/components/shared/markdown-viewer';
 import { useSkills } from '@/lib/use-data';
-import { updateSkillContent } from '@/lib/api-client';
+import { fetchSkillContent, updateSkillContent } from '@/lib/api-client';
 
 interface Skill {
   name: string;
@@ -61,15 +60,31 @@ export default function SkillsPage() {
   const skills = (skillsRaw ?? []) as Skill[];
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<Skill | null>(null);
+  const [selectedContent, setSelectedContent] = useState<string | null>(null);
+  const [contentLoading, setContentLoading] = useState(false);
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
   const [editing, setEditing] = useState(false);
   const [editContent, setEditContent] = useState('');
+
+  async function handleSelectSkill(skill: Skill) {
+    setSelected(skill);
+    setSelectedContent(null);
+    setContentLoading(true);
+    try {
+      const { content } = await fetchSkillContent(skill.filePath);
+      setSelectedContent(content);
+    } catch {
+      setSelectedContent('*Failed to load content*');
+    } finally {
+      setContentLoading(false);
+    }
+  }
 
   async function handleSave() {
     if (!selected) return;
     try {
       await updateSkillContent(selected.filePath, editContent);
-      setSelected({ ...selected, content: editContent });
+      setSelectedContent(editContent);
       setEditing(false);
       mutate();
     } catch (err) {
@@ -106,7 +121,7 @@ export default function SkillsPage() {
         style={{
           borderBottom: i < total - 1 ? '1px solid var(--border)' : 'none',
         }}
-        onClick={() => setSelected(skill)}
+        onClick={() => handleSelectSkill(skill)}
       >
         <code
           className="text-sm font-mono shrink-0"
@@ -248,9 +263,9 @@ export default function SkillsPage() {
               <code className="text-xs font-mono hidden lg:block" style={{ color: 'var(--text-muted)' }}>
                 {selected.filePath}
               </code>
-              {selected.source === 'user' && !editing && (
+              {selected.source === 'user' && !editing && !contentLoading && (
                 <button
-                  onClick={() => { setEditing(true); setEditContent(selected.content ?? ''); }}
+                  onClick={() => { setEditing(true); setEditContent(selectedContent ?? ''); }}
                   className="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors hover:bg-bg-hover"
                   style={{ color: 'var(--accent-light)' }}
                 >
@@ -260,7 +275,7 @@ export default function SkillsPage() {
               <button
                 className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors hover:bg-bg-hover"
                 style={{ color: 'var(--text-secondary)' }}
-                onClick={() => { setSelected(null); setEditing(false); }}
+                onClick={() => { setSelected(null); setEditing(false); setSelectedContent(null); }}
               >
                 ✕
               </button>
@@ -282,12 +297,15 @@ export default function SkillsPage() {
                   <button onClick={handleSave} className="px-4 py-2 rounded-lg text-sm btn-primary">Save</button>
                 </div>
               </div>
-            ) : (
-              <div className="max-w-4xl mx-auto skill-markdown">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                  {selected.content ?? '*No content available*'}
-                </ReactMarkdown>
+            ) : contentLoading ? (
+              <div className="max-w-4xl mx-auto text-center py-12">
+                <p style={{ color: 'var(--text-muted)' }}>Loading content...</p>
               </div>
+            ) : (
+              <MarkdownViewer
+                content={selectedContent ?? '*No content available*'}
+                className="max-w-4xl mx-auto skill-markdown"
+              />
             )}
           </div>
         </div>

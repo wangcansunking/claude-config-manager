@@ -1,0 +1,1123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude Config Manager - Overview Redesign</title>
+<style>
+  /* ================================================================
+     DESIGN TOKENS (from globals.css / tailwind.config.ts)
+     ================================================================ */
+  :root {
+    --bg-primary: #0f0f14;
+    --bg-sidebar: #16161d;
+    --bg-card: #1e1e28;
+    --bg-card-hover: #252530;
+    --bg-border: #2a2a35;
+    --bg-bar-track: #16161d;
+
+    --text-primary: #ffffff;
+    --text-secondary: #b2bec3;
+    --text-muted: #636e72;
+    --text-dim: #4a4a55;
+
+    --accent-purple: #6c5ce7;
+    --accent-purple-light: #a29bfe;
+    --accent-green: #00b894;
+    --accent-blue: #0984e3;
+    --accent-orange: #e17055;
+    --accent-yellow: #fdcb6e;
+    --accent-pink: #fd79a8;
+    --accent-red: #ff4757;
+
+    --radius-card: 12px;
+    --radius-inner: 8px;
+    --font-stack: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-mono: 'SF Mono', 'Cascadia Code', 'Fira Code', 'JetBrains Mono', Consolas, monospace;
+  }
+
+  /* ================================================================
+     RESET & BASE
+     ================================================================ */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+  body {
+    font-family: var(--font-stack);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+
+  /* ================================================================
+     LAYOUT — Sidebar + Main
+     ================================================================ */
+  .layout {
+    display: flex;
+    min-height: 100vh;
+  }
+
+  /* ---- Sidebar ---- */
+  .sidebar {
+    width: 240px;
+    min-width: 240px;
+    background: var(--bg-sidebar);
+    border-right: 1px solid var(--bg-border);
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0; left: 0;
+    height: 100vh;
+    overflow-y: auto;
+    z-index: 100;
+  }
+  .sidebar-logo {
+    padding: 16px;
+    border-bottom: 1px solid var(--bg-border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .sidebar-logo-icon {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, var(--accent-purple), var(--accent-purple-light));
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-weight: 700; font-size: 14px;
+  }
+  .sidebar-logo-text { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+  .sidebar-logo-version { font-size: 11px; color: var(--text-muted); }
+
+  .sidebar-nav { flex: 1; padding: 12px; }
+  .sidebar-nav ul { list-style: none; }
+  .sidebar-nav li + li { margin-top: 2px; }
+  .sidebar-nav a {
+    display: flex; align-items: center; gap: 12px;
+    padding: 8px 12px; border-radius: 8px;
+    font-size: 14px; color: var(--text-secondary);
+    text-decoration: none; transition: background 0.15s, color 0.15s;
+  }
+  .sidebar-nav a:hover { background: var(--bg-border); color: var(--text-primary); }
+  .sidebar-nav a.active { background: var(--accent-purple); color: #fff; }
+  .sidebar-nav .icon { font-size: 16px; width: 20px; text-align: center; }
+  .sidebar-divider { height: 1px; background: var(--bg-border); margin: 12px 0; }
+
+  /* ---- Main content ---- */
+  .main {
+    margin-left: 240px;
+    flex: 1;
+    padding: 0 40px 60px 40px;
+    max-width: 1280px;
+  }
+
+  /* ================================================================
+     HEADER
+     ================================================================ */
+  .page-header {
+    padding: 32px 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .page-header h1 {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.02em;
+  }
+  .page-header .subtitle {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-left: 12px;
+  }
+  .header-right {
+    display: flex; align-items: center; gap: 10px;
+  }
+  .header-badge {
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    background: rgba(0, 184, 148, 0.12);
+    color: var(--accent-green);
+    font-weight: 500;
+  }
+  .header-time {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  /* ================================================================
+     ROW 1 — Quick Stats
+     ================================================================ */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+  .stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--bg-border);
+    border-radius: var(--radius-card);
+    padding: 20px 24px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s, transform 0.15s;
+    cursor: default;
+  }
+  .stat-card:hover {
+    border-color: #3a3a48;
+    transform: translateY(-1px);
+  }
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    border-radius: var(--radius-card) var(--radius-card) 0 0;
+  }
+  .stat-card[data-color="purple"]::before  { background: var(--accent-purple); }
+  .stat-card[data-color="blue"]::before    { background: var(--accent-blue); }
+  .stat-card[data-color="green"]::before   { background: var(--accent-green); }
+  .stat-card[data-color="orange"]::before  { background: var(--accent-orange); }
+  .stat-card[data-color="pink"]::before    { background: var(--accent-pink); }
+
+  .stat-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+  .stat-value-row {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+  .stat-value {
+    font-size: 32px;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.03em;
+  }
+  .stat-card[data-color="purple"]  .stat-value { color: var(--accent-purple); }
+  .stat-card[data-color="blue"]    .stat-value { color: var(--accent-blue); }
+  .stat-card[data-color="green"]   .stat-value { color: var(--accent-green); }
+  .stat-card[data-color="orange"]  .stat-value { color: var(--accent-orange); }
+  .stat-card[data-color="pink"]    .stat-value { color: var(--accent-pink); }
+
+  .stat-trend {
+    font-size: 11px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 2px 8px;
+    border-radius: 10px;
+  }
+  .stat-trend.up   { background: rgba(0, 184, 148, 0.12); color: var(--accent-green); }
+  .stat-trend.same { background: rgba(99, 110, 114, 0.15); color: var(--text-muted); }
+  .stat-icon {
+    position: absolute;
+    bottom: 16px; right: 20px;
+    font-size: 28px;
+    opacity: 0.08;
+  }
+
+  /* ================================================================
+     SHARED — Card & Section
+     ================================================================ */
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--bg-border);
+    border-radius: var(--radius-card);
+    overflow: hidden;
+  }
+  .card-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--bg-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .card-header h3 {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+  }
+  .card-header .pill {
+    font-size: 11px;
+    padding: 2px 10px;
+    border-radius: 10px;
+    background: var(--bg-border);
+    color: var(--text-secondary);
+    font-weight: 500;
+  }
+  .card-body { padding: 8px 0; }
+  .card-body.padded { padding: 20px; }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 32px;
+  }
+
+  /* ================================================================
+     ROW 2 — Bar Charts (Skills & Tools)
+     ================================================================ */
+  .bar-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 20px;
+    transition: background 0.12s;
+  }
+  .bar-row:hover { background: var(--bg-card-hover); }
+  .bar-label {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--accent-purple-light);
+    width: 200px;
+    min-width: 200px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .bar-label.blue { color: var(--accent-blue); }
+  .bar-label.orange { color: var(--accent-orange); }
+  .bar-track {
+    flex: 1;
+    height: 20px;
+    border-radius: 4px;
+    background: var(--bg-bar-track);
+    overflow: hidden;
+  }
+  .bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.4s ease;
+    min-width: 4px;
+  }
+  .bar-fill.purple { background: var(--accent-purple); opacity: 0.85; }
+  .bar-fill.blue   { background: var(--accent-blue); opacity: 0.85; }
+  .bar-fill.orange  { background: var(--accent-orange); opacity: 0.85; }
+  .bar-count {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    width: 40px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .bar-time {
+    font-size: 11px;
+    color: var(--text-muted);
+    width: 56px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  /* ================================================================
+     ROW 3 LEFT — Recent Sessions
+     ================================================================ */
+  .session-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 14px 20px;
+    transition: background 0.12s;
+    cursor: pointer;
+    border-bottom: 1px solid var(--bg-border);
+  }
+  .session-row:last-child { border-bottom: none; }
+  .session-row:hover { background: var(--bg-card-hover); }
+  .session-dot {
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    margin-top: 5px;
+    flex-shrink: 0;
+  }
+  .session-dot.alive { background: var(--accent-green); box-shadow: 0 0 6px rgba(0, 184, 148, 0.4); }
+  .session-dot.dead  { background: var(--text-muted); }
+  .session-info { flex: 1; min-width: 0; }
+  .session-top {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 3px;
+  }
+  .session-id {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent-purple-light);
+  }
+  .session-tag {
+    font-size: 10px;
+    padding: 1px 7px;
+    border-radius: 4px;
+    font-weight: 500;
+  }
+  .session-tag.ide  { background: rgba(108, 92, 231, 0.15); color: var(--accent-purple-light); }
+  .session-tag.pid  { background: rgba(99, 110, 114, 0.2);  color: var(--text-secondary); }
+  .session-path {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .session-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 4px;
+  }
+  .session-time { font-size: 11px; color: var(--text-muted); }
+  .session-msg  { font-size: 12px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .session-arrow {
+    color: var(--text-muted);
+    flex-shrink: 0;
+    margin-top: 4px;
+  }
+
+  /* ================================================================
+     ROW 3 RIGHT — Environment Health
+     ================================================================ */
+  .health-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--bg-border);
+  }
+  .health-row:last-child { border-bottom: none; }
+  .health-icon {
+    width: 34px; height: 34px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+  .health-icon.ok  { background: rgba(0, 184, 148, 0.12); }
+  .health-icon.warn { background: rgba(253, 203, 110, 0.12); }
+  .health-icon.info { background: rgba(9, 132, 227, 0.12); }
+  .health-label {
+    flex: 1;
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+  .health-label strong { color: var(--text-primary); font-weight: 600; }
+  .health-status {
+    font-size: 12px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex-shrink: 0;
+  }
+  .health-status.ok   { color: var(--accent-green); }
+  .health-status.warn { color: var(--accent-yellow); }
+  .health-status.info { color: var(--accent-blue); }
+
+  .health-actions {
+    padding: 16px 20px;
+    border-top: 1px solid var(--bg-border);
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .action-link {
+    font-size: 12px;
+    padding: 5px 14px;
+    border-radius: 6px;
+    background: rgba(108, 92, 231, 0.1);
+    color: var(--accent-purple-light);
+    border: none;
+    cursor: pointer;
+    transition: background 0.12s;
+    text-decoration: none;
+    font-weight: 500;
+  }
+  .action-link:hover { background: rgba(108, 92, 231, 0.2); }
+
+  /* ================================================================
+     ROW 4 — MCP Server Usage (Collapsible)
+     ================================================================ */
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .section-header h2 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-header .count-badge {
+    font-size: 11px;
+    padding: 2px 10px;
+    border-radius: 10px;
+    background: var(--bg-border);
+    color: var(--text-secondary);
+    font-weight: 500;
+  }
+
+  .mcp-server-card {
+    background: var(--bg-card);
+    border: 1px solid var(--bg-border);
+    border-radius: var(--radius-card);
+    overflow: hidden;
+    margin-bottom: 12px;
+  }
+  .mcp-server-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    cursor: pointer;
+    transition: background 0.12s;
+    user-select: none;
+  }
+  .mcp-server-header:hover { background: var(--bg-card-hover); }
+  .mcp-server-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .mcp-server-name {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent-orange);
+  }
+  .mcp-server-pill {
+    font-size: 11px;
+    padding: 2px 10px;
+    border-radius: 10px;
+    font-weight: 500;
+  }
+  .mcp-server-pill.calls { background: var(--bg-border); color: var(--text-secondary); }
+  .mcp-server-pill.tools { background: var(--bg-border); color: var(--text-muted); }
+  .mcp-chevron {
+    width: 16px; height: 16px;
+    color: var(--text-muted);
+    transition: transform 0.2s;
+  }
+  .mcp-chevron.open { transform: rotate(0deg); }
+  .mcp-chevron.closed { transform: rotate(-90deg); }
+
+  .mcp-server-body {
+    border-top: 1px solid var(--bg-border);
+    padding: 4px 0;
+  }
+
+  /* ================================================================
+     UTILITY — Tag
+     ================================================================ */
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+  }
+  .tag.purple { background: rgba(108, 92, 231, 0.15); color: var(--accent-purple-light); }
+  .tag.green  { background: rgba(0, 184, 148, 0.15);  color: var(--accent-green); }
+  .tag.blue   { background: rgba(9, 132, 227, 0.15);  color: var(--accent-blue); }
+  .tag.orange { background: rgba(225, 112, 85, 0.15); color: var(--accent-orange); }
+  .tag.gray   { background: rgba(99, 110, 114, 0.2);  color: var(--text-secondary); }
+  .tag.red    { background: rgba(255, 71, 87, 0.15);  color: var(--accent-red); }
+
+  /* ================================================================
+     SCROLLBAR
+     ================================================================ */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--bg-border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #3a3a48; }
+
+  /* ================================================================
+     ANIMATIONS
+     ================================================================ */
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+  .stats-grid .stat-card { animation: fadeIn 0.35s ease both; }
+  .stats-grid .stat-card:nth-child(1) { animation-delay: 0.00s; }
+  .stats-grid .stat-card:nth-child(2) { animation-delay: 0.05s; }
+  .stats-grid .stat-card:nth-child(3) { animation-delay: 0.10s; }
+  .stats-grid .stat-card:nth-child(4) { animation-delay: 0.15s; }
+  .stats-grid .stat-card:nth-child(5) { animation-delay: 0.20s; }
+
+  @keyframes barGrow { from { width: 0; } }
+  .bar-fill { animation: barGrow 0.5s ease-out both; }
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- ================================================================
+       SIDEBAR (exact replica of existing component)
+       ================================================================ -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-icon">C</div>
+      <div>
+        <div class="sidebar-logo-text">Claude Config</div>
+        <div class="sidebar-logo-version">1.0.0-draft</div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <ul>
+        <li><a href="#" class="active"><span class="icon">&#x1F4CA;</span> Overview</a></li>
+        <li><a href="#"><span class="icon">&#x1F9E9;</span> Plugins</a></li>
+        <li><a href="#"><span class="icon">&#x1F50C;</span> MCP Servers</a></li>
+        <li><a href="#"><span class="icon">&#x26A1;</span> Skills</a></li>
+        <li><a href="#"><span class="icon">&#x1F4DD;</span> Commands</a></li>
+        <li><a href="#"><span class="icon">&#x2699;&#xFE0F;</span> Settings</a></li>
+        <li><a href="#"><span class="icon">&#x1F5A5;&#xFE0F;</span> Sessions</a></li>
+      </ul>
+      <div class="sidebar-divider"></div>
+      <ul>
+        <li><a href="#"><span class="icon">&#x1F464;</span> Profiles</a></li>
+        <li><a href="#"><span class="icon">&#x1F4E6;</span> Export / Import</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <!-- ================================================================
+       MAIN CONTENT
+       ================================================================ -->
+  <div class="main">
+
+    <!-- Page Header -->
+    <div class="page-header">
+      <div style="display:flex;align-items:baseline;">
+        <h1>Overview</h1>
+        <span class="subtitle">claude-config-manager dashboard</span>
+      </div>
+      <div class="header-right">
+        <span class="header-badge">&#x2713; All systems healthy</span>
+        <span class="header-time">Last synced 12s ago</span>
+      </div>
+    </div>
+
+    <!-- ============================================================
+         ROW 1 — Quick Stats (5 cards)
+         ============================================================ -->
+    <div class="stats-grid">
+
+      <!-- Plugins -->
+      <div class="stat-card" data-color="purple">
+        <div class="stat-label">Plugins</div>
+        <div class="stat-value-row">
+          <span class="stat-value">14</span>
+          <span class="stat-trend up">
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M5 2L8.5 6.5H1.5L5 2Z" fill="currentColor"/></svg>
+            +3
+          </span>
+        </div>
+        <div class="stat-icon">&#x1F9E9;</div>
+      </div>
+
+      <!-- MCP Servers -->
+      <div class="stat-card" data-color="blue">
+        <div class="stat-label">MCP Servers</div>
+        <div class="stat-value-row">
+          <span class="stat-value">7</span>
+          <span class="stat-trend same">&#8212; stable</span>
+        </div>
+        <div class="stat-icon">&#x1F50C;</div>
+      </div>
+
+      <!-- Skills -->
+      <div class="stat-card" data-color="green">
+        <div class="stat-label">Skills</div>
+        <div class="stat-value-row">
+          <span class="stat-value">30</span>
+          <span class="stat-trend up">
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M5 2L8.5 6.5H1.5L5 2Z" fill="currentColor"/></svg>
+            +8
+          </span>
+        </div>
+        <div class="stat-icon">&#x26A1;</div>
+      </div>
+
+      <!-- Profiles -->
+      <div class="stat-card" data-color="orange">
+        <div class="stat-label">Profiles</div>
+        <div class="stat-value-row">
+          <span class="stat-value">1</span>
+          <span class="stat-trend same">&#8212; default</span>
+        </div>
+        <div class="stat-icon">&#x1F464;</div>
+      </div>
+
+      <!-- Sessions -->
+      <div class="stat-card" data-color="pink">
+        <div class="stat-label">Sessions</div>
+        <div class="stat-value-row">
+          <span class="stat-value">1</span>
+          <span class="stat-trend up" style="background:rgba(0,184,148,0.12);color:var(--accent-green);">
+            <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent-green);margin-right:2px;box-shadow:0 0 4px rgba(0,184,148,0.5);"></span>
+            active
+          </span>
+        </div>
+        <div class="stat-icon">&#x1F5A5;&#xFE0F;</div>
+      </div>
+
+    </div>
+
+    <!-- ============================================================
+         ROW 2 — Top Skills + Top Tools
+         ============================================================ -->
+    <div class="two-col">
+
+      <!-- Top Skills -->
+      <div class="card">
+        <div class="card-header">
+          <h3>Top Skills</h3>
+          <span class="pill">5 of 30</span>
+        </div>
+        <div class="card-body">
+          <!-- Skill 1 — highest -->
+          <div class="bar-row">
+            <span class="bar-label">commit</span>
+            <div class="bar-track"><div class="bar-fill purple" style="width:100%;animation-delay:0.1s;"></div></div>
+            <span class="bar-count">47</span>
+            <span class="bar-time">2m ago</span>
+          </div>
+          <!-- Skill 2 -->
+          <div class="bar-row">
+            <span class="bar-label">review-pr</span>
+            <div class="bar-track"><div class="bar-fill purple" style="width:72%;animation-delay:0.15s;"></div></div>
+            <span class="bar-count">34</span>
+            <span class="bar-time">18m ago</span>
+          </div>
+          <!-- Skill 3 -->
+          <div class="bar-row">
+            <span class="bar-label">simplify</span>
+            <div class="bar-track"><div class="bar-fill purple" style="width:53%;animation-delay:0.2s;"></div></div>
+            <span class="bar-count">25</span>
+            <span class="bar-time">1h ago</span>
+          </div>
+          <!-- Skill 4 -->
+          <div class="bar-row">
+            <span class="bar-label">feature-dev</span>
+            <div class="bar-track"><div class="bar-fill purple" style="width:38%;animation-delay:0.25s;"></div></div>
+            <span class="bar-count">18</span>
+            <span class="bar-time">3h ago</span>
+          </div>
+          <!-- Skill 5 -->
+          <div class="bar-row">
+            <span class="bar-label">init</span>
+            <div class="bar-track"><div class="bar-fill purple" style="width:21%;animation-delay:0.3s;"></div></div>
+            <span class="bar-count">10</span>
+            <span class="bar-time">1d ago</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Top Tools -->
+      <div class="card">
+        <div class="card-header">
+          <h3>Top Tools</h3>
+          <span class="pill">built-in</span>
+        </div>
+        <div class="card-body">
+          <div class="bar-row">
+            <span class="bar-label blue">Read</span>
+            <div class="bar-track"><div class="bar-fill blue" style="width:100%;animation-delay:0.1s;"></div></div>
+            <span class="bar-count">312</span>
+            <span class="bar-time">just now</span>
+          </div>
+          <div class="bar-row">
+            <span class="bar-label blue">Edit</span>
+            <div class="bar-track"><div class="bar-fill blue" style="width:74%;animation-delay:0.14s;"></div></div>
+            <span class="bar-count">231</span>
+            <span class="bar-time">just now</span>
+          </div>
+          <div class="bar-row">
+            <span class="bar-label blue">Bash</span>
+            <div class="bar-track"><div class="bar-fill blue" style="width:61%;animation-delay:0.18s;"></div></div>
+            <span class="bar-count">190</span>
+            <span class="bar-time">1m ago</span>
+          </div>
+          <div class="bar-row">
+            <span class="bar-label blue">Glob</span>
+            <div class="bar-track"><div class="bar-fill blue" style="width:43%;animation-delay:0.22s;"></div></div>
+            <span class="bar-count">134</span>
+            <span class="bar-time">2m ago</span>
+          </div>
+          <div class="bar-row">
+            <span class="bar-label blue">Grep</span>
+            <div class="bar-track"><div class="bar-fill blue" style="width:38%;animation-delay:0.26s;"></div></div>
+            <span class="bar-count">118</span>
+            <span class="bar-time">5m ago</span>
+          </div>
+          <div class="bar-row">
+            <span class="bar-label blue">Write</span>
+            <div class="bar-track"><div class="bar-fill blue" style="width:28%;animation-delay:0.30s;"></div></div>
+            <span class="bar-count">87</span>
+            <span class="bar-time">12m ago</span>
+          </div>
+          <div class="bar-row">
+            <span class="bar-label blue">Skill</span>
+            <div class="bar-track"><div class="bar-fill blue" style="width:21%;animation-delay:0.34s;"></div></div>
+            <span class="bar-count">65</span>
+            <span class="bar-time">18m ago</span>
+          </div>
+          <div class="bar-row">
+            <span class="bar-label blue">WebFetch</span>
+            <div class="bar-track"><div class="bar-fill blue" style="width:12%;animation-delay:0.38s;"></div></div>
+            <span class="bar-count">38</span>
+            <span class="bar-time">1h ago</span>
+          </div>
+          <div class="bar-row">
+            <span class="bar-label blue">WebSearch</span>
+            <div class="bar-track"><div class="bar-fill blue" style="width:8%;animation-delay:0.42s;"></div></div>
+            <span class="bar-count">25</span>
+            <span class="bar-time">2h ago</span>
+          </div>
+          <div class="bar-row">
+            <span class="bar-label blue">ToolSearch</span>
+            <div class="bar-track"><div class="bar-fill blue" style="width:4%;animation-delay:0.46s;"></div></div>
+            <span class="bar-count">12</span>
+            <span class="bar-time">3h ago</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ============================================================
+         ROW 3 — Recent Sessions + Environment Health
+         ============================================================ -->
+    <div class="two-col">
+
+      <!-- Recent Sessions -->
+      <div class="card">
+        <div class="card-header">
+          <h3>Recent Sessions</h3>
+          <span class="pill">last 5</span>
+        </div>
+        <div class="card-body" style="padding:0;">
+
+          <!-- Session 1: Active -->
+          <div class="session-row">
+            <span class="session-dot alive"></span>
+            <div class="session-info">
+              <div class="session-top">
+                <span class="session-id">sess_a8f3c1d2</span>
+                <span class="session-tag pid">PID 14892</span>
+                <span class="session-tag ide">VS Code (stdio)</span>
+              </div>
+              <div class="session-path">C:\repos\claude-go</div>
+              <div class="session-meta">
+                <span class="session-time">2m ago</span>
+                <span class="session-msg">Create a visual design spec as an HTML file...</span>
+              </div>
+            </div>
+            <svg class="session-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5l7 7-7 7"/></svg>
+          </div>
+
+          <!-- Session 2: Terminated -->
+          <div class="session-row">
+            <span class="session-dot dead"></span>
+            <div class="session-info">
+              <div class="session-top">
+                <span class="session-id">sess_7b2e9f41</span>
+                <span class="session-tag pid">PID 11204</span>
+                <span class="session-tag ide">VS Code (stdio)</span>
+              </div>
+              <div class="session-path">C:\repos\claude-go\packages\dashboard</div>
+              <div class="session-meta">
+                <span class="session-time">45m ago</span>
+                <span class="session-msg">Make plugin installable without npm install</span>
+              </div>
+            </div>
+            <svg class="session-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5l7 7-7 7"/></svg>
+          </div>
+
+          <!-- Session 3: Terminated -->
+          <div class="session-row">
+            <span class="session-dot dead"></span>
+            <div class="session-info">
+              <div class="session-top">
+                <span class="session-id">sess_c4d8e7a0</span>
+                <span class="session-tag pid">PID 9381</span>
+              </div>
+              <div class="session-path">C:\repos\claude-go</div>
+              <div class="session-meta">
+                <span class="session-time">3h ago</span>
+                <span class="session-msg">Add plugin marketplace browser and management</span>
+              </div>
+            </div>
+            <svg class="session-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5l7 7-7 7"/></svg>
+          </div>
+
+          <!-- Session 4: Terminated -->
+          <div class="session-row">
+            <span class="session-dot dead"></span>
+            <div class="session-info">
+              <div class="session-top">
+                <span class="session-id">sess_e1f5a3b8</span>
+                <span class="session-tag pid">PID 7620</span>
+                <span class="session-tag ide">VS Code (stdio)</span>
+              </div>
+              <div class="session-path">C:\repos\claude-go\packages\mcp-server</div>
+              <div class="session-meta">
+                <span class="session-time">6h ago</span>
+                <span class="session-msg">Add MCP Store search and install from registries</span>
+              </div>
+            </div>
+            <svg class="session-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5l7 7-7 7"/></svg>
+          </div>
+
+          <!-- Session 5: Terminated -->
+          <div class="session-row">
+            <span class="session-dot dead"></span>
+            <div class="session-info">
+              <div class="session-top">
+                <span class="session-id">sess_92d0b6c5</span>
+                <span class="session-tag pid">PID 5104</span>
+              </div>
+              <div class="session-path">C:\repos\claude-go</div>
+              <div class="session-meta">
+                <span class="session-time">1d ago</span>
+                <span class="session-msg">Fullscreen markdown viewer for commands + inline editing</span>
+              </div>
+            </div>
+            <svg class="session-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5l7 7-7 7"/></svg>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Environment Health -->
+      <div class="card">
+        <div class="card-header">
+          <h3>Environment Health</h3>
+          <span class="tag green">Healthy</span>
+        </div>
+        <div class="card-body" style="padding:0;">
+
+          <!-- Active Model -->
+          <div class="health-row">
+            <div class="health-icon ok">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00b894" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+            </div>
+            <div class="health-label"><strong>Active Model</strong> &mdash; claude-opus-4-6[1m]</div>
+            <span class="health-status ok">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+              Connected
+            </span>
+          </div>
+
+          <!-- Plugins -->
+          <div class="health-row">
+            <div class="health-icon ok">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00b894" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+            </div>
+            <div class="health-label"><strong>Plugins</strong> &mdash; 14 enabled</div>
+            <span class="health-status ok">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+              All loaded
+            </span>
+          </div>
+
+          <!-- MCP Servers -->
+          <div class="health-row">
+            <div class="health-icon ok">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00b894" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+            </div>
+            <div class="health-label"><strong>MCP Servers</strong> &mdash; 7 connected</div>
+            <span class="health-status ok">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+              7 / 7
+            </span>
+          </div>
+
+          <!-- Hooks -->
+          <div class="health-row">
+            <div class="health-icon info">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0984e3" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+            </div>
+            <div class="health-label"><strong>Hooks</strong> &mdash; 1 configured</div>
+            <span class="health-status info">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+              Active
+            </span>
+          </div>
+
+          <!-- Disk / Config -->
+          <div class="health-row">
+            <div class="health-icon ok">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00b894" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+            </div>
+            <div class="health-label"><strong>Config</strong> &mdash; ~/.claude synced</div>
+            <span class="health-status ok">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+              OK
+            </span>
+          </div>
+
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="health-actions">
+          <a href="#" class="action-link">Manage Plugins</a>
+          <a href="#" class="action-link">MCP Servers</a>
+          <a href="#" class="action-link">Edit Settings</a>
+          <a href="#" class="action-link">View Hooks</a>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ============================================================
+         ROW 4 — MCP Server Usage (Full Width, Collapsible)
+         ============================================================ -->
+    <div style="margin-bottom: 40px;">
+      <div class="section-header">
+        <h2>
+          MCP Server Usage
+          <span class="count-badge">7 servers</span>
+        </h2>
+      </div>
+
+      <!-- Server 1: azure-devops (expanded) -->
+      <div class="mcp-server-card">
+        <div class="mcp-server-header" onclick="this.parentElement.querySelector('.mcp-server-body').style.display = this.parentElement.querySelector('.mcp-server-body').style.display === 'none' ? 'block' : 'none'; this.querySelector('.mcp-chevron').classList.toggle('open'); this.querySelector('.mcp-chevron').classList.toggle('closed');">
+          <div class="mcp-server-left">
+            <span class="mcp-server-name">azure-devops</span>
+            <span class="mcp-server-pill calls">142 calls</span>
+            <span class="mcp-server-pill tools">12 tools</span>
+          </div>
+          <svg class="mcp-chevron open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 9l-7 7-7-7"/></svg>
+        </div>
+        <div class="mcp-server-body">
+          <div class="bar-row"><span class="bar-label orange">wit_get_work_item</span><div class="bar-track"><div class="bar-fill orange" style="width:100%;animation-delay:0.1s;"></div></div><span class="bar-count">38</span><span class="bar-time">5m ago</span></div>
+          <div class="bar-row"><span class="bar-label orange">repo_list_pull_requests</span><div class="bar-track"><div class="bar-fill orange" style="width:66%;animation-delay:0.15s;"></div></div><span class="bar-count">25</span><span class="bar-time">12m ago</span></div>
+          <div class="bar-row"><span class="bar-label orange">wit_create_work_item</span><div class="bar-track"><div class="bar-fill orange" style="width:50%;animation-delay:0.2s;"></div></div><span class="bar-count">19</span><span class="bar-time">28m ago</span></div>
+          <div class="bar-row"><span class="bar-label orange">repo_create_pull_request</span><div class="bar-track"><div class="bar-fill orange" style="width:42%;animation-delay:0.25s;"></div></div><span class="bar-count">16</span><span class="bar-time">1h ago</span></div>
+          <div class="bar-row"><span class="bar-label orange">search_code</span><div class="bar-track"><div class="bar-fill orange" style="width:37%;animation-delay:0.3s;"></div></div><span class="bar-count">14</span><span class="bar-time">2h ago</span></div>
+        </div>
+      </div>
+
+      <!-- Server 2: azure (collapsed) -->
+      <div class="mcp-server-card">
+        <div class="mcp-server-header" onclick="this.parentElement.querySelector('.mcp-server-body').style.display = this.parentElement.querySelector('.mcp-server-body').style.display === 'none' ? 'block' : 'none'; this.querySelector('.mcp-chevron').classList.toggle('open'); this.querySelector('.mcp-chevron').classList.toggle('closed');">
+          <div class="mcp-server-left">
+            <span class="mcp-server-name">azure</span>
+            <span class="mcp-server-pill calls">98 calls</span>
+            <span class="mcp-server-pill tools">45 tools</span>
+          </div>
+          <svg class="mcp-chevron closed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 9l-7 7-7-7"/></svg>
+        </div>
+        <div class="mcp-server-body" style="display:none;">
+          <div class="bar-row"><span class="bar-label orange">documentation</span><div class="bar-track"><div class="bar-fill orange" style="width:100%;"></div></div><span class="bar-count">22</span><span class="bar-time">8m ago</span></div>
+          <div class="bar-row"><span class="bar-label orange">appservice</span><div class="bar-track"><div class="bar-fill orange" style="width:73%;"></div></div><span class="bar-count">16</span><span class="bar-time">30m ago</span></div>
+          <div class="bar-row"><span class="bar-label orange">keyvault</span><div class="bar-track"><div class="bar-fill orange" style="width:55%;"></div></div><span class="bar-count">12</span><span class="bar-time">1h ago</span></div>
+        </div>
+      </div>
+
+      <!-- Server 3: metagraph (collapsed) -->
+      <div class="mcp-server-card">
+        <div class="mcp-server-header" onclick="this.parentElement.querySelector('.mcp-server-body').style.display = this.parentElement.querySelector('.mcp-server-body').style.display === 'none' ? 'block' : 'none'; this.querySelector('.mcp-chevron').classList.toggle('open'); this.querySelector('.mcp-chevron').classList.toggle('closed');">
+          <div class="mcp-server-left">
+            <span class="mcp-server-name">metagraph</span>
+            <span class="mcp-server-pill calls">64 calls</span>
+            <span class="mcp-server-pill tools">11 tools</span>
+          </div>
+          <svg class="mcp-chevron closed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 9l-7 7-7-7"/></svg>
+        </div>
+        <div class="mcp-server-body" style="display:none;">
+          <div class="bar-row"><span class="bar-label orange">query_entities</span><div class="bar-track"><div class="bar-fill orange" style="width:100%;"></div></div><span class="bar-count">18</span><span class="bar-time">15m ago</span></div>
+          <div class="bar-row"><span class="bar-label orange">create_entity</span><div class="bar-track"><div class="bar-fill orange" style="width:72%;"></div></div><span class="bar-count">13</span><span class="bar-time">25m ago</span></div>
+          <div class="bar-row"><span class="bar-label orange">add_relationship</span><div class="bar-track"><div class="bar-fill orange" style="width:50%;"></div></div><span class="bar-count">9</span><span class="bar-time">40m ago</span></div>
+        </div>
+      </div>
+
+      <!-- Server 4: figma (collapsed) -->
+      <div class="mcp-server-card">
+        <div class="mcp-server-header" onclick="this.parentElement.querySelector('.mcp-server-body').style.display = this.parentElement.querySelector('.mcp-server-body').style.display === 'none' ? 'block' : 'none'; this.querySelector('.mcp-chevron').classList.toggle('open'); this.querySelector('.mcp-chevron').classList.toggle('closed');">
+          <div class="mcp-server-left">
+            <span class="mcp-server-name">figma</span>
+            <span class="mcp-server-pill calls">31 calls</span>
+            <span class="mcp-server-pill tools">5 tools</span>
+          </div>
+          <svg class="mcp-chevron closed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 9l-7 7-7-7"/></svg>
+        </div>
+        <div class="mcp-server-body" style="display:none;">
+          <div class="bar-row"><span class="bar-label orange">authenticate</span><div class="bar-track"><div class="bar-fill orange" style="width:100%;"></div></div><span class="bar-count">14</span><span class="bar-time">2h ago</span></div>
+          <div class="bar-row"><span class="bar-label orange">complete_authentication</span><div class="bar-track"><div class="bar-fill orange" style="width:50%;"></div></div><span class="bar-count">7</span><span class="bar-time">2h ago</span></div>
+        </div>
+      </div>
+
+      <!-- Server 5: workiq (collapsed) -->
+      <div class="mcp-server-card">
+        <div class="mcp-server-header" onclick="this.parentElement.querySelector('.mcp-server-body').style.display = this.parentElement.querySelector('.mcp-server-body').style.display === 'none' ? 'block' : 'none'; this.querySelector('.mcp-chevron').classList.toggle('open'); this.querySelector('.mcp-chevron').classList.toggle('closed');">
+          <div class="mcp-server-left">
+            <span class="mcp-server-name">workiq</span>
+            <span class="mcp-server-pill calls">18 calls</span>
+            <span class="mcp-server-pill tools">2 tools</span>
+          </div>
+          <svg class="mcp-chevron closed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 9l-7 7-7-7"/></svg>
+        </div>
+        <div class="mcp-server-body" style="display:none;">
+          <div class="bar-row"><span class="bar-label orange">ask_work_iq</span><div class="bar-track"><div class="bar-fill orange" style="width:100%;"></div></div><span class="bar-count">15</span><span class="bar-time">20m ago</span></div>
+          <div class="bar-row"><span class="bar-label orange">accept_eula</span><div class="bar-track"><div class="bar-fill orange" style="width:20%;"></div></div><span class="bar-count">3</span><span class="bar-time">2d ago</span></div>
+        </div>
+      </div>
+
+      <!-- Server 6: plugin_figma (collapsed) -->
+      <div class="mcp-server-card">
+        <div class="mcp-server-header" onclick="this.parentElement.querySelector('.mcp-server-body').style.display = this.parentElement.querySelector('.mcp-server-body').style.display === 'none' ? 'block' : 'none'; this.querySelector('.mcp-chevron').classList.toggle('open'); this.querySelector('.mcp-chevron').classList.toggle('closed');">
+          <div class="mcp-server-left">
+            <span class="mcp-server-name">plugin_figma_figma</span>
+            <span class="mcp-server-pill calls">12 calls</span>
+            <span class="mcp-server-pill tools">2 tools</span>
+          </div>
+          <svg class="mcp-chevron closed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 9l-7 7-7-7"/></svg>
+        </div>
+        <div class="mcp-server-body" style="display:none;">
+          <div class="bar-row"><span class="bar-label orange">authenticate</span><div class="bar-track"><div class="bar-fill orange" style="width:100%;"></div></div><span class="bar-count">8</span><span class="bar-time">3h ago</span></div>
+          <div class="bar-row"><span class="bar-label orange">complete_authentication</span><div class="bar-track"><div class="bar-fill orange" style="width:50%;"></div></div><span class="bar-count">4</span><span class="bar-time">3h ago</span></div>
+        </div>
+      </div>
+
+      <!-- Server 7: custom-tools (collapsed) -->
+      <div class="mcp-server-card">
+        <div class="mcp-server-header" onclick="this.parentElement.querySelector('.mcp-server-body').style.display = this.parentElement.querySelector('.mcp-server-body').style.display === 'none' ? 'block' : 'none'; this.querySelector('.mcp-chevron').classList.toggle('open'); this.querySelector('.mcp-chevron').classList.toggle('closed');">
+          <div class="mcp-server-left">
+            <span class="mcp-server-name">custom-tools</span>
+            <span class="mcp-server-pill calls">5 calls</span>
+            <span class="mcp-server-pill tools">3 tools</span>
+          </div>
+          <svg class="mcp-chevron closed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 9l-7 7-7-7"/></svg>
+        </div>
+        <div class="mcp-server-body" style="display:none;">
+          <div class="bar-row"><span class="bar-label orange">run_query</span><div class="bar-track"><div class="bar-fill orange" style="width:100%;"></div></div><span class="bar-count">3</span><span class="bar-time">5h ago</span></div>
+          <div class="bar-row"><span class="bar-label orange">format_output</span><div class="bar-track"><div class="bar-fill orange" style="width:67%;"></div></div><span class="bar-count">2</span><span class="bar-time">1d ago</span></div>
+        </div>
+      </div>
+
+    </div>
+
+  </div><!-- /main -->
+
+</div><!-- /layout -->
+
+</body>
+</html>

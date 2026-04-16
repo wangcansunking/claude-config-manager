@@ -1,5 +1,6 @@
 import { join } from 'path';
 import { readJsonFile, writeJsonFile } from '../utils/file-ops.js';
+import { getCached, setCache, invalidateCache } from '../utils/cache.js';
 import { FileNotFoundError } from '@ccm/types';
 export class PluginManager {
     pluginsJsonPath;
@@ -52,6 +53,9 @@ export class PluginManager {
         return match;
     }
     async list() {
+        const cached = getCached('plugin-list');
+        if (cached)
+            return cached;
         const { plugins } = await this.readInstalledPlugins();
         const enabledPlugins = await this.readEnabledPlugins();
         const entries = [];
@@ -72,6 +76,7 @@ export class PluginManager {
                 lastUpdated: install.lastUpdated,
             });
         }
+        setCache('plugin-list', entries);
         return entries;
     }
     async getDetail(name) {
@@ -105,6 +110,7 @@ export class PluginManager {
             ...settings,
             enabledPlugins: { ...current, [fullName]: enabled },
         });
+        invalidateCache('plugin');
     }
     async remove(name) {
         const data = await this.readInstalledPlugins();
@@ -117,6 +123,7 @@ export class PluginManager {
         const enabledPlugins = await this.readEnabledPlugins();
         const { [fullName]: _ep, ...remainingEp } = enabledPlugins;
         await writeJsonFile(this.settingsPath, { ...settings, enabledPlugins: remainingEp });
+        invalidateCache('plugin');
     }
     async isInstalled(name) {
         const { plugins } = await this.readInstalledPlugins();

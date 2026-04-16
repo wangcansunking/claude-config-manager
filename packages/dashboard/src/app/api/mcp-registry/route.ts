@@ -115,6 +115,13 @@ async function searchSmithery(query: string): Promise<McpRegistryResult[]> {
 }
 
 // ---------------------------------------------------------------------------
+// In-memory search cache (5 minute TTL)
+// ---------------------------------------------------------------------------
+
+const searchCache = new Map<string, { data: { results: McpRegistryResult[]; smitheryAvailable: boolean }; timestamp: number }>();
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+// ---------------------------------------------------------------------------
 // GET /api/mcp-registry?q=search-term
 // ---------------------------------------------------------------------------
 
@@ -122,6 +129,12 @@ export async function GET(request: NextRequest) {
   const query = request.nextUrl.searchParams.get('q')?.trim();
   if (!query) {
     return NextResponse.json({ results: [], smitheryAvailable: !!process.env.SMITHERY_API_KEY });
+  }
+
+  // Check cache
+  const cached = searchCache.get(query);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    return NextResponse.json(cached.data);
   }
 
   // Fetch all sources in parallel — tolerant of individual failures
@@ -151,8 +164,13 @@ export async function GET(request: NextRequest) {
     (a, b) => (b.score ?? 0) - (a.score ?? 0),
   );
 
-  return NextResponse.json({
+  const responseData = {
     results,
     smitheryAvailable: !!process.env.SMITHERY_API_KEY,
-  });
+  };
+
+  // Cache result
+  searchCache.set(query, { data: responseData, timestamp: Date.now() });
+
+  return NextResponse.json(responseData);
 }
