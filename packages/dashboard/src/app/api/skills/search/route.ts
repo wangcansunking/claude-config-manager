@@ -28,8 +28,10 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // Run npx skills find <query> and parse output
-    const { stdout } = await exec('npx', ['skills@latest', 'find', query], {
+    // Use locally installed skills package (faster than npx)
+    const { resolve } = await import('path');
+    const skillsBin = resolve(process.cwd(), '..', '..', 'node_modules', 'skills', 'bin', 'cli.mjs');
+    const { stdout } = await exec('node', [skillsBin, 'find', query], {
       timeout: 15000,
       env: { ...process.env, NO_COLOR: '1', FORCE_COLOR: '0' },
     });
