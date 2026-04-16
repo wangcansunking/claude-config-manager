@@ -15,32 +15,18 @@ Start the Claude Config Manager dashboard web UI.
 curl -s -o /dev/null -w "%{http_code}" http://localhost:3399 2>/dev/null
 ```
 
-2. If 200, it's running. Open and STOP:
+2. If 200, open and STOP:
 ```bash
 start "" "http://localhost:3399"
 ```
 
-3. If NOT running, check deps and build:
-
+3. If NOT running, start the pre-built server:
 ```bash
-ls "${CLAUDE_PLUGIN_ROOT}/packages/dashboard/node_modules/.package-lock.json" 2>/dev/null && echo "DEPS_OK" || echo "DEPS_MISSING"
-ls "${CLAUDE_PLUGIN_ROOT}/packages/dashboard/.next/BUILD_ID" 2>/dev/null && echo "BUILD_OK" || echo "BUILD_MISSING"
+node "${CLAUDE_PLUGIN_ROOT}/packages/dashboard/dist/server.mjs" &
+sleep 3 && start "" "http://localhost:3399"
 ```
 
-4. If DEPS_MISSING: `cd "${CLAUDE_PLUGIN_ROOT}" && npm install`
-
-5. If BUILD_MISSING: tell user "Building dashboard (first time only, ~30s)..." then:
-```bash
-cd "${CLAUDE_PLUGIN_ROOT}/packages/dashboard" && npx next build
-```
-
-6. Start production server and open:
-```bash
-cd "${CLAUDE_PLUGIN_ROOT}/packages/dashboard" && npx next start -p 3399 &
-sleep 5 && start "" "http://localhost:3399"
-```
-
-7. Tell user: "Dashboard running at http://localhost:3399"
+4. Tell user: "Dashboard running at http://localhost:3399"
 
 ## Features
 
