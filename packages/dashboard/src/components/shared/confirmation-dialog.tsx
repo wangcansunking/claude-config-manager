@@ -28,18 +28,22 @@ export function ConfirmationDialog({
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center"
-      style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)' }}
+      style={{ backgroundColor: 'rgba(0, 0, 0, 0.85)' }}
       onClick={onClose}
     >
       <div
-        className="rounded-xl p-6 w-full max-w-md mx-4 shadow-2xl"
-        style={{ backgroundColor: '#1e1e28', border: '1px solid #2a2a35' }}
+        className="rounded-xl p-6 w-full max-w-md mx-4"
+        style={{
+          backgroundColor: '#191a1b',
+          border: '1px solid rgba(255, 255, 255, 0.08)',
+          boxShadow: 'rgba(0,0,0,0.4) 0px 2px 4px',
+        }}
         onClick={(e) => e.stopPropagation()}
       >
-        <h3 className="text-lg font-semibold mb-2" style={{ color: '#ffffff' }}>
+        <h3 className="text-lg mb-2" style={{ color: '#f7f8f8', fontWeight: 510 }}>
           {title}
         </h3>
-        <p className="text-sm mb-6" style={{ color: '#b2bec3' }}>
+        <p className="text-sm mb-6" style={{ color: '#d0d6e0' }}>
           {message}
         </p>
         <div className="flex items-center justify-end gap-3">

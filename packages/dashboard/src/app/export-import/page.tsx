@@ -18,7 +18,7 @@ export default function ExportImportPage() {
       <Header title="Export / Import" />
 
       {loading ? (
-        <p style={{ color: '#b2bec3' }}>Loading...</p>
+        <p style={{ color: '#d0d6e0' }}>Loading...</p>
       ) : (
         <div className="grid grid-cols-2 gap-6">
           <ExportPanel profiles={profiles} />

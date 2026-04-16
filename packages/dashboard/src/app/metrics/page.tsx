@@ -74,16 +74,16 @@ function UsageBar({
 
   return (
     <div
-      className="flex items-center gap-3 px-5 py-2.5 transition-colors hover:bg-[#252530]"
+      className="flex items-center gap-3 px-5 py-2.5 transition-colors hover:bg-[#28282c]"
     >
       <span
         className="font-mono text-xs shrink-0"
-        style={{ color: '#a29bfe', width: '220px' }}
+        style={{ color: '#7170ff', width: '220px' }}
         title={entry.name}
       >
         {entry.name.length > 32 ? entry.name.slice(0, 30) + '...' : entry.name}
       </span>
-      <div className="flex-1 h-5 rounded overflow-hidden" style={{ backgroundColor: '#16161d' }}>
+      <div className="flex-1 h-5 rounded overflow-hidden" style={{ backgroundColor: '#0f1011' }}>
         <div
           className="h-full rounded"
           style={{
@@ -96,14 +96,14 @@ function UsageBar({
       </div>
       <span
         className="text-xs font-semibold shrink-0 text-right"
-        style={{ color: '#b2bec3', width: '48px' }}
+        style={{ color: '#d0d6e0', width: '48px' }}
       >
         {entry.usageCount}
       </span>
       {relTime && (
         <span
           className="text-xs shrink-0 text-right"
-          style={{ color: '#636e72', width: '72px' }}
+          style={{ color: '#8a8f98', width: '72px' }}
         >
           {relTime}
         </span>
@@ -132,22 +132,22 @@ function UsageBarList({
   return (
     <div
       className="rounded-xl overflow-hidden"
-      style={{ backgroundColor: '#1e1e28', border: '1px solid #2a2a35' }}
+      style={{ backgroundColor: '#191a1b', border: '1px solid rgba(255,255,255,0.05)' }}
     >
       <div
         className="px-5 py-3"
-        style={{ borderBottom: '1px solid #2a2a35' }}
+        style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}
       >
         <h3
           className="text-xs font-semibold uppercase tracking-wider"
-          style={{ color: '#636e72' }}
+          style={{ color: '#8a8f98' }}
         >
           {title}
         </h3>
       </div>
       {entries.length === 0 ? (
         <div className="px-5 py-6 text-center">
-          <p className="text-sm" style={{ color: '#636e72' }}>{emptyMessage}</p>
+          <p className="text-sm" style={{ color: '#8a8f98' }}>{emptyMessage}</p>
         </div>
       ) : (
         <div className="py-1">
@@ -186,11 +186,11 @@ function McpServerSection({
   return (
     <div
       className="rounded-xl overflow-hidden"
-      style={{ backgroundColor: '#1e1e28', border: '1px solid #2a2a35' }}
+      style={{ backgroundColor: '#191a1b', border: '1px solid rgba(255,255,255,0.05)' }}
     >
       <button
-        className="w-full flex items-center justify-between px-5 py-3 text-left transition-colors hover:bg-[#252530]"
-        style={{ borderBottom: open ? '1px solid #2a2a35' : 'none' }}
+        className="w-full flex items-center justify-between px-5 py-3 text-left transition-colors hover:bg-[#28282c]"
+        style={{ borderBottom: open ? '1px solid rgba(255,255,255,0.05)' : 'none' }}
         onClick={() => setOpen(!open)}
       >
         <div className="flex items-center gap-3">
@@ -202,13 +202,13 @@ function McpServerSection({
           </span>
           <span
             className="text-xs px-2 py-0.5 rounded-full"
-            style={{ backgroundColor: '#2a2a35', color: '#b2bec3' }}
+            style={{ backgroundColor: 'rgba(255,255,255,0.05)', color: '#d0d6e0' }}
           >
             {totalCalls} calls
           </span>
           <span
             className="text-xs px-2 py-0.5 rounded-full"
-            style={{ backgroundColor: '#2a2a35', color: '#636e72' }}
+            style={{ backgroundColor: 'rgba(255,255,255,0.05)', color: '#8a8f98' }}
           >
             {toolCount} tools
           </span>
@@ -216,7 +216,7 @@ function McpServerSection({
         <svg
           className="w-4 h-4 transition-transform"
           style={{
-            color: '#636e72',
+            color: '#8a8f98',
             transform: open ? 'rotate(0deg)' : 'rotate(-90deg)',
           }}
           fill="none"
@@ -280,16 +280,16 @@ export default function MetricsPage() {
       />
 
       {isLoading ? (
-        <p style={{ color: '#b2bec3' }}>Loading...</p>
+        <p style={{ color: '#d0d6e0' }}>Loading...</p>
       ) : !metrics ? (
         <div
           className="rounded-xl p-8 text-center"
-          style={{ backgroundColor: '#1e1e28', border: '1px solid #2a2a35' }}
+          style={{ backgroundColor: '#191a1b', border: '1px solid rgba(255,255,255,0.05)' }}
         >
-          <p className="text-lg mb-2" style={{ color: '#636e72' }}>
+          <p className="text-lg mb-2" style={{ color: '#8a8f98' }}>
             No metrics available
           </p>
-          <p className="text-sm" style={{ color: '#4a4a55' }}>
+          <p className="text-sm" style={{ color: '#62666d' }}>
             Usage data will appear here once Claude tools and skills have been used.
           </p>
         </div>
@@ -324,7 +324,7 @@ export default function MetricsPage() {
             <UsageBarList
               title="Top Skills"
               entries={metrics.topSkills}
-              barColor="#6c5ce7"
+              barColor="#5e6ad2"
               emptyMessage="No skills have been used yet."
             />
             <UsageBarList
@@ -341,7 +341,7 @@ export default function MetricsPage() {
               <UsageBarList
                 title="All Skills"
                 entries={metrics.skills}
-                barColor="#6c5ce7"
+                barColor="#5e6ad2"
                 emptyMessage="No skills have been used yet."
               />
             </div>
@@ -352,7 +352,7 @@ export default function MetricsPage() {
             <div className="mb-8">
               <h2
                 className="text-lg font-semibold mb-3"
-                style={{ color: '#ffffff' }}
+                style={{ color: '#f7f8f8' }}
               >
                 MCP Server Breakdown
               </h2>

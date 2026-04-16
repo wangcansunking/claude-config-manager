@@ -57,10 +57,10 @@ export function ImportPanel() {
 
   return (
     <div
-      className="rounded-xl p-5 h-full"
-      style={{ backgroundColor: '#1e1e28', border: '1px solid #2a2a35' }}
+      className="rounded-lg p-5 h-full"
+      style={{ backgroundColor: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.08)' }}
     >
-      <h2 className="text-base font-semibold mb-4" style={{ color: '#ffffff' }}>
+      <h2 className="text-base mb-4" style={{ color: '#f7f8f8', fontWeight: 510 }}>
         Import
       </h2>
 
@@ -68,8 +68,8 @@ export function ImportPanel() {
       <div
         className="rounded-lg border-2 border-dashed p-8 text-center mb-4 cursor-pointer transition-colors"
         style={{
-          borderColor: dragging ? '#6c5ce7' : '#2a2a35',
-          backgroundColor: dragging ? 'rgba(108, 92, 231, 0.05)' : 'transparent',
+          borderColor: dragging ? '#5e6ad2' : 'rgba(255, 255, 255, 0.08)',
+          backgroundColor: dragging ? 'rgba(94, 106, 210, 0.05)' : 'transparent',
         }}
         onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
         onDragLeave={() => setDragging(false)}
@@ -85,7 +85,7 @@ export function ImportPanel() {
         />
         <svg
           className="w-8 h-8 mx-auto mb-2"
-          style={{ color: '#636e72' }}
+          style={{ color: '#8a8f98' }}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -95,13 +95,13 @@ export function ImportPanel() {
           />
         </svg>
         {fileName ? (
-          <p className="text-sm font-medium" style={{ color: '#a29bfe' }}>{fileName}</p>
+          <p className="text-sm" style={{ color: '#7170ff', fontWeight: 510 }}>{fileName}</p>
         ) : (
           <>
-            <p className="text-sm font-medium" style={{ color: '#b2bec3' }}>
+            <p className="text-sm" style={{ color: '#d0d6e0', fontWeight: 510 }}>
               Drop JSON or YAML file here
             </p>
-            <p className="text-xs mt-1" style={{ color: '#636e72' }}>
+            <p className="text-xs mt-1" style={{ color: '#8a8f98' }}>
               or click to browse
             </p>
           </>
@@ -111,12 +111,12 @@ export function ImportPanel() {
       {/* Preview */}
       {preview && (
         <div className="mb-4">
-          <h3 className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: '#636e72' }}>
+          <h3 className="text-xs uppercase tracking-wider mb-2" style={{ color: '#8a8f98', fontWeight: 510 }}>
             Preview
           </h3>
           <pre
             className="text-xs rounded-lg p-3 overflow-auto max-h-48 whitespace-pre-wrap"
-            style={{ backgroundColor: '#16161d', color: '#b2bec3' }}
+            style={{ backgroundColor: '#0f1011', color: '#d0d6e0' }}
           >
             {JSON.stringify(preview, null, 2).slice(0, 600)}
             {JSON.stringify(preview, null, 2).length > 600 ? '\n...' : ''}
@@ -131,8 +131,8 @@ export function ImportPanel() {
           style={{
             backgroundColor: importResult.includes('failed')
               ? 'rgba(255, 71, 87, 0.1)'
-              : 'rgba(0, 184, 148, 0.1)',
-            color: importResult.includes('failed') ? '#ff4757' : '#00b894',
+              : 'rgba(39, 166, 68, 0.1)',
+            color: importResult.includes('failed') ? '#ff4757' : '#27a644',
           }}
         >
           {importResult}

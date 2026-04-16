@@ -30,10 +30,10 @@ export function ProfileCard({ profile, onActivate, onEdit, onExport, onDelete }:
 
   return (
     <div
-      className="rounded-xl p-5 flex flex-col gap-4"
+      className="rounded-lg p-5 flex flex-col gap-4"
       style={{
-        backgroundColor: '#1e1e28',
-        border: profile.active ? '1px solid #6c5ce7' : '1px solid #2a2a35',
+        backgroundColor: 'rgba(255, 255, 255, 0.02)',
+        border: profile.active ? '1px solid #5e6ad2' : '1px solid rgba(255, 255, 255, 0.08)',
       }}
     >
       {/* Header */}
@@ -41,15 +41,15 @@ export function ProfileCard({ profile, onActivate, onEdit, onExport, onDelete }:
         <div className="flex items-center gap-3">
           <div
             className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-base shrink-0"
-            style={{ background: 'linear-gradient(135deg, #6c5ce7, #fd79a8)' }}
+            style={{ backgroundColor: '#5e6ad2' }}
           >
             {profile.name.charAt(0).toUpperCase()}
           </div>
           <div>
-            <h3 className="font-semibold text-sm" style={{ color: '#ffffff' }}>
+            <h3 className="text-sm" style={{ color: '#f7f8f8', fontWeight: 510 }}>
               {profile.name}
             </h3>
-            <p className="text-xs mt-0.5" style={{ color: '#636e72' }}>
+            <p className="text-xs mt-0.5" style={{ color: '#62666d' }}>
               Created {new Date(profile.createdAt).toLocaleDateString()}
             </p>
           </div>
@@ -68,7 +68,7 @@ export function ProfileCard({ profile, onActivate, onEdit, onExport, onDelete }:
 
       {/* Description */}
       {profile.description && (
-        <p className="text-xs" style={{ color: '#b2bec3' }}>{profile.description}</p>
+        <p className="text-xs" style={{ color: '#d0d6e0' }}>{profile.description}</p>
       )}
 
       {/* Actions */}

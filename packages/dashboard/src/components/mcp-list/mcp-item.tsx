@@ -25,22 +25,22 @@ export function McpItem({ server, onClick }: McpItemProps) {
 
   return (
     <div
-      className="flex items-center gap-4 px-5 py-4 cursor-pointer transition-colors hover:bg-[#252530]"
-      style={{ borderBottom: '1px solid #2a2a35' }}
+      className="flex items-center gap-4 px-5 py-4 cursor-pointer transition-colors hover:bg-[#28282c]"
+      style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}
       onClick={onClick}
     >
       {/* Status dot */}
       <span
         className="w-2 h-2 rounded-full shrink-0"
-        style={{ backgroundColor: isEnabled ? '#00b894' : '#ff4757' }}
+        style={{ backgroundColor: isEnabled ? '#27a644' : '#8a8f98' }}
       />
 
       {/* Name + command */}
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium" style={{ color: '#ffffff' }}>
+        <p className="text-sm" style={{ color: '#f7f8f8', fontWeight: 510 }}>
           {server.name}
         </p>
-        <p className="text-xs font-mono truncate mt-0.5" style={{ color: '#636e72' }}>
+        <p className="text-xs font-mono truncate mt-0.5" style={{ color: '#62666d' }}>
           {server.config.command}
           {server.config.args && server.config.args.length > 0
             ? ' ' + server.config.args.join(' ')
@@ -51,13 +51,13 @@ export function McpItem({ server, onClick }: McpItemProps) {
       {/* Status tag */}
       <Tag
         label={isEnabled ? 'Connected' : 'Disabled'}
-        variant={isEnabled ? 'green' : 'red'}
+        variant={isEnabled ? 'green' : 'gray'}
       />
 
       {/* Chevron */}
       <svg
         className="w-4 h-4 shrink-0"
-        style={{ color: '#636e72' }}
+        style={{ color: '#62666d' }}
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"

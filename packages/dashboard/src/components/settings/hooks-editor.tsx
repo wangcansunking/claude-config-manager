@@ -25,7 +25,7 @@ export function HooksEditor({ hooks }: HooksEditorProps) {
   const entries = Object.entries(hooks);
 
   if (entries.length === 0) {
-    return <p className="text-sm" style={{ color: '#636e72' }}>No hooks configured.</p>;
+    return <p className="text-sm" style={{ color: '#8a8f98' }}>No hooks configured.</p>;
   }
 
   return (
@@ -43,14 +43,14 @@ export function HooksEditor({ hooks }: HooksEditorProps) {
               <div
                 key={i}
                 className="rounded-lg p-3"
-                style={{ backgroundColor: '#16161d', border: '1px solid #2a2a35' }}
+                style={{ backgroundColor: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.05)' }}
               >
-                <code className="block text-xs font-mono" style={{ color: '#a29bfe' }}>
+                <code className="block text-xs font-mono" style={{ color: '#7170ff' }}>
                   {hook.command}
                   {hook.args && hook.args.length > 0 ? ' ' + hook.args.join(' ') : ''}
                 </code>
                 {hook.timeout !== undefined && (
-                  <p className="text-xs mt-1" style={{ color: '#636e72' }}>
+                  <p className="text-xs mt-1" style={{ color: '#8a8f98' }}>
                     Timeout: {hook.timeout}ms
                   </p>
                 )}

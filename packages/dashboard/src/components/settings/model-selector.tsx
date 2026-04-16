@@ -17,23 +17,23 @@ const COMMON_MODELS = [
 export function ModelSelector({ value, onChange }: ModelSelectorProps) {
   return (
     <div className="space-y-2">
-      <label className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#636e72' }}>
+      <label className="text-xs uppercase tracking-wider" style={{ color: '#8a8f98', fontWeight: 510 }}>
         Default Model
       </label>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full px-3 py-2 rounded-lg text-sm outline-none"
+        className="w-full px-3 py-2 rounded-md text-sm outline-none"
         style={{
-          backgroundColor: '#2a2a35',
-          border: '1px solid #2a2a35',
-          color: '#ffffff',
+          backgroundColor: '#191a1b',
+          border: '1px solid rgba(255, 255, 255, 0.08)',
+          color: '#f7f8f8',
         }}
         onFocus={(e) => {
-          e.currentTarget.style.borderColor = '#6c5ce7';
+          e.currentTarget.style.borderColor = '#5e6ad2';
         }}
         onBlur={(e) => {
-          e.currentTarget.style.borderColor = '#2a2a35';
+          e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
         }}
       >
         <option value="">-- Select a model --</option>
@@ -52,17 +52,17 @@ export function ModelSelector({ value, onChange }: ModelSelectorProps) {
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder="Or type a custom model ID..."
-        className="w-full px-3 py-2 rounded-lg text-sm outline-none"
+        className="w-full px-3 py-2 rounded-md text-sm outline-none"
         style={{
-          backgroundColor: '#2a2a35',
-          border: '1px solid #2a2a35',
-          color: '#ffffff',
+          backgroundColor: '#191a1b',
+          border: '1px solid rgba(255, 255, 255, 0.08)',
+          color: '#f7f8f8',
         }}
         onFocus={(e) => {
-          e.currentTarget.style.borderColor = '#6c5ce7';
+          e.currentTarget.style.borderColor = '#5e6ad2';
         }}
         onBlur={(e) => {
-          e.currentTarget.style.borderColor = '#2a2a35';
+          e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
         }}
       />
     </div>

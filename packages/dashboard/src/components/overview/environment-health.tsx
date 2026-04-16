@@ -26,12 +26,12 @@ function HealthRow({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex items-center justify-between px-5 py-3 transition-colors hover:bg-[#252530]">
+    <div className="flex items-center justify-between px-5 py-3 transition-colors hover:bg-[#28282c]">
       <div className="flex items-center gap-3">
-        <span className="shrink-0 w-5 h-5 flex items-center justify-center" style={{ color: '#636e72' }}>
+        <span className="shrink-0 w-5 h-5 flex items-center justify-center" style={{ color: '#8a8f98' }}>
           {icon}
         </span>
-        <span className="text-sm" style={{ color: '#b2bec3' }}>{label}</span>
+        <span className="text-sm" style={{ color: '#d0d6e0' }}>{label}</span>
       </div>
       <div className="flex items-center gap-2">{children}</div>
     </div>
@@ -40,16 +40,16 @@ function HealthRow({
 
 function Badge({ label, color }: { label: string; color: 'green' | 'blue' | 'yellow' | 'gray' }) {
   const colorMap = {
-    green: { bg: 'rgba(0, 184, 148, 0.15)', text: '#00b894' },
-    blue:  { bg: 'rgba(9, 132, 227, 0.15)',  text: '#0984e3' },
-    yellow: { bg: 'rgba(253, 203, 110, 0.15)', text: '#fdcb6e' },
-    gray:  { bg: 'rgba(99, 110, 114, 0.2)',  text: '#b2bec3' },
+    green: { bg: 'rgba(39, 166, 68, 0.15)', text: '#27a644' },
+    blue:  { bg: 'rgba(94, 106, 210, 0.15)',  text: '#7170ff' },
+    yellow: { bg: 'rgba(138, 143, 152, 0.15)', text: '#d0d6e0' },
+    gray:  { bg: 'rgba(255, 255, 255, 0.05)',  text: '#8a8f98' },
   };
   const c = colorMap[color];
   return (
     <span
-      className="text-xs px-2 py-0.5 rounded-full font-medium"
-      style={{ backgroundColor: c.bg, color: c.text }}
+      className="text-xs px-2 py-0.5 rounded-full"
+      style={{ backgroundColor: c.bg, color: c.text, fontWeight: 510 }}
     >
       {label}
     </span>
@@ -58,7 +58,7 @@ function Badge({ label, color }: { label: string; color: 'green' | 'blue' | 'yel
 
 function CheckIcon() {
   return (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: '#00b894' }}>
+    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: '#27a644' }}>
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
     </svg>
   );
@@ -121,28 +121,34 @@ export function EnvironmentHealth() {
   const envVarCount = Object.keys(envVars).length;
 
   return (
-    <div className="rounded-xl overflow-hidden bg-[#1e1e28] border border-[#2a2a35]">
-      <div className="px-5 py-3 border-b border-[#2a2a35]">
-        <h3 className="text-lg font-semibold text-white">Environment Health</h3>
+    <div
+      className="rounded-lg overflow-hidden"
+      style={{ backgroundColor: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.08)' }}
+    >
+      <div
+        className="px-5 py-3"
+        style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}
+      >
+        <h3 className="text-lg" style={{ color: '#f7f8f8', fontWeight: 510 }}>Environment Health</h3>
       </div>
 
       {isLoading ? (
         <div className="px-5 py-6">
-          <p className="text-sm" style={{ color: '#636e72' }}>Loading...</p>
+          <p className="text-sm" style={{ color: '#8a8f98' }}>Loading...</p>
         </div>
       ) : (
-        <div className="divide-y divide-[#2a2a35]">
+        <div>
           {/* Model */}
           <HealthRow icon={<ModelIcon />} label="Model">
             {model ? (
               <>
-                <span className="text-sm font-mono" style={{ color: '#a29bfe' }}>
+                <span className="text-sm font-mono" style={{ color: '#7170ff' }}>
                   {model.length > 30 ? model.slice(0, 28) + '...' : model}
                 </span>
                 <CheckIcon />
               </>
             ) : (
-              <span className="text-sm" style={{ color: '#636e72' }}>Not configured</span>
+              <span className="text-sm" style={{ color: '#8a8f98' }}>Not configured</span>
             )}
           </HealthRow>
 
@@ -178,7 +184,7 @@ export function EnvironmentHealth() {
             {envVarCount > 0 ? (
               <Badge label={`${envVarCount} set`} color="blue" />
             ) : (
-              <span className="text-sm" style={{ color: '#636e72' }}>None set</span>
+              <span className="text-sm" style={{ color: '#8a8f98' }}>None set</span>
             )}
           </HealthRow>
         </div>

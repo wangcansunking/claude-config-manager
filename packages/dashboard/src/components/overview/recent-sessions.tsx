@@ -52,12 +52,18 @@ export function RecentSessions() {
     .slice(0, 5);
 
   return (
-    <div className="rounded-xl overflow-hidden bg-[#1e1e28] border border-[#2a2a35]">
-      <div className="px-5 py-3 border-b border-[#2a2a35] flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-white">Recent Sessions</h3>
+    <div
+      className="rounded-lg overflow-hidden"
+      style={{ backgroundColor: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.08)' }}
+    >
+      <div
+        className="px-5 py-3 flex items-center justify-between"
+        style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}
+      >
+        <h3 className="text-lg" style={{ color: '#f7f8f8', fontWeight: 510 }}>Recent Sessions</h3>
         <button
-          className="text-xs transition-colors hover:text-white"
-          style={{ color: '#636e72' }}
+          className="text-xs transition-colors"
+          style={{ color: '#8a8f98' }}
           onClick={() => router.push('/sessions')}
         >
           View all
@@ -66,32 +72,32 @@ export function RecentSessions() {
 
       {isLoading ? (
         <div className="px-5 py-6">
-          <p className="text-sm" style={{ color: '#636e72' }}>Loading...</p>
+          <p className="text-sm" style={{ color: '#8a8f98' }}>Loading...</p>
         </div>
       ) : sessions.length === 0 ? (
         <div className="px-5 py-6 text-center">
-          <p className="text-sm" style={{ color: '#636e72' }}>No sessions found.</p>
+          <p className="text-sm" style={{ color: '#8a8f98' }}>No sessions found.</p>
         </div>
       ) : (
         <div>
           {sessions.map((session, i) => (
             <div
               key={session.sessionId}
-              className="flex items-start gap-3 px-5 py-3 cursor-pointer transition-colors hover:bg-[#252530]"
-              style={{ borderBottom: i < sessions.length - 1 ? '1px solid #2a2a35' : 'none' }}
+              className="flex items-start gap-3 px-5 py-3 cursor-pointer transition-colors hover:bg-[#28282c]"
+              style={{ borderBottom: i < sessions.length - 1 ? '1px solid rgba(255, 255, 255, 0.05)' : 'none' }}
               onClick={() => router.push('/sessions')}
             >
               {/* Status dot */}
               <span
                 className="inline-block w-2 h-2 rounded-full shrink-0 mt-1.5"
-                style={{ backgroundColor: session.alive ? '#00b894' : '#636e72' }}
+                style={{ backgroundColor: session.alive ? '#27a644' : '#8a8f98' }}
               />
 
               <div className="flex-1 min-w-0">
                 {/* Project path */}
                 <p
                   className="font-mono text-xs truncate mb-0.5"
-                  style={{ color: '#b2bec3' }}
+                  style={{ color: '#d0d6e0' }}
                   title={session.projectDir ?? session.cwd}
                 >
                   {truncatePath(session.projectDir ?? session.cwd)}
@@ -99,11 +105,11 @@ export function RecentSessions() {
 
                 {/* Relative time + last message */}
                 <div className="flex items-center gap-2 min-w-0">
-                  <span className="text-xs shrink-0" style={{ color: '#636e72' }}>
+                  <span className="text-xs shrink-0" style={{ color: '#62666d' }}>
                     {formatRelativeTime(session.startedAt)}
                   </span>
                   {session.lastMessage && (
-                    <span className="text-xs truncate" style={{ color: '#636e72' }}>
+                    <span className="text-xs truncate" style={{ color: '#62666d' }}>
                       {truncateMessage(session.lastMessage)}
                     </span>
                   )}

@@ -24,7 +24,7 @@ export default function RootLayout({
               flex: 1,
               marginLeft: '240px',
               padding: '24px',
-              backgroundColor: '#0f0f14',
+              backgroundColor: '#08090a',
               minHeight: '100vh',
             }}
           >

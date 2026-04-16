@@ -55,32 +55,32 @@ export function ExportPanel({ profiles }: ExportPanelProps) {
   }
 
   const selectStyle = {
-    backgroundColor: '#2a2a35',
-    border: '1px solid #2a2a35',
-    color: '#ffffff',
+    backgroundColor: '#191a1b',
+    border: '1px solid rgba(255, 255, 255, 0.08)',
+    color: '#f7f8f8',
   };
 
   return (
     <div
-      className="rounded-xl p-5 h-full"
-      style={{ backgroundColor: '#1e1e28', border: '1px solid #2a2a35' }}
+      className="rounded-lg p-5 h-full"
+      style={{ backgroundColor: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.08)' }}
     >
-      <h2 className="text-base font-semibold mb-4" style={{ color: '#ffffff' }}>
+      <h2 className="text-base mb-4" style={{ color: '#f7f8f8', fontWeight: 510 }}>
         Export
       </h2>
 
       {/* Profile selector */}
       <div className="mb-4">
-        <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: '#636e72' }}>
+        <label className="block text-xs uppercase tracking-wider mb-2" style={{ color: '#8a8f98', fontWeight: 510 }}>
           Profile
         </label>
         <select
           value={selectedProfile}
           onChange={(e) => setSelectedProfile(e.target.value)}
-          className="w-full px-3 py-2 rounded-lg text-sm outline-none"
+          className="w-full px-3 py-2 rounded-md text-sm outline-none"
           style={selectStyle}
-          onFocus={(e) => { e.currentTarget.style.borderColor = '#6c5ce7'; }}
-          onBlur={(e) => { e.currentTarget.style.borderColor = '#2a2a35'; }}
+          onFocus={(e) => { e.currentTarget.style.borderColor = '#5e6ad2'; }}
+          onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)'; }}
         >
           <option value="">Select a profile...</option>
           {profiles.map((p) => (
@@ -91,7 +91,7 @@ export function ExportPanel({ profiles }: ExportPanelProps) {
 
       {/* Include options */}
       <div className="mb-4">
-        <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: '#636e72' }}>
+        <label className="block text-xs uppercase tracking-wider mb-2" style={{ color: '#8a8f98', fontWeight: 510 }}>
           Include
         </label>
         <div className="space-y-2">
@@ -102,9 +102,9 @@ export function ExportPanel({ profiles }: ExportPanelProps) {
                 checked={options[key]}
                 onChange={() => toggleOption(key)}
                 className="w-4 h-4 rounded"
-                style={{ accentColor: '#6c5ce7' }}
+                style={{ accentColor: '#5e6ad2' }}
               />
-              <span className="text-sm capitalize" style={{ color: '#b2bec3' }}>
+              <span className="text-sm capitalize" style={{ color: '#d0d6e0' }}>
                 {key === 'mcpServers' ? 'MCP Servers' : key}
               </span>
               {key === 'credentials' && (
@@ -122,7 +122,7 @@ export function ExportPanel({ profiles }: ExportPanelProps) {
 
       {/* Format selector */}
       <div className="mb-5">
-        <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: '#636e72' }}>
+        <label className="block text-xs uppercase tracking-wider mb-2" style={{ color: '#8a8f98', fontWeight: 510 }}>
           Format
         </label>
         <div className="flex gap-2">
@@ -130,11 +130,12 @@ export function ExportPanel({ profiles }: ExportPanelProps) {
             <button
               key={f}
               onClick={() => setFormat(f)}
-              className="px-4 py-1.5 rounded-lg text-sm font-medium transition-colors"
+              className="px-4 py-1.5 rounded-md text-sm transition-colors"
               style={{
-                backgroundColor: format === f ? '#6c5ce7' : '#2a2a35',
-                color: format === f ? '#ffffff' : '#b2bec3',
-                border: 'none',
+                backgroundColor: format === f ? '#5e6ad2' : 'rgba(255, 255, 255, 0.04)',
+                color: format === f ? '#f7f8f8' : '#d0d6e0',
+                border: format === f ? 'none' : '1px solid rgba(255, 255, 255, 0.08)',
+                fontWeight: 510,
               }}
             >
               {f.toUpperCase()}
