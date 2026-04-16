@@ -208,6 +208,21 @@ export function importProfile(data: string, strategy: 'merge' | 'replace' = 'rep
   });
 }
 
+// ---- Metrics ----------------------------------------------------------------
+
+export function fetchMetrics() {
+  return request<{
+    skills: { name: string; usageCount: number; lastUsedAt: number; category: string; mcpServer?: string }[];
+    builtinTools: { name: string; usageCount: number; lastUsedAt: number; category: string }[];
+    mcpTools: { name: string; usageCount: number; lastUsedAt: number; category: string; mcpServer?: string }[];
+    totalToolCalls: number;
+    totalSkillCalls: number;
+    topTools: { name: string; usageCount: number; lastUsedAt: number; category: string; mcpServer?: string }[];
+    topSkills: { name: string; usageCount: number; lastUsedAt: number; category: string }[];
+    mcpServerBreakdown: { server: string; toolCount: number; totalCalls: number }[];
+  }>('/metrics');
+}
+
 // ---- Marketplaces -----------------------------------------------------------
 
 export function fetchMarketplaces() {

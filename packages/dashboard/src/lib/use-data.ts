@@ -1,5 +1,5 @@
 import useSWR from 'swr';
-import { fetchStats, fetchPlugins, fetchMcpServers, fetchSkills, fetchCommands, fetchProfiles, fetchSettings, fetchSessions, fetchSessionHistory, fetchMarketplaces, fetchAvailablePlugins } from './api-client';
+import { fetchStats, fetchPlugins, fetchMcpServers, fetchSkills, fetchCommands, fetchProfiles, fetchSettings, fetchSessions, fetchSessionHistory, fetchMarketplaces, fetchAvailablePlugins, fetchMetrics } from './api-client';
 
 const swrConfig = {
   revalidateOnFocus: false,
@@ -44,6 +44,10 @@ export function useSessionHistory(historyFile: string | null) {
     () => (historyFile ? fetchSessionHistory(historyFile) : Promise.resolve([])),
     swrConfig,
   );
+}
+
+export function useMetrics() {
+  return useSWR('metrics', fetchMetrics, swrConfig);
 }
 
 export function useMarketplaces() {

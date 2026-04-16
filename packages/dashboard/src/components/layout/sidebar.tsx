@@ -19,6 +19,7 @@ const primaryNavItems: NavItem[] = [
   { label: 'Commands', icon: '📝', href: '/commands' },
   { label: 'Settings', icon: '⚙\uFE0F', href: '/settings' },
   { label: 'Sessions', icon: '🖥\uFE0F', href: '/sessions' },
+  { label: 'Metrics', icon: '📈', href: '/metrics' },
 ];
 
 const secondaryNavItems: NavItem[] = [
