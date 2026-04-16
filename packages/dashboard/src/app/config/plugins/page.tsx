@@ -388,15 +388,22 @@ function MarketplaceTab() {
                     {/* Install command */}
                     {!plugin.installed && (
                       <code
-                        className="text-xs font-mono px-2 py-1 rounded shrink-0 cursor-pointer"
+                        className="text-xs font-mono px-2 py-1 rounded shrink-0 cursor-pointer inline-flex items-center gap-1.5 transition-colors hover:opacity-80"
                         style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--accent-light)', border: '1px solid var(--border)' }}
                         title="Click to copy"
                         onClick={(e) => {
                           e.stopPropagation();
                           navigator.clipboard.writeText(`/plugin install ${plugin.name}@${activeMp}`);
+                          const el = e.currentTarget;
+                          el.style.color = 'var(--status-green)';
+                          setTimeout(() => { el.style.color = 'var(--accent-light)'; }, 1000);
                         }}
                       >
                         /plugin install {plugin.name}@{activeMp}
+                        <svg className="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                          <rect x="9" y="9" width="13" height="13" rx="2" />
+                          <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
+                        </svg>
                       </code>
                     )}
 
