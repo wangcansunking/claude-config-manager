@@ -1,5 +1,5 @@
 import useSWR from 'swr';
-import { fetchStats, fetchPlugins, fetchMcpServers, fetchSkills, fetchCommands, fetchProfiles, fetchSettings, fetchSessions, fetchSessionHistory, fetchMarketplaces, fetchAvailablePlugins, fetchMetrics } from './api-client';
+import { fetchStats, fetchPlugins, fetchMcpServers, fetchSkills, fetchCommands, fetchProfiles, fetchSettings, fetchSessions, fetchSessionHistory, fetchMarketplaces, fetchAvailablePlugins, fetchMetrics, fetchRecommendations } from './api-client';
 
 const swrConfig = {
   revalidateOnFocus: false,
@@ -60,4 +60,8 @@ export function useAvailablePlugins(marketplace: string | null) {
     () => (marketplace ? fetchAvailablePlugins(marketplace) : Promise.resolve([])),
     swrConfig,
   );
+}
+
+export function useRecommendations() {
+  return useSWR('recommendations', fetchRecommendations, swrConfig);
 }

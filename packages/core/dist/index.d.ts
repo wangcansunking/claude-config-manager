@@ -8,4 +8,5 @@ export * from './managers/profile-manager.js';
 export * from './managers/session-manager.js';
 export * from './managers/marketplace-manager.js';
 export * from './managers/metrics-manager.js';
+export * from './managers/recommendation-manager.js';
 //# sourceMappingURL=index.d.ts.map

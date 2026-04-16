@@ -14,6 +14,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { label: 'Dashboard', icon: '\u{1F4CA}', href: '/' },
+  { label: 'Recommended', icon: '\u2728', href: '/recommended' },
   { label: 'Configuration', icon: '\u2699\uFE0F', href: '/config' },
   { label: 'Profiles', icon: '\u{1F464}', href: '/profiles' },
   { label: 'Activity', icon: '\u{1F5A5}\uFE0F', href: '/activity' },
