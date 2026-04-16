@@ -1,10 +1,17 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { Header } from '@/components/layout/header';
 import { Tag } from '@/components/shared/tag';
+import { SearchBox } from '@/components/shared/search-box';
 import { useRecommendations } from '@/lib/use-data';
-import { generateRecommendations, type Recommendation } from '@/lib/api-client';
+import {
+  generateRecommendations,
+  searchSkills,
+  searchMcpRegistry,
+  type Recommendation,
+  type SkillStoreResult,
+} from '@/lib/api-client';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -35,6 +42,19 @@ const CATEGORY_ORDER = [
   'testing',
   'documentation',
 ];
+
+// ---------------------------------------------------------------------------
+// Types for combined discovery results
+// ---------------------------------------------------------------------------
+
+interface DiscoveryResult {
+  name: string;
+  description?: string;
+  source: 'skills.sh' | 'mcp-registry' | 'npm' | 'smithery';
+  installCommand?: string;
+  url?: string;
+  badge?: string;
+}
 
 // ---------------------------------------------------------------------------
 // FilterChip
@@ -163,6 +183,235 @@ function RecommendationCard({ rec }: { rec: Recommendation }) {
           {rec.type}
         </span>
       </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// DiscoveryResultCard — used in "Find More" section
+// ---------------------------------------------------------------------------
+
+function DiscoveryResultCard({ result }: { result: DiscoveryResult }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = useCallback(() => {
+    if (result.installCommand) {
+      navigator.clipboard.writeText(result.installCommand).then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      });
+    }
+  }, [result.installCommand]);
+
+  const sourceVariant: Record<string, 'green' | 'blue' | 'orange' | 'purple'> = {
+    'skills.sh': 'purple',
+    'mcp-registry': 'green',
+    npm: 'blue',
+    smithery: 'orange',
+  };
+
+  return (
+    <div
+      className="rounded-lg p-4 transition-colors hover:bg-bg-hover"
+      style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--card-border)' }}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1 flex-wrap">
+            <code className="text-sm font-mono font-medium" style={{ color: 'var(--accent-light)' }}>
+              {result.name}
+            </code>
+            <Tag label={result.source} variant={sourceVariant[result.source] ?? 'gray'} />
+            {result.badge && <Tag label={result.badge} variant="blue" />}
+          </div>
+          {result.description && (
+            <p className="text-xs mt-1 line-clamp-2" style={{ color: 'var(--text-secondary)' }}>
+              {result.description}
+            </p>
+          )}
+          {result.installCommand && (
+            <div className="flex items-center gap-2 mt-2">
+              <code
+                className="text-xs font-mono px-2 py-1 rounded"
+                style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-secondary)' }}
+              >
+                {result.installCommand}
+              </code>
+              <button
+                className="p-1 rounded transition-colors hover:bg-bg-hover shrink-0"
+                style={{ color: copied ? 'var(--status-green)' : 'var(--text-muted)' }}
+                onClick={handleCopy}
+                title="Copy install command"
+              >
+                {copied ? (
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                ) : (
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                )}
+              </button>
+            </div>
+          )}
+          {result.url && (
+            <a
+              href={result.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs underline mt-1 inline-block transition-colors"
+              style={{ color: 'var(--text-muted)' }}
+            >
+              View
+            </a>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Discovery search skeleton
+// ---------------------------------------------------------------------------
+
+function DiscoverySkeleton() {
+  return (
+    <div className="space-y-3">
+      {[1, 2, 3].map((i) => (
+        <div
+          key={i}
+          className="rounded-lg p-4 animate-pulse"
+          style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--card-border)' }}
+        >
+          <div className="flex items-start gap-3">
+            <div className="flex-1">
+              <div className="h-4 rounded w-48 mb-2" style={{ backgroundColor: 'var(--border)' }} />
+              <div className="h-3 rounded w-full mb-1" style={{ backgroundColor: 'var(--border)' }} />
+              <div className="h-3 rounded w-2/3" style={{ backgroundColor: 'var(--border)' }} />
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Find More section
+// ---------------------------------------------------------------------------
+
+function FindMoreSection() {
+  const [search, setSearch] = useState('');
+  const [results, setResults] = useState<DiscoveryResult[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [searched, setSearched] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const doSearch = useCallback(async (query: string) => {
+    if (!query.trim()) {
+      setResults([]);
+      setSearched(false);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    try {
+      // Search both skills.sh and MCP registries in parallel
+      const [skillsResult, mcpResult] = await Promise.allSettled([
+        searchSkills(query),
+        searchMcpRegistry(query),
+      ]);
+
+      const combined: DiscoveryResult[] = [];
+
+      // Add skills.sh results
+      if (skillsResult.status === 'fulfilled') {
+        for (const s of skillsResult.value as SkillStoreResult[]) {
+          combined.push({
+            name: s.name,
+            source: 'skills.sh',
+            installCommand: s.installCommand,
+            url: s.url,
+            badge: s.installs,
+          });
+        }
+      }
+
+      // Add MCP registry results
+      if (mcpResult.status === 'fulfilled') {
+        for (const r of mcpResult.value.results) {
+          combined.push({
+            name: r.name,
+            description: r.description,
+            source: r.source,
+            installCommand: r.installCommand,
+            url: r.repositoryUrl ?? r.npmUrl,
+          });
+        }
+      }
+
+      setResults(combined);
+      setSearched(true);
+    } catch {
+      setSearched(true);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (!search.trim()) {
+      setResults([]);
+      setSearched(false);
+      return;
+    }
+    debounceRef.current = setTimeout(() => doSearch(search), 500);
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [search, doSearch]);
+
+  return (
+    <div className="mt-10">
+      <h2 className="text-lg font-medium mb-1" style={{ color: 'var(--text-primary)' }}>
+        Find More
+      </h2>
+      <p className="text-sm mb-4" style={{ color: 'var(--text-muted)' }}>
+        Search skills.sh and MCP registries to discover more tools.
+      </p>
+
+      <div className="mb-4">
+        <SearchBox
+          value={search}
+          onChange={setSearch}
+          placeholder="Search skills and MCP servers..."
+        />
+      </div>
+
+      {loading ? (
+        <DiscoverySkeleton />
+      ) : searched && results.length === 0 ? (
+        <div
+          className="rounded-lg p-8 text-center"
+          style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--card-border)' }}
+        >
+          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+            No results found for &ldquo;{search}&rdquo;.
+          </p>
+        </div>
+      ) : results.length > 0 ? (
+        <div className="space-y-3">
+          <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+            {results.length} result{results.length !== 1 ? 's' : ''} from skills.sh and MCP registries
+          </p>
+          {results.map((r) => (
+            <DiscoveryResultCard key={`${r.source}-${r.name}`} result={r} />
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -375,6 +624,9 @@ export default function RecommendedPage() {
           </p>
         </div>
       )}
+
+      {/* Find More section */}
+      <FindMoreSection />
     </div>
   );
 }

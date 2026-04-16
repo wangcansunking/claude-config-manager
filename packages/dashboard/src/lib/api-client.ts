@@ -126,6 +126,21 @@ export async function updateSkillContent(filePath: string, content: string) {
   return res.json();
 }
 
+// ---- Skills Store -----------------------------------------------------------
+
+export interface SkillStoreResult {
+  name: string;
+  installs: string;
+  url: string;
+  installCommand: string;
+}
+
+export async function searchSkills(query: string): Promise<SkillStoreResult[]> {
+  const res = await fetch(`/api/skills/search?q=${encodeURIComponent(query)}`);
+  if (!res.ok) throw new Error('Search failed');
+  return res.json();
+}
+
 // ---- MCP Registry -----------------------------------------------------------
 
 export async function searchMcpRegistry(query: string) {
