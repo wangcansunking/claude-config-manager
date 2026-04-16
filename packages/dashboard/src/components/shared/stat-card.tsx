@@ -12,24 +12,24 @@ export function StatCard({ title, value, subtitle }: StatCardProps) {
     <div
       className="rounded-lg p-5"
       style={{
-        backgroundColor: 'rgba(255, 255, 255, 0.02)',
-        border: '1px solid rgba(255, 255, 255, 0.08)',
+        backgroundColor: 'var(--card-bg)',
+        border: '1px solid var(--card-border)',
       }}
     >
       <p
         className="text-xs uppercase tracking-wider mb-2"
-        style={{ color: '#8a8f98', fontWeight: 510 }}
+        style={{ color: 'var(--text-muted)', fontWeight: 510 }}
       >
         {title}
       </p>
       <p
         className="text-3xl mb-1"
-        style={{ color: '#f7f8f8', fontWeight: 510 }}
+        style={{ color: 'var(--text-primary)', fontWeight: 510 }}
       >
         {value}
       </p>
       {subtitle && (
-        <p className="text-sm" style={{ color: '#d0d6e0' }}>
+        <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
           {subtitle}
         </p>
       )}

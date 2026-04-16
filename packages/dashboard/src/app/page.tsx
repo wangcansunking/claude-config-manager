@@ -70,15 +70,15 @@ function UsageBar({ entry, maxCount, barColor }: { entry: UsageEntry; maxCount: 
   const pct = maxCount > 0 ? (entry.usageCount / maxCount) * 100 : 0;
   const relTime = formatRelativeTime(entry.lastUsedAt);
   return (
-    <div className="flex items-center gap-3 px-5 py-2.5 transition-colors hover:bg-[#28282c]">
+    <div className="flex items-center gap-3 px-5 py-2.5 transition-colors hover:bg-bg-hover">
       <span
         className="font-mono text-xs shrink-0"
-        style={{ color: '#7170ff', width: '200px' }}
+        style={{ color: 'var(--accent-light)', width: '200px' }}
         title={entry.name}
       >
         {entry.name.length > 28 ? entry.name.slice(0, 26) + '...' : entry.name}
       </span>
-      <div className="flex-1 h-5 rounded overflow-hidden" style={{ backgroundColor: 'rgba(255, 255, 255, 0.03)' }}>
+      <div className="flex-1 h-5 rounded overflow-hidden" style={{ backgroundColor: 'var(--border)' }}>
         <div
           className="h-full rounded"
           style={{
@@ -91,14 +91,14 @@ function UsageBar({ entry, maxCount, barColor }: { entry: UsageEntry; maxCount: 
       </div>
       <span
         className="text-xs shrink-0 text-right"
-        style={{ color: '#d0d6e0', width: '44px', fontWeight: 510 }}
+        style={{ color: 'var(--text-secondary)', width: '44px', fontWeight: 510 }}
       >
         {entry.usageCount}
       </span>
       {relTime && (
         <span
           className="text-xs shrink-0 text-right"
-          style={{ color: '#62666d', width: '64px' }}
+          style={{ color: 'var(--text-faint)', width: '64px' }}
         >
           {relTime}
         </span>
@@ -128,26 +128,26 @@ function McpServerSection({
   return (
     <div
       className="rounded-lg overflow-hidden"
-      style={{ backgroundColor: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.08)' }}
+      style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--card-border)' }}
     >
       <button
-        className="w-full flex items-center justify-between px-5 py-3 text-left transition-colors hover:bg-[#28282c]"
-        style={{ borderBottom: open ? '1px solid rgba(255, 255, 255, 0.05)' : 'none' }}
+        className="w-full flex items-center justify-between px-5 py-3 text-left transition-colors hover:bg-bg-hover"
+        style={{ borderBottom: open ? '1px solid var(--border)' : 'none' }}
         onClick={() => setOpen(!open)}
       >
         <div className="flex items-center gap-3">
-          <span className="font-mono text-sm" style={{ color: '#d0d6e0', fontWeight: 510 }}>
+          <span className="font-mono text-sm" style={{ color: 'var(--text-secondary)', fontWeight: 510 }}>
             {server}
           </span>
           <span
             className="text-xs px-2 py-0.5 rounded-full"
-            style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)', color: '#d0d6e0' }}
+            style={{ backgroundColor: 'var(--border)', color: 'var(--text-secondary)' }}
           >
             {totalCalls} calls
           </span>
           <span
             className="text-xs px-2 py-0.5 rounded-full"
-            style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)', color: '#8a8f98' }}
+            style={{ backgroundColor: 'var(--border)', color: 'var(--text-muted)' }}
           >
             {toolCount} tools
           </span>
@@ -155,7 +155,7 @@ function McpServerSection({
         <svg
           className="w-4 h-4 transition-transform"
           style={{
-            color: '#62666d',
+            color: 'var(--text-faint)',
             transform: open ? 'rotate(0deg)' : 'rotate(-90deg)',
           }}
           fill="none"
@@ -168,7 +168,7 @@ function McpServerSection({
       {open && (
         <div className="py-1">
           {tools.map((tool) => (
-            <UsageBar key={tool.name} entry={tool} maxCount={maxCount} barColor="#5e6ad2" />
+            <UsageBar key={tool.name} entry={tool} maxCount={maxCount} barColor="var(--accent)" />
           ))}
         </div>
       )}
@@ -194,18 +194,18 @@ function McpUsageSection({
   return (
     <div
       className="rounded-lg overflow-hidden"
-      style={{ backgroundColor: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.08)' }}
+      style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--card-border)' }}
     >
       <button
-        className="w-full flex items-center justify-between px-5 py-3 text-left transition-colors hover:bg-[#28282c]"
-        style={{ borderBottom: open ? '1px solid rgba(255, 255, 255, 0.05)' : 'none' }}
+        className="w-full flex items-center justify-between px-5 py-3 text-left transition-colors hover:bg-bg-hover"
+        style={{ borderBottom: open ? '1px solid var(--border)' : 'none' }}
         onClick={() => setOpen(!open)}
       >
-        <h2 className="text-lg" style={{ color: '#f7f8f8', fontWeight: 510 }}>MCP Server Usage</h2>
+        <h2 className="text-lg" style={{ color: 'var(--text-primary)', fontWeight: 510 }}>MCP Server Usage</h2>
         <svg
           className="w-4 h-4 transition-transform"
           style={{
-            color: '#62666d',
+            color: 'var(--text-faint)',
             transform: open ? 'rotate(0deg)' : 'rotate(-90deg)',
           }}
           fill="none"
@@ -258,7 +258,7 @@ export default function OverviewPage() {
       <Header title="Overview" />
 
       {loading ? (
-        <p style={{ color: '#d0d6e0' }}>Loading...</p>
+        <p style={{ color: 'var(--text-secondary)' }}>Loading...</p>
       ) : (
         <div className="space-y-6">
           {/* Row 1: Quick Stats — 5 cards */}
@@ -276,13 +276,13 @@ export default function OverviewPage() {
               <UsageChart
                 title="Top Skills"
                 entries={metrics.topSkills}
-                barColor="#5e6ad2"
+                barColor="var(--accent)"
                 maxItems={8}
               />
               <UsageChart
                 title="Top Tools"
                 entries={metrics.topTools}
-                barColor="#7170ff"
+                barColor="var(--accent-light)"
                 maxItems={8}
               />
             </div>

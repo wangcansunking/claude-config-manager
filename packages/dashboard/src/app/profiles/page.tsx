@@ -6,8 +6,12 @@ import { Button } from '@/components/shared/button';
 import { ConfirmationDialog } from '@/components/shared/confirmation-dialog';
 import { ProfileCard } from '@/components/profile-grid/profile-card';
 import type { Profile } from '@/components/profile-grid/profile-card';
+import { ExportPanel } from '@/components/export-import/export-panel';
+import { ImportPanel } from '@/components/export-import/import-panel';
 import { createProfile, activateProfile, deleteProfile, exportProfile, updateProfile, fetchPlugins, fetchMcpServers } from '@/lib/api-client';
 import { useProfiles } from '@/lib/use-data';
+
+type ProfileTabId = 'profiles' | 'export-import';
 
 interface AvailablePlugin {
   name: string;
@@ -37,6 +41,7 @@ interface EditState {
 export default function ProfilesPage() {
   const { data: profilesRaw, isLoading: loading, mutate } = useProfiles();
   const profiles = (profilesRaw ?? []) as Profile[];
+  const [profileTab, setProfileTab] = useState<ProfileTabId>('profiles');
   const [showNewForm, setShowNewForm] = useState(false);
   const [newName, setNewName] = useState('');
   const [creating, setCreating] = useState(false);
@@ -216,18 +221,53 @@ export default function ProfilesPage() {
   return (
     <div>
       <Header title="Profiles">
-        <Button variant="primary" size="md" onClick={() => setShowNewForm(!showNewForm)}>
-          New Profile
-        </Button>
+        {profileTab === 'profiles' && (
+          <Button variant="primary" size="md" onClick={() => setShowNewForm(!showNewForm)}>
+            New Profile
+          </Button>
+        )}
       </Header>
+
+      {/* Tabs: Profiles | Export / Import */}
+      <div className="flex items-center gap-1 mb-6 p-1 rounded-lg" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
+        {([
+          { id: 'profiles' as ProfileTabId, label: 'Profiles' },
+          { id: 'export-import' as ProfileTabId, label: 'Export / Import' },
+        ]).map(({ id, label }) => (
+          <button
+            key={id}
+            className="px-4 py-2 rounded-md text-sm transition-colors"
+            style={{
+              backgroundColor: profileTab === id ? 'var(--accent)' : 'transparent',
+              color: profileTab === id ? '#fff' : 'var(--text-muted)',
+              fontWeight: profileTab === id ? 510 : 400,
+            }}
+            onClick={() => setProfileTab(id)}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {profileTab === 'export-import' ? (
+        loading ? (
+          <p style={{ color: 'var(--text-secondary)' }}>Loading...</p>
+        ) : (
+          <div className="grid grid-cols-2 gap-6">
+            <ExportPanel profiles={profiles} />
+            <ImportPanel />
+          </div>
+        )
+      ) : (
+      <>
 
       {/* New Profile Form */}
       {showNewForm && (
         <div
           className="rounded-lg p-5 mb-6"
-          style={{ backgroundColor: 'rgba(255, 255, 255, 0.02)', border: '1px solid #5e6ad2' }}
+          style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--accent)' }}
         >
-          <h3 className="text-sm font-medium mb-3" style={{ color: '#f7f8f8' }}>
+          <h3 className="text-sm font-medium mb-3" style={{ color: 'var(--text-primary)' }}>
             Create New Profile
           </h3>
           <div className="flex gap-3">
@@ -238,9 +278,9 @@ export default function ProfilesPage() {
               placeholder="Profile name..."
               className="flex-1 px-3 py-2 rounded-lg text-sm outline-none profile-input"
               style={{
-                backgroundColor: 'rgba(255, 255, 255,0.05)',
-                border: '1px solid rgba(255, 255, 255,0.08)',
-                color: '#f7f8f8',
+                backgroundColor: 'var(--input-bg)',
+                border: '1px solid var(--card-border)',
+                color: 'var(--text-primary)',
               }}
               onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
               autoFocus
@@ -256,13 +296,13 @@ export default function ProfilesPage() {
       )}
 
       {loading ? (
-        <p style={{ color: '#d0d6e0' }}>Loading...</p>
+        <p style={{ color: 'var(--text-secondary)' }}>Loading...</p>
       ) : profiles.length === 0 ? (
         <div
           className="rounded-lg p-10 text-center"
-          style={{ backgroundColor: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.05)' }}
+          style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--border)' }}
         >
-          <p className="text-sm" style={{ color: '#8a8f98' }}>
+          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
             No profiles yet. Click &ldquo;New Profile&rdquo; to create one.
           </p>
         </div>
@@ -282,18 +322,18 @@ export default function ProfilesPage() {
               {editingProfile === profile.name && editState && (
                 <div
                   className="rounded-b-xl p-5 -mt-1 space-y-5"
-                  style={{ backgroundColor: '#0f1011', border: '1px solid #5e6ad2', borderTop: 'none' }}
+                  style={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--accent)', borderTop: 'none' }}
                 >
                   {/* Profile Name (read-only label) & Description */}
                   <div>
-                    <label className="block text-xs font-medium uppercase tracking-wider mb-2" style={{ color: '#8a8f98' }}>
+                    <label className="block text-xs font-medium uppercase tracking-wider mb-2" style={{ color: 'var(--text-muted)' }}>
                       Profile Name
                     </label>
-                    <p className="text-sm font-medium" style={{ color: '#f7f8f8' }}>{editState.name}</p>
+                    <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{editState.name}</p>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium uppercase tracking-wider mb-2" style={{ color: '#8a8f98' }}>
+                    <label className="block text-xs font-medium uppercase tracking-wider mb-2" style={{ color: 'var(--text-muted)' }}>
                       Description
                     </label>
                     <input
@@ -302,19 +342,19 @@ export default function ProfilesPage() {
                       onChange={(e) => setEditState((prev) => prev ? { ...prev, description: e.target.value } : prev)}
                       placeholder="Optional description..."
                       className="w-full px-3 py-2 rounded-lg text-sm outline-none profile-input"
-                      style={{ backgroundColor: 'rgba(255, 255, 255,0.05)', border: '1px solid rgba(255, 255, 255,0.08)', color: '#f7f8f8' }}
+                      style={{ backgroundColor: 'var(--input-bg)', border: '1px solid var(--card-border)', color: 'var(--text-primary)' }}
                     />
                   </div>
 
                   {/* Plugins */}
                   <div>
-                    <label className="block text-xs font-medium uppercase tracking-wider mb-2" style={{ color: '#8a8f98' }}>
+                    <label className="block text-xs font-medium uppercase tracking-wider mb-2" style={{ color: 'var(--text-muted)' }}>
                       Plugins
                     </label>
                     {availablePlugins.length === 0 && Object.keys(editState.enabledPlugins).length === 0 ? (
-                      <p className="text-xs" style={{ color: '#8a8f98' }}>No plugins available.</p>
+                      <p className="text-xs" style={{ color: 'var(--text-muted)' }}>No plugins available.</p>
                     ) : (
-                      <div className="space-y-1.5 max-h-40 overflow-y-auto rounded-lg p-2" style={{ backgroundColor: '#0f1011' }}>
+                      <div className="space-y-1.5 max-h-40 overflow-y-auto rounded-lg p-2" style={{ backgroundColor: 'var(--bg-secondary)' }}>
                         {(() => {
                           // Merge: show all known plugin names
                           const allNames = new Set([
@@ -331,9 +371,9 @@ export default function ProfilesPage() {
                                     prev ? { ...prev, enabledPlugins: { ...prev.enabledPlugins, [name]: e.target.checked } } : prev
                                   );
                                 }}
-                                className="accent-[#5e6ad2]"
+                                className="accent-accent-purple"
                               />
-                              <span className="text-xs" style={{ color: '#d0d6e0' }}>{name}</span>
+                              <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>{name}</span>
                             </label>
                           ));
                         })()}
@@ -343,13 +383,13 @@ export default function ProfilesPage() {
 
                   {/* MCP Servers */}
                   <div>
-                    <label className="block text-xs font-medium uppercase tracking-wider mb-2" style={{ color: '#8a8f98' }}>
+                    <label className="block text-xs font-medium uppercase tracking-wider mb-2" style={{ color: 'var(--text-muted)' }}>
                       MCP Servers
                     </label>
                     {availableMcpServers.length === 0 && Object.keys(editState.enabledMcpServers).length === 0 ? (
-                      <p className="text-xs" style={{ color: '#8a8f98' }}>No MCP servers available.</p>
+                      <p className="text-xs" style={{ color: 'var(--text-muted)' }}>No MCP servers available.</p>
                     ) : (
-                      <div className="space-y-1.5 max-h-40 overflow-y-auto rounded-lg p-2" style={{ backgroundColor: '#0f1011' }}>
+                      <div className="space-y-1.5 max-h-40 overflow-y-auto rounded-lg p-2" style={{ backgroundColor: 'var(--bg-secondary)' }}>
                         {(() => {
                           const allNames = new Set([
                             ...availableMcpServers.map((s) => s.name),
@@ -365,9 +405,9 @@ export default function ProfilesPage() {
                                     prev ? { ...prev, enabledMcpServers: { ...prev.enabledMcpServers, [name]: e.target.checked } } : prev
                                   );
                                 }}
-                                className="accent-[#5e6ad2]"
+                                className="accent-accent-purple"
                               />
-                              <span className="text-xs" style={{ color: '#d0d6e0' }}>{name}</span>
+                              <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>{name}</span>
                             </label>
                           ));
                         })()}
@@ -377,19 +417,19 @@ export default function ProfilesPage() {
 
                   {/* Settings */}
                   <div>
-                    <label className="block text-xs font-medium uppercase tracking-wider mb-2" style={{ color: '#8a8f98' }}>
+                    <label className="block text-xs font-medium uppercase tracking-wider mb-2" style={{ color: 'var(--text-muted)' }}>
                       Settings
                     </label>
                     <div className="space-y-2">
                       <div>
-                        <label className="block text-xs mb-1" style={{ color: '#8a8f98' }}>Model</label>
+                        <label className="block text-xs mb-1" style={{ color: 'var(--text-muted)' }}>Model</label>
                         <input
                           type="text"
                           value={editState.model}
                           onChange={(e) => setEditState((prev) => prev ? { ...prev, model: e.target.value } : prev)}
                           placeholder="e.g. claude-sonnet-4-20250514"
                           className="w-full px-3 py-2 rounded-lg text-sm outline-none profile-input"
-                          style={{ backgroundColor: 'rgba(255, 255, 255,0.05)', border: '1px solid rgba(255, 255, 255,0.08)', color: '#f7f8f8' }}
+                          style={{ backgroundColor: 'var(--input-bg)', border: '1px solid var(--card-border)', color: 'var(--text-primary)' }}
                         />
                       </div>
                     </div>
@@ -409,6 +449,9 @@ export default function ProfilesPage() {
             </div>
           ))}
         </div>
+      )}
+
+      </>
       )}
 
       {/* Delete confirmation */}

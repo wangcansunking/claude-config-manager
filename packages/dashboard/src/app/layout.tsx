@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Sidebar } from '@/components/layout/sidebar';
 import { RealtimeSync } from '@/components/layout/realtime-sync';
+import { ThemeProvider } from '@/lib/theme-context';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -16,21 +17,23 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <RealtimeSync />
-        <div style={{ display: 'flex', minHeight: '100vh' }}>
-          <Sidebar />
-          <main
-            style={{
-              flex: 1,
-              marginLeft: '240px',
-              padding: '24px',
-              backgroundColor: '#08090a',
-              minHeight: '100vh',
-            }}
-          >
-            {children}
-          </main>
-        </div>
+        <ThemeProvider>
+          <RealtimeSync />
+          <div style={{ display: 'flex', minHeight: '100vh' }}>
+            <Sidebar />
+            <main
+              style={{
+                flex: 1,
+                marginLeft: '240px',
+                padding: '24px',
+                backgroundColor: 'var(--bg-primary)',
+                minHeight: '100vh',
+              }}
+            >
+              {children}
+            </main>
+          </div>
+        </ThemeProvider>
       </body>
     </html>
   );

@@ -37,7 +37,7 @@ export function DetailPanel({
       {open && (
         <div
           className="fixed inset-0 z-40"
-          style={{ backgroundColor: 'rgba(0, 0, 0, 0.85)' }}
+          style={{ backgroundColor: 'var(--overlay-bg)' }}
           onClick={onClose}
         />
       )}
@@ -47,8 +47,8 @@ export function DetailPanel({
         className="fixed top-0 right-0 z-50 h-full flex flex-col"
         style={{
           width: '440px',
-          backgroundColor: '#0f1011',
-          borderLeft: '1px solid rgba(255, 255, 255, 0.08)',
+          backgroundColor: 'var(--bg-secondary)',
+          borderLeft: '1px solid var(--card-border)',
           transform: open ? 'translateX(0)' : 'translateX(100%)',
           transition: 'transform 0.25s ease-in-out',
           boxShadow: open ? '-8px 0 32px rgba(0, 0, 0, 0.4)' : 'none',
@@ -57,18 +57,18 @@ export function DetailPanel({
         {/* Header */}
         <div
           className="flex items-start justify-between p-5 shrink-0"
-          style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}
+          style={{ borderBottom: '1px solid var(--border)' }}
         >
           <div className="flex items-start gap-3 min-w-0">
             {icon && (
               <div className="shrink-0 mt-0.5 text-xl">{icon}</div>
             )}
             <div className="min-w-0">
-              <h2 className="truncate" style={{ color: '#f7f8f8', fontWeight: 510 }}>
+              <h2 className="truncate" style={{ color: 'var(--text-primary)', fontWeight: 510 }}>
                 {title}
               </h2>
               {subtitle && (
-                <p className="text-sm mt-0.5 truncate" style={{ color: '#d0d6e0' }}>
+                <p className="text-sm mt-0.5 truncate" style={{ color: 'var(--text-secondary)' }}>
                   {subtitle}
                 </p>
               )}
@@ -83,7 +83,8 @@ export function DetailPanel({
           </div>
           <button
             onClick={onClose}
-            className="shrink-0 ml-3 p-1 rounded transition-colors text-[#8a8f98] hover:bg-[#28282c] hover:text-[#f7f8f8]"
+            className="shrink-0 ml-3 p-1 rounded transition-colors"
+            style={{ color: 'var(--text-muted)' }}
             aria-label="Close panel"
           >
             <svg
@@ -107,7 +108,7 @@ export function DetailPanel({
         {actions && (
           <div
             className="shrink-0 flex items-center justify-end gap-3 p-4"
-            style={{ borderTop: '1px solid rgba(255, 255, 255, 0.05)' }}
+            style={{ borderTop: '1px solid var(--border)' }}
           >
             {actions}
           </div>

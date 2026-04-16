@@ -28,34 +28,34 @@ export function EnvVarsEditor({ vars, onAdd, onRemove }: EnvVarsEditorProps) {
   }
 
   const inputStyle = {
-    backgroundColor: '#191a1b',
-    border: '1px solid rgba(255, 255, 255, 0.08)',
-    color: '#f7f8f8',
+    backgroundColor: 'var(--bg-tertiary)',
+    border: '1px solid var(--card-border)',
+    color: 'var(--text-primary)',
   };
 
   return (
     <div className="space-y-2">
       {Object.entries(vars).length === 0 ? (
-        <p className="text-sm" style={{ color: '#8a8f98' }}>No environment variables set.</p>
+        <p className="text-sm" style={{ color: 'var(--text-muted)' }}>No environment variables set.</p>
       ) : (
         <div
           className="rounded-lg overflow-hidden"
-          style={{ border: '1px solid rgba(255, 255, 255, 0.08)' }}
+          style={{ border: '1px solid var(--card-border)' }}
         >
           {Object.entries(vars).map(([key, val], i) => (
             <div
               key={key}
               className="flex items-center gap-3 px-4 py-2.5"
-              style={{ borderBottom: i < Object.entries(vars).length - 1 ? '1px solid rgba(255, 255, 255, 0.05)' : 'none' }}
+              style={{ borderBottom: i < Object.entries(vars).length - 1 ? '1px solid var(--border)' : 'none' }}
             >
-              <code className="text-sm font-mono flex-1" style={{ color: '#7170ff' }}>{key}</code>
-              <code className="text-sm font-mono flex-1 text-right" style={{ color: '#d0d6e0' }}>
+              <code className="text-sm font-mono flex-1" style={{ color: 'var(--accent-light)' }}>{key}</code>
+              <code className="text-sm font-mono flex-1 text-right" style={{ color: 'var(--text-secondary)' }}>
                 {showValues[key] ? val : '--------'}
               </code>
               <button
                 onClick={() => toggleShow(key)}
                 className="text-xs px-2 py-1 rounded transition-colors"
-                style={{ color: '#8a8f98', backgroundColor: 'rgba(255, 255, 255, 0.05)' }}
+                style={{ color: 'var(--text-muted)', backgroundColor: 'var(--border)' }}
                 title={showValues[key] ? 'Hide value' : 'Show value'}
               >
                 {showValues[key] ? 'Hide' : 'Show'}
@@ -63,7 +63,7 @@ export function EnvVarsEditor({ vars, onAdd, onRemove }: EnvVarsEditorProps) {
               <button
                 onClick={() => onRemove(key)}
                 className="p-1 rounded transition-colors"
-                style={{ color: '#ff4757' }}
+                style={{ color: 'var(--status-red)' }}
                 title="Remove"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -84,8 +84,8 @@ export function EnvVarsEditor({ vars, onAdd, onRemove }: EnvVarsEditorProps) {
           placeholder="KEY"
           className="flex-1 px-3 py-2 rounded-md text-sm font-mono outline-none"
           style={inputStyle}
-          onFocus={(e) => { e.currentTarget.style.borderColor = '#5e6ad2'; }}
-          onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)'; }}
+          onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--accent)'; }}
+          onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--card-border)'; }}
           onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
         />
         <input
@@ -95,8 +95,8 @@ export function EnvVarsEditor({ vars, onAdd, onRemove }: EnvVarsEditorProps) {
           placeholder="value"
           className="flex-1 px-3 py-2 rounded-md text-sm outline-none"
           style={inputStyle}
-          onFocus={(e) => { e.currentTarget.style.borderColor = '#5e6ad2'; }}
-          onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)'; }}
+          onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--accent)'; }}
+          onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--card-border)'; }}
           onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
         />
         <Button variant="primary" size="md" onClick={handleAdd}>Add</Button>

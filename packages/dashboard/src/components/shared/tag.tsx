@@ -8,14 +8,14 @@ interface TagProps {
 }
 
 const variantStyles: Record<TagVariant, { bg: string; color: string }> = {
-  green:  { bg: 'rgba(39, 166, 68, 0.15)',    color: '#27a644' },
-  blue:   { bg: 'rgba(94, 106, 210, 0.15)',   color: '#7170ff' },
-  orange: { bg: 'rgba(138, 143, 152, 0.15)',  color: '#d0d6e0' },
-  purple: { bg: 'rgba(94, 106, 210, 0.15)',   color: '#7170ff' },
-  red:    { bg: 'rgba(255, 71, 87, 0.15)',    color: '#ff4757' },
-  yellow: { bg: 'rgba(138, 143, 152, 0.15)',  color: '#d0d6e0' },
-  pink:   { bg: 'rgba(94, 106, 210, 0.12)',   color: '#828fff' },
-  gray:   { bg: 'rgba(255, 255, 255, 0.05)',  color: '#8a8f98' },
+  green:  { bg: 'rgba(39, 166, 68, 0.15)',    color: 'var(--status-green)' },
+  blue:   { bg: 'rgba(94, 106, 210, 0.15)',   color: 'var(--accent-light)' },
+  orange: { bg: 'rgba(138, 143, 152, 0.15)',  color: 'var(--text-secondary)' },
+  purple: { bg: 'rgba(94, 106, 210, 0.15)',   color: 'var(--accent-light)' },
+  red:    { bg: 'rgba(255, 71, 87, 0.15)',    color: 'var(--status-red)' },
+  yellow: { bg: 'rgba(138, 143, 152, 0.15)',  color: 'var(--text-secondary)' },
+  pink:   { bg: 'rgba(94, 106, 210, 0.12)',   color: 'var(--accent-hover)' },
+  gray:   { bg: 'var(--border)',               color: 'var(--text-muted)' },
 };
 
 export function Tag({ label, variant = 'gray' }: TagProps) {

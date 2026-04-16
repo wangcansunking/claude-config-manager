@@ -25,22 +25,24 @@ export function McpItem({ server, onClick }: McpItemProps) {
 
   return (
     <div
-      className="flex items-center gap-4 px-5 py-4 cursor-pointer transition-colors hover:bg-[#28282c]"
-      style={{ borderBottom: '1px solid rgba(255, 255, 255,0.05)' }}
+      className="flex items-center gap-4 px-5 py-4 cursor-pointer transition-colors"
+      style={{ borderBottom: '1px solid var(--border)' }}
       onClick={onClick}
+      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--bg-hover)'; }}
+      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; }}
     >
       {/* Status dot */}
       <span
         className="w-2 h-2 rounded-full shrink-0"
-        style={{ backgroundColor: isEnabled ? '#27a644' : '#8a8f98' }}
+        style={{ backgroundColor: isEnabled ? 'var(--status-green)' : 'var(--text-muted)' }}
       />
 
       {/* Name + command */}
       <div className="flex-1 min-w-0">
-        <p className="text-sm" style={{ color: '#f7f8f8', fontWeight: 510 }}>
+        <p className="text-sm" style={{ color: 'var(--text-primary)', fontWeight: 510 }}>
           {server.name}
         </p>
-        <p className="text-xs font-mono truncate mt-0.5" style={{ color: '#62666d' }}>
+        <p className="text-xs font-mono truncate mt-0.5" style={{ color: 'var(--text-faint)' }}>
           {server.config.command}
           {server.config.args && server.config.args.length > 0
             ? ' ' + server.config.args.join(' ')
@@ -57,7 +59,7 @@ export function McpItem({ server, onClick }: McpItemProps) {
       {/* Chevron */}
       <svg
         className="w-4 h-4 shrink-0"
-        style={{ color: '#62666d' }}
+        style={{ color: 'var(--text-faint)' }}
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"

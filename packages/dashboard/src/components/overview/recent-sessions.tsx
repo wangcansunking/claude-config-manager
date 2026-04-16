@@ -54,17 +54,17 @@ export function RecentSessions() {
   return (
     <div
       className="rounded-lg overflow-hidden"
-      style={{ backgroundColor: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.08)' }}
+      style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--card-border)' }}
     >
       <div
         className="px-5 py-3 flex items-center justify-between"
-        style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}
+        style={{ borderBottom: '1px solid var(--border)' }}
       >
-        <h3 className="text-lg" style={{ color: '#f7f8f8', fontWeight: 510 }}>Recent Sessions</h3>
+        <h3 className="text-lg" style={{ color: 'var(--text-primary)', fontWeight: 510 }}>Recent Sessions</h3>
         <button
           className="text-xs transition-colors"
-          style={{ color: '#8a8f98' }}
-          onClick={() => router.push('/sessions')}
+          style={{ color: 'var(--text-muted)' }}
+          onClick={() => router.push('/activity')}
         >
           View all
         </button>
@@ -72,32 +72,34 @@ export function RecentSessions() {
 
       {isLoading ? (
         <div className="px-5 py-6">
-          <p className="text-sm" style={{ color: '#8a8f98' }}>Loading...</p>
+          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Loading...</p>
         </div>
       ) : sessions.length === 0 ? (
         <div className="px-5 py-6 text-center">
-          <p className="text-sm" style={{ color: '#8a8f98' }}>No sessions found.</p>
+          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>No sessions found.</p>
         </div>
       ) : (
         <div>
           {sessions.map((session, i) => (
             <div
               key={session.sessionId}
-              className="flex items-start gap-3 px-5 py-3 cursor-pointer transition-colors hover:bg-[#28282c]"
-              style={{ borderBottom: i < sessions.length - 1 ? '1px solid rgba(255, 255, 255, 0.05)' : 'none' }}
-              onClick={() => router.push('/sessions')}
+              className="flex items-start gap-3 px-5 py-3 cursor-pointer transition-colors"
+              style={{ borderBottom: i < sessions.length - 1 ? '1px solid var(--border)' : 'none' }}
+              onClick={() => router.push('/activity')}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--bg-hover)'; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; }}
             >
               {/* Status dot */}
               <span
                 className="inline-block w-2 h-2 rounded-full shrink-0 mt-1.5"
-                style={{ backgroundColor: session.alive ? '#27a644' : '#8a8f98' }}
+                style={{ backgroundColor: session.alive ? 'var(--status-green)' : 'var(--text-muted)' }}
               />
 
               <div className="flex-1 min-w-0">
                 {/* Project path */}
                 <p
                   className="font-mono text-xs truncate mb-0.5"
-                  style={{ color: '#d0d6e0' }}
+                  style={{ color: 'var(--text-secondary)' }}
                   title={session.projectDir ?? session.cwd}
                 >
                   {truncatePath(session.projectDir ?? session.cwd)}
@@ -105,11 +107,11 @@ export function RecentSessions() {
 
                 {/* Relative time + last message */}
                 <div className="flex items-center gap-2 min-w-0">
-                  <span className="text-xs shrink-0" style={{ color: '#62666d' }}>
+                  <span className="text-xs shrink-0" style={{ color: 'var(--text-faint)' }}>
                     {formatRelativeTime(session.startedAt)}
                   </span>
                   {session.lastMessage && (
-                    <span className="text-xs truncate" style={{ color: '#62666d' }}>
+                    <span className="text-xs truncate" style={{ color: 'var(--text-faint)' }}>
                       {truncateMessage(session.lastMessage)}
                     </span>
                   )}

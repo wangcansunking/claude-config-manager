@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Button } from '../shared/button';
+import { Select } from '../shared/select';
 import { exportProfile } from '@/lib/api-client';
 
 interface Profile {
@@ -54,44 +55,36 @@ export function ExportPanel({ profiles }: ExportPanelProps) {
     }
   }
 
-  const selectStyle = {
-    backgroundColor: '#191a1b',
-    border: '1px solid rgba(255, 255, 255, 0.08)',
-    color: '#f7f8f8',
-  };
+  const profileOptions = [
+    { value: '', label: 'Select a profile...' },
+    ...profiles.map((p) => ({ value: p.name, label: p.name })),
+  ];
 
   return (
     <div
       className="rounded-lg p-5 h-full"
-      style={{ backgroundColor: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.08)' }}
+      style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--card-border)' }}
     >
-      <h2 className="text-base mb-4" style={{ color: '#f7f8f8', fontWeight: 510 }}>
+      <h2 className="text-base mb-4" style={{ color: 'var(--text-primary)', fontWeight: 510 }}>
         Export
       </h2>
 
       {/* Profile selector */}
       <div className="mb-4">
-        <label className="block text-xs uppercase tracking-wider mb-2" style={{ color: '#8a8f98', fontWeight: 510 }}>
+        <label className="block text-xs uppercase tracking-wider mb-2" style={{ color: 'var(--text-muted)', fontWeight: 510 }}>
           Profile
         </label>
-        <select
+        <Select
           value={selectedProfile}
-          onChange={(e) => setSelectedProfile(e.target.value)}
-          className="w-full px-3 py-2 rounded-md text-sm outline-none"
-          style={selectStyle}
-          onFocus={(e) => { e.currentTarget.style.borderColor = '#5e6ad2'; }}
-          onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)'; }}
-        >
-          <option value="">Select a profile...</option>
-          {profiles.map((p) => (
-            <option key={p.name} value={p.name}>{p.name}</option>
-          ))}
-        </select>
+          onChange={setSelectedProfile}
+          options={profileOptions}
+          placeholder="Select a profile..."
+        />
       </div>
 
       {/* Include options */}
       <div className="mb-4">
-        <label className="block text-xs uppercase tracking-wider mb-2" style={{ color: '#8a8f98', fontWeight: 510 }}>
+        <label className="block text-xs uppercase tracking-wider mb-2" style={{ color: 'var(--text-muted)', fontWeight: 510 }}>
           Include
         </label>
         <div className="space-y-2">
@@ -102,15 +95,15 @@ export function ExportPanel({ profiles }: ExportPanelProps) {
                 checked={options[key]}
                 onChange={() => toggleOption(key)}
                 className="w-4 h-4 rounded"
-                style={{ accentColor: '#5e6ad2' }}
+                style={{ accentColor: 'var(--accent)' }}
               />
-              <span className="text-sm capitalize" style={{ color: '#d0d6e0' }}>
+              <span className="text-sm capitalize" style={{ color: 'var(--text-secondary)' }}>
                 {key === 'mcpServers' ? 'MCP Servers' : key}
               </span>
               {key === 'credentials' && (
                 <span
                   className="text-xs px-1.5 py-0.5 rounded"
-                  style={{ backgroundColor: 'rgba(255, 71, 87, 0.15)', color: '#ff4757' }}
+                  style={{ backgroundColor: 'rgba(255, 71, 87, 0.15)', color: 'var(--status-red)' }}
                 >
                   sensitive
                 </span>
@@ -122,7 +115,7 @@ export function ExportPanel({ profiles }: ExportPanelProps) {
 
       {/* Format selector */}
       <div className="mb-5">
-        <label className="block text-xs uppercase tracking-wider mb-2" style={{ color: '#8a8f98', fontWeight: 510 }}>
+        <label className="block text-xs uppercase tracking-wider mb-2" style={{ color: 'var(--text-muted)', fontWeight: 510 }}>
           Format
         </label>
         <div className="flex gap-2">
@@ -132,9 +125,9 @@ export function ExportPanel({ profiles }: ExportPanelProps) {
               onClick={() => setFormat(f)}
               className="px-4 py-1.5 rounded-md text-sm transition-colors"
               style={{
-                backgroundColor: format === f ? '#5e6ad2' : 'rgba(255, 255, 255, 0.04)',
-                color: format === f ? '#f7f8f8' : '#d0d6e0',
-                border: format === f ? 'none' : '1px solid rgba(255, 255, 255, 0.08)',
+                backgroundColor: format === f ? 'var(--accent)' : 'var(--input-bg)',
+                color: format === f ? '#fff' : 'var(--text-secondary)',
+                border: format === f ? 'none' : '1px solid var(--card-border)',
                 fontWeight: 510,
               }}
             >

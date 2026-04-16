@@ -15,7 +15,7 @@ export function SearchBox({ value, onChange, placeholder = 'Search...' }: Search
       >
         <svg
           className="w-4 h-4"
-          style={{ color: '#8a8f98' }}
+          style={{ color: 'var(--text-muted)' }}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -36,9 +36,9 @@ export function SearchBox({ value, onChange, placeholder = 'Search...' }: Search
         placeholder={placeholder}
         className="w-full pl-9 pr-4 py-2 rounded-md text-sm outline-none transition-colors search-input"
         style={{
-          backgroundColor: '#191a1b',
+          backgroundColor: 'var(--bg-tertiary)',
           border: '1px solid',
-          color: '#f7f8f8',
+          color: 'var(--text-primary)',
         }}
       />
     </div>

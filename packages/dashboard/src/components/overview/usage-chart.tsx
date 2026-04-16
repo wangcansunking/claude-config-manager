@@ -31,17 +31,17 @@ export function UsageChart({ title, entries, barColor, maxItems = 8 }: UsageChar
   return (
     <div
       className="rounded-lg overflow-hidden"
-      style={{ backgroundColor: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.08)' }}
+      style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--card-border)' }}
     >
       <div
         className="px-5 py-3"
-        style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}
+        style={{ borderBottom: '1px solid var(--border)' }}
       >
-        <h3 className="text-lg" style={{ color: '#f7f8f8', fontWeight: 510 }}>{title}</h3>
+        <h3 className="text-lg" style={{ color: 'var(--text-primary)', fontWeight: 510 }}>{title}</h3>
       </div>
       {visible.length === 0 ? (
         <div className="px-5 py-6 text-center">
-          <p className="text-sm" style={{ color: '#8a8f98' }}>No data yet.</p>
+          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>No data yet.</p>
         </div>
       ) : (
         <div className="py-1">
@@ -51,18 +51,20 @@ export function UsageChart({ title, entries, barColor, maxItems = 8 }: UsageChar
             return (
               <div
                 key={entry.name}
-                className="flex items-center gap-3 px-5 py-2.5 transition-colors hover:bg-[#28282c]"
+                className="flex items-center gap-3 px-5 py-2.5 transition-colors"
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--bg-hover)'; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; }}
               >
                 <span
                   className="font-mono text-xs shrink-0 truncate"
-                  style={{ color: '#7170ff', width: '180px' }}
+                  style={{ color: 'var(--accent-light)', width: '180px' }}
                   title={entry.name}
                 >
                   {entry.name.length > 26 ? entry.name.slice(0, 24) + '...' : entry.name}
                 </span>
                 <div
                   className="flex-1 h-5 rounded overflow-hidden"
-                  style={{ backgroundColor: 'rgba(255, 255, 255, 0.03)' }}
+                  style={{ backgroundColor: 'var(--border)' }}
                 >
                   <div
                     className="h-full rounded"
@@ -76,14 +78,14 @@ export function UsageChart({ title, entries, barColor, maxItems = 8 }: UsageChar
                 </div>
                 <span
                   className="text-xs shrink-0 text-right"
-                  style={{ color: '#d0d6e0', width: '44px', fontWeight: 510 }}
+                  style={{ color: 'var(--text-secondary)', width: '44px', fontWeight: 510 }}
                 >
                   {entry.usageCount}
                 </span>
                 {relTime && (
                   <span
                     className="text-xs shrink-0 text-right"
-                    style={{ color: '#62666d', width: '64px' }}
+                    style={{ color: 'var(--text-faint)', width: '64px' }}
                   >
                     {relTime}
                   </span>
