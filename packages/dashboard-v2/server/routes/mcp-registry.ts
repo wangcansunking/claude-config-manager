@@ -1,0 +1,221 @@
+import { Router } from 'express';
+import { McpManager, getClaudeHome } from '@ccm/core';
+
+const router = Router();
+
+// ---------------------------------------------------------------------------
+// Unified registry result type
+// ---------------------------------------------------------------------------
+
+interface McpRegistryResult {
+  name: string;
+  description: string;
+  source: 'mcp-registry' | 'npm' | 'smithery';
+  version?: string;
+  installCommand?: string;
+  repositoryUrl?: string;
+  npmUrl?: string;
+  score?: number;
+}
+
+// ---------------------------------------------------------------------------
+// Source 1: Official MCP Registry
+// ---------------------------------------------------------------------------
+
+async function searchOfficialRegistry(query: string): Promise<McpRegistryResult[]> {
+  const res = await fetch(
+    `https://registry.modelcontextprotocol.io/v0.1/servers?search=${encodeURIComponent(query)}&limit=10`,
+    { signal: AbortSignal.timeout(8000) },
+  );
+  if (!res.ok) return [];
+  const data = (await res.json()) as {
+    servers?: { name?: string; description?: string; repositoryUrl?: string }[];
+  };
+  if (!Array.isArray(data?.servers)) return [];
+  return data.servers.map((s) => ({
+    name: s.name ?? 'unknown',
+    description: s.description ?? '',
+    source: 'mcp-registry' as const,
+    repositoryUrl: s.repositoryUrl,
+    installCommand: s.name ? `npx -y ${s.name}` : undefined,
+    score: 0.9, // boost official results
+  }));
+}
+
+// ---------------------------------------------------------------------------
+// Source 2: npm search
+// ---------------------------------------------------------------------------
+
+async function searchNpm(query: string): Promise<McpRegistryResult[]> {
+  const res = await fetch(
+    `https://registry.npmjs.org/-/v1/search?text=mcp+${encodeURIComponent(query)}&size=10`,
+    { signal: AbortSignal.timeout(8000) },
+  );
+  if (!res.ok) return [];
+  const data = (await res.json()) as {
+    objects?: {
+      package: {
+        name?: string;
+        description?: string;
+        version?: string;
+        links?: { npm?: string; repository?: string };
+      };
+      score?: { final?: number };
+    }[];
+  };
+  if (!Array.isArray(data?.objects)) return [];
+  return data.objects.map((obj) => ({
+    name: obj.package.name ?? 'unknown',
+    description: obj.package.description ?? '',
+    source: 'npm' as const,
+    version: obj.package.version,
+    npmUrl: obj.package.links?.npm,
+    repositoryUrl: obj.package.links?.repository,
+    installCommand: obj.package.name ? `npx -y ${obj.package.name}` : undefined,
+    score: (obj.score?.final ?? 0.5) * 0.8, // slightly lower than official
+  }));
+}
+
+// ---------------------------------------------------------------------------
+// Source 3: Smithery (optional — needs SMITHERY_API_KEY)
+// ---------------------------------------------------------------------------
+
+async function searchSmithery(query: string): Promise<McpRegistryResult[]> {
+  const apiKey = process.env.SMITHERY_API_KEY;
+  if (!apiKey) return [];
+
+  try {
+    const res = await fetch(
+      `https://registry.smithery.ai/servers?q=${encodeURIComponent(query)}&pageSize=10`,
+      {
+        headers: { Authorization: `Bearer ${apiKey}` },
+        signal: AbortSignal.timeout(8000),
+      },
+    );
+    if (!res.ok) return [];
+    const data = (await res.json()) as {
+      servers?: {
+        qualifiedName?: string;
+        displayName?: string;
+        description?: string;
+        homepage?: string;
+      }[];
+    };
+    if (!Array.isArray(data?.servers)) return [];
+    return data.servers.map((s) => ({
+      name: s.qualifiedName ?? s.displayName ?? 'unknown',
+      description: s.description ?? '',
+      source: 'smithery' as const,
+      repositoryUrl: s.homepage,
+      installCommand: s.qualifiedName
+        ? `npx -y @smithery/cli install ${s.qualifiedName} --client claude`
+        : undefined,
+      score: 0.7,
+    }));
+  } catch {
+    return [];
+  }
+}
+
+// ---------------------------------------------------------------------------
+// In-memory search cache (5 minute TTL)
+// ---------------------------------------------------------------------------
+
+const searchCache = new Map<string, { data: { results: McpRegistryResult[]; smitheryAvailable: boolean }; timestamp: number }>();
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+// ---------------------------------------------------------------------------
+// GET /api/mcp-registry?q=search-term
+// ---------------------------------------------------------------------------
+
+router.get('/', async (req, res) => {
+  const query = (req.query.q as string)?.trim();
+  if (!query) {
+    return res.json({ results: [], smitheryAvailable: !!process.env.SMITHERY_API_KEY });
+  }
+
+  // Check cache
+  const cached = searchCache.get(query);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    return res.json(cached.data);
+  }
+
+  // Fetch all sources in parallel — tolerant of individual failures
+  const [officialResult, npmResult, smitheryResult] = await Promise.allSettled([
+    searchOfficialRegistry(query),
+    searchNpm(query),
+    searchSmithery(query),
+  ]);
+
+  const all: McpRegistryResult[] = [];
+  if (officialResult.status === 'fulfilled') all.push(...officialResult.value);
+  if (npmResult.status === 'fulfilled') all.push(...npmResult.value);
+  if (smitheryResult.status === 'fulfilled') all.push(...smitheryResult.value);
+
+  // Deduplicate by name (keep the one with highest score)
+  const deduped = new Map<string, McpRegistryResult>();
+  for (const item of all) {
+    const key = item.name.toLowerCase();
+    const existing = deduped.get(key);
+    if (!existing || (item.score ?? 0) > (existing.score ?? 0)) {
+      deduped.set(key, item);
+    }
+  }
+
+  // Sort by score descending
+  const results = [...deduped.values()].sort(
+    (a, b) => (b.score ?? 0) - (a.score ?? 0),
+  );
+
+  const responseData = {
+    results,
+    smitheryAvailable: !!process.env.SMITHERY_API_KEY,
+  };
+
+  // Cache result
+  searchCache.set(query, { data: responseData, timestamp: Date.now() });
+
+  res.json(responseData);
+});
+
+// ---------------------------------------------------------------------------
+// POST /api/mcp-registry/install
+// ---------------------------------------------------------------------------
+
+router.post('/install', async (req, res) => {
+  try {
+    const { name, command, args, env } = req.body as {
+      name?: string;
+      command?: string;
+      args?: string[];
+      env?: Record<string, string>;
+    };
+
+    if (!name || typeof name !== 'string') {
+      return res.status(400).json({ error: 'Missing required field: name' });
+    }
+    if (!command || typeof command !== 'string') {
+      return res.status(400).json({ error: 'Missing required field: command' });
+    }
+    if (args !== undefined && !Array.isArray(args)) {
+      return res.status(400).json({ error: 'Field args must be an array' });
+    }
+
+    const config: { command: string; args?: string[]; env?: Record<string, string> } = { command };
+    if (args && args.length > 0) config.args = args;
+    if (env && Object.keys(env).length > 0) config.env = env;
+
+    const home = getClaudeHome();
+    const manager = new McpManager(home);
+    await manager.add(name, config);
+
+    res.status(201).json({ success: true });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Internal server error';
+    const status = message.includes('already exists') ? 409 : 500;
+    console.error('[POST /api/mcp-registry/install]', err);
+    res.status(status).json({ error: message });
+  }
+});
+
+export { router as mcpRegistryRouter };
