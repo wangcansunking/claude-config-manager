@@ -35,18 +35,18 @@ type SourceFilter = 'all' | 'mcp-registry' | 'npm' | 'smithery';
 function CollapsibleSection({ icon, label, count, children }: { icon: string; label: string; count: number; children: React.ReactNode }) {
   const [open, setOpen] = useState(true);
   return (
-    <div className="rounded-xl overflow-hidden" style={{ backgroundColor: '#1e1e28', border: '1px solid #2a2a35' }}>
+    <div className="rounded-xl overflow-hidden" style={{ backgroundColor: '#191a1b', border: '1px solid #23252a' }}>
       <button
-        className="w-full flex items-center justify-between px-5 py-3 text-left transition-colors hover:bg-[#252530]"
-        style={{ borderBottom: open ? '1px solid #2a2a35' : 'none' }}
+        className="w-full flex items-center justify-between px-5 py-3 text-left transition-colors hover:bg-[#28282c]"
+        style={{ borderBottom: open ? '1px solid #23252a' : 'none' }}
         onClick={() => setOpen(!open)}
       >
         <div className="flex items-center gap-2">
           <span className="text-base">{icon}</span>
-          <span className="text-sm font-semibold" style={{ color: label === 'User' ? '#a29bfe' : '#636e72' }}>{label}</span>
-          <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: '#2a2a35', color: '#b2bec3' }}>{count}</span>
+          <span className="text-sm font-semibold" style={{ color: label === 'User' ? '#7170ff' : '#8a8f98' }}>{label}</span>
+          <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: '#23252a', color: '#d0d6e0' }}>{count}</span>
         </div>
-        <svg className="w-4 h-4 transition-transform" style={{ color: '#636e72', transform: open ? 'rotate(0deg)' : 'rotate(-90deg)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-4 h-4 transition-transform" style={{ color: '#8a8f98', transform: open ? 'rotate(0deg)' : 'rotate(-90deg)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
       </button>
@@ -88,14 +88,14 @@ function RegistryResultCard({
 }) {
   return (
     <div
-      className="rounded-xl p-5 transition-colors hover:bg-[#252530]"
-      style={{ backgroundColor: '#1e1e28', border: '1px solid #2a2a35' }}
+      className="rounded-xl p-5 transition-colors hover:bg-[#28282c]"
+      style={{ backgroundColor: '#191a1b', border: '1px solid #23252a' }}
     >
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0">
           {/* Name row */}
           <div className="flex items-center gap-2 mb-1 flex-wrap">
-            <code className="text-sm font-mono font-semibold" style={{ color: '#a29bfe' }}>
+            <code className="text-sm font-mono font-semibold" style={{ color: '#7170ff' }}>
               {result.name}
             </code>
             <Tag label={sourceLabel(result.source)} variant={sourceBadgeVariant(result.source)} />
@@ -106,7 +106,7 @@ function RegistryResultCard({
 
           {/* Description */}
           {result.description && (
-            <p className="text-xs mt-1 line-clamp-2" style={{ color: '#b2bec3' }}>
+            <p className="text-xs mt-1 line-clamp-2" style={{ color: '#d0d6e0' }}>
               {result.description}
             </p>
           )}
@@ -119,7 +119,7 @@ function RegistryResultCard({
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-xs underline transition-colors"
-                style={{ color: '#636e72' }}
+                style={{ color: '#8a8f98' }}
                 onClick={(e) => e.stopPropagation()}
               >
                 Repository
@@ -131,7 +131,7 @@ function RegistryResultCard({
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-xs underline transition-colors"
-                style={{ color: '#636e72' }}
+                style={{ color: '#8a8f98' }}
                 onClick={(e) => e.stopPropagation()}
               >
                 npm
@@ -160,15 +160,15 @@ function SearchSkeleton() {
         <div
           key={i}
           className="rounded-xl p-5 animate-pulse"
-          style={{ backgroundColor: '#1e1e28', border: '1px solid #2a2a35' }}
+          style={{ backgroundColor: '#191a1b', border: '1px solid #23252a' }}
         >
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1">
-              <div className="h-4 rounded w-48 mb-2" style={{ backgroundColor: '#2a2a35' }} />
-              <div className="h-3 rounded w-full mb-1" style={{ backgroundColor: '#2a2a35' }} />
-              <div className="h-3 rounded w-2/3" style={{ backgroundColor: '#2a2a35' }} />
+              <div className="h-4 rounded w-48 mb-2" style={{ backgroundColor: '#23252a' }} />
+              <div className="h-3 rounded w-full mb-1" style={{ backgroundColor: '#23252a' }} />
+              <div className="h-3 rounded w-2/3" style={{ backgroundColor: '#23252a' }} />
             </div>
-            <div className="h-8 w-16 rounded-lg" style={{ backgroundColor: '#2a2a35' }} />
+            <div className="h-8 w-16 rounded-lg" style={{ backgroundColor: '#23252a' }} />
           </div>
         </div>
       ))}
@@ -247,15 +247,15 @@ function InstallDialog({
           maxWidth: '95vw',
           maxHeight: '85vh',
           overflowY: 'auto',
-          backgroundColor: '#1e1e28',
-          border: '1px solid #2a2a35',
+          backgroundColor: '#191a1b',
+          border: '1px solid #23252a',
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="text-lg font-semibold mb-1" style={{ color: '#ffffff' }}>
+        <h2 className="text-lg font-semibold mb-1" style={{ color: '#f7f8f8' }}>
           Install MCP Server
         </h2>
-        <p className="text-xs mb-5" style={{ color: '#636e72' }}>
+        <p className="text-xs mb-5" style={{ color: '#8a8f98' }}>
           This will add the server to your user-level MCP config (~/.claude/.mcp.json).
         </p>
 
@@ -266,7 +266,7 @@ function InstallDialog({
 
         {/* Name field */}
         <div className="mb-4">
-          <label className="block text-xs font-medium mb-1" style={{ color: '#b2bec3' }}>
+          <label className="block text-xs font-medium mb-1" style={{ color: '#d0d6e0' }}>
             Server Name
           </label>
           <input
@@ -274,13 +274,13 @@ function InstallDialog({
             value={name}
             onChange={(e) => setName(e.target.value)}
             className="w-full px-3 py-2 rounded-lg text-sm font-mono outline-none"
-            style={{ backgroundColor: '#16161d', border: '1px solid #2a2a35', color: '#ffffff' }}
+            style={{ backgroundColor: '#0f1011', border: '1px solid #23252a', color: '#f7f8f8' }}
           />
         </div>
 
         {/* Command field */}
         <div className="mb-4">
-          <label className="block text-xs font-medium mb-1" style={{ color: '#b2bec3' }}>
+          <label className="block text-xs font-medium mb-1" style={{ color: '#d0d6e0' }}>
             Command
           </label>
           <input
@@ -288,13 +288,13 @@ function InstallDialog({
             value={command}
             onChange={(e) => setCommand(e.target.value)}
             className="w-full px-3 py-2 rounded-lg text-sm font-mono outline-none"
-            style={{ backgroundColor: '#16161d', border: '1px solid #2a2a35', color: '#ffffff' }}
+            style={{ backgroundColor: '#0f1011', border: '1px solid #23252a', color: '#f7f8f8' }}
           />
         </div>
 
         {/* Args field */}
         <div className="mb-4">
-          <label className="block text-xs font-medium mb-1" style={{ color: '#b2bec3' }}>
+          <label className="block text-xs font-medium mb-1" style={{ color: '#d0d6e0' }}>
             Arguments (space-separated)
           </label>
           <input
@@ -302,26 +302,26 @@ function InstallDialog({
             value={args}
             onChange={(e) => setArgs(e.target.value)}
             className="w-full px-3 py-2 rounded-lg text-sm font-mono outline-none"
-            style={{ backgroundColor: '#16161d', border: '1px solid #2a2a35', color: '#ffffff' }}
+            style={{ backgroundColor: '#0f1011', border: '1px solid #23252a', color: '#f7f8f8' }}
           />
         </div>
 
         {/* Env vars */}
         <div className="mb-4">
           <div className="flex items-center justify-between mb-1">
-            <label className="text-xs font-medium" style={{ color: '#b2bec3' }}>
+            <label className="text-xs font-medium" style={{ color: '#d0d6e0' }}>
               Environment Variables
             </label>
             <button
               className="text-xs px-2 py-0.5 rounded transition-colors"
-              style={{ color: '#a29bfe', backgroundColor: 'rgba(108, 92, 231, 0.1)' }}
+              style={{ color: '#7170ff', backgroundColor: 'rgba(94, 106, 210, 0.1)' }}
               onClick={handleAddEnvVar}
             >
               + Add
             </button>
           </div>
           {envPairs.length === 0 && (
-            <p className="text-xs" style={{ color: '#636e72' }}>No environment variables</p>
+            <p className="text-xs" style={{ color: '#8a8f98' }}>No environment variables</p>
           )}
           {envPairs.map((pair, i) => (
             <div key={i} className="flex items-center gap-2 mt-2">
@@ -331,7 +331,7 @@ function InstallDialog({
                 value={pair.key}
                 onChange={(e) => handleEnvChange(i, 'key', e.target.value)}
                 className="flex-1 px-2 py-1.5 rounded text-xs font-mono outline-none"
-                style={{ backgroundColor: '#16161d', border: '1px solid #2a2a35', color: '#fdcb6e' }}
+                style={{ backgroundColor: '#0f1011', border: '1px solid #23252a', color: '#fdcb6e' }}
               />
               <input
                 type="text"
@@ -339,7 +339,7 @@ function InstallDialog({
                 value={pair.value}
                 onChange={(e) => handleEnvChange(i, 'value', e.target.value)}
                 className="flex-1 px-2 py-1.5 rounded text-xs font-mono outline-none"
-                style={{ backgroundColor: '#16161d', border: '1px solid #2a2a35', color: '#b2bec3' }}
+                style={{ backgroundColor: '#0f1011', border: '1px solid #23252a', color: '#d0d6e0' }}
               />
               <button
                 className="text-xs px-1.5 py-1 rounded transition-colors"
@@ -354,12 +354,12 @@ function InstallDialog({
 
         {/* Preview */}
         <div className="mb-5">
-          <label className="block text-xs font-medium mb-1" style={{ color: '#636e72' }}>
+          <label className="block text-xs font-medium mb-1" style={{ color: '#8a8f98' }}>
             Config Preview
           </label>
           <pre
             className="rounded-lg p-3 text-xs font-mono overflow-x-auto"
-            style={{ backgroundColor: '#16161d', color: '#b2bec3' }}
+            style={{ backgroundColor: '#0f1011', color: '#d0d6e0' }}
           >
             {JSON.stringify(
               {
@@ -516,8 +516,8 @@ function McpStoreTab({ onInstalled }: { onInstalled: () => void }) {
             key={f.key}
             className="px-3 py-1 rounded-full text-xs font-medium transition-colors"
             style={{
-              backgroundColor: sourceFilter === f.key ? '#6c5ce7' : '#2a2a35',
-              color: sourceFilter === f.key ? '#fff' : '#b2bec3',
+              backgroundColor: sourceFilter === f.key ? '#5e6ad2' : '#23252a',
+              color: sourceFilter === f.key ? '#f7f8f8' : '#d0d6e0',
             }}
             onClick={() => setSourceFilter(f.key)}
           >
@@ -528,7 +528,7 @@ function McpStoreTab({ onInstalled }: { onInstalled: () => void }) {
 
       {/* Smithery note */}
       {!smitheryAvailable && searched && (
-        <p className="text-xs mb-4" style={{ color: '#636e72' }}>
+        <p className="text-xs mb-4" style={{ color: '#8a8f98' }}>
           Set SMITHERY_API_KEY environment variable to enable Smithery search.
         </p>
       )}
@@ -537,7 +537,7 @@ function McpStoreTab({ onInstalled }: { onInstalled: () => void }) {
       {successMessage && (
         <div
           className="rounded-lg px-4 py-3 mb-4 text-sm flex items-center gap-2"
-          style={{ backgroundColor: 'rgba(0, 184, 148, 0.15)', color: '#00b894' }}
+          style={{ backgroundColor: 'rgba(0, 184, 148, 0.15)', color: '#27a644' }}
         >
           <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -552,28 +552,28 @@ function McpStoreTab({ onInstalled }: { onInstalled: () => void }) {
       ) : !searched ? (
         <div
           className="rounded-xl p-10 text-center"
-          style={{ backgroundColor: '#1e1e28', border: '1px solid #2a2a35' }}
+          style={{ backgroundColor: '#191a1b', border: '1px solid #23252a' }}
         >
-          <p className="text-sm mb-2" style={{ color: '#636e72' }}>
+          <p className="text-sm mb-2" style={{ color: '#8a8f98' }}>
             Search for MCP servers across npm, Official MCP Registry, and Smithery.
           </p>
-          <p className="text-xs" style={{ color: '#4a4a55' }}>
+          <p className="text-xs" style={{ color: '#62666d' }}>
             Type a search term above to get started.
           </p>
         </div>
       ) : filtered.length === 0 ? (
         <div
           className="rounded-xl p-10 text-center"
-          style={{ backgroundColor: '#1e1e28', border: '1px solid #2a2a35' }}
+          style={{ backgroundColor: '#191a1b', border: '1px solid #23252a' }}
         >
-          <p className="text-sm" style={{ color: '#636e72' }}>
+          <p className="text-sm" style={{ color: '#8a8f98' }}>
             No results found for &ldquo;{search}&rdquo;
             {sourceFilter !== 'all' ? ` in ${sourceLabel(sourceFilter)}` : ''}.
           </p>
         </div>
       ) : (
         <div className="space-y-3">
-          <p className="text-xs" style={{ color: '#636e72' }}>
+          <p className="text-xs" style={{ color: '#8a8f98' }}>
             {filtered.length} result{filtered.length !== 1 ? 's' : ''}
           </p>
           {filtered.map((r) => (
@@ -629,7 +629,7 @@ export default function McpServersPage() {
 
   return (
     <div>
-      <div className="sticky top-0 z-10 bg-[#0f0f14]">
+      <div className="sticky top-0 z-10 bg-[#08090a]">
         <Header title="MCP Servers">
           <Button variant="primary" size="md">Add Server</Button>
         </Header>
@@ -639,8 +639,8 @@ export default function McpServersPage() {
           <button
             className="px-4 py-1.5 rounded-lg text-sm font-medium transition-colors"
             style={{
-              backgroundColor: tab === 'installed' ? '#6c5ce7' : 'transparent',
-              color: tab === 'installed' ? '#fff' : '#636e72',
+              backgroundColor: tab === 'installed' ? '#5e6ad2' : 'transparent',
+              color: tab === 'installed' ? '#f7f8f8' : '#8a8f98',
             }}
             onClick={() => setTab('installed')}
           >
@@ -649,8 +649,8 @@ export default function McpServersPage() {
           <button
             className="px-4 py-1.5 rounded-lg text-sm font-medium transition-colors"
             style={{
-              backgroundColor: tab === 'store' ? '#6c5ce7' : 'transparent',
-              color: tab === 'store' ? '#fff' : '#636e72',
+              backgroundColor: tab === 'store' ? '#5e6ad2' : 'transparent',
+              color: tab === 'store' ? '#f7f8f8' : '#8a8f98',
             }}
             onClick={() => setTab('store')}
           >
@@ -663,15 +663,15 @@ export default function McpServersPage() {
         /* ---- Installed tab ---- */
         <>
           {loading ? (
-            <p style={{ color: '#b2bec3' }}>Loading...</p>
+            <p style={{ color: '#d0d6e0' }}>Loading...</p>
           ) : servers.length === 0 ? (
             <div
               className="rounded-xl p-10 text-center"
-              style={{ backgroundColor: '#1e1e28', border: '1px solid #2a2a35' }}
+              style={{ backgroundColor: '#191a1b', border: '1px solid #23252a' }}
             >
-              <p className="text-sm" style={{ color: '#636e72' }}>
+              <p className="text-sm" style={{ color: '#8a8f98' }}>
                 No MCP servers configured. Click &ldquo;Add Server&rdquo; to get started, or browse
-                the <button className="underline" style={{ color: '#a29bfe' }} onClick={() => setTab('store')}>MCP Store</button>.
+                the <button className="underline" style={{ color: '#7170ff' }} onClick={() => setTab('store')}>MCP Store</button>.
               </p>
             </div>
           ) : (
@@ -723,27 +723,27 @@ export default function McpServersPage() {
               <div className="space-y-5">
                 {/* Connection config */}
                 <section>
-                  <h3 className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: '#636e72' }}>
+                  <h3 className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: '#8a8f98' }}>
                     Connection Config
                   </h3>
                   <div className="space-y-2">
                     <div className="flex justify-between gap-4">
-                      <span className="text-xs" style={{ color: '#636e72' }}>Command</span>
-                      <code className="text-xs font-mono" style={{ color: '#a29bfe' }}>
+                      <span className="text-xs" style={{ color: '#8a8f98' }}>Command</span>
+                      <code className="text-xs font-mono" style={{ color: '#7170ff' }}>
                         {selected.config.command}
                       </code>
                     </div>
                     {selected.config.args && selected.config.args.length > 0 && (
                       <div className="flex justify-between gap-4">
-                        <span className="text-xs" style={{ color: '#636e72' }}>Args</span>
-                        <code className="text-xs font-mono text-right" style={{ color: '#b2bec3' }}>
+                        <span className="text-xs" style={{ color: '#8a8f98' }}>Args</span>
+                        <code className="text-xs font-mono text-right" style={{ color: '#d0d6e0' }}>
                           {selected.config.args.join(' ')}
                         </code>
                       </div>
                     )}
                     <div className="flex justify-between gap-4">
-                      <span className="text-xs" style={{ color: '#636e72' }}>Scope</span>
-                      <span className="text-xs" style={{ color: '#b2bec3' }}>Global</span>
+                      <span className="text-xs" style={{ color: '#8a8f98' }}>Scope</span>
+                      <span className="text-xs" style={{ color: '#d0d6e0' }}>Global</span>
                     </div>
                   </div>
                 </section>
@@ -751,17 +751,17 @@ export default function McpServersPage() {
                 {/* Environment Variables */}
                 {selected.config.env && Object.keys(selected.config.env).length > 0 && (
                   <section>
-                    <h3 className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: '#636e72' }}>
+                    <h3 className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: '#8a8f98' }}>
                       Environment Variables
                     </h3>
                     <div
                       className="rounded-lg p-3 space-y-2"
-                      style={{ backgroundColor: '#16161d' }}
+                      style={{ backgroundColor: '#0f1011' }}
                     >
                       {Object.entries(selected.config.env).map(([key]) => (
                         <div key={key} className="flex justify-between gap-4">
                           <code className="text-xs font-mono" style={{ color: '#fdcb6e' }}>{key}</code>
-                          <code className="text-xs font-mono" style={{ color: '#636e72' }}>--------</code>
+                          <code className="text-xs font-mono" style={{ color: '#8a8f98' }}>--------</code>
                         </div>
                       ))}
                     </div>
@@ -770,7 +770,7 @@ export default function McpServersPage() {
 
                 {/* Tools placeholder */}
                 <section>
-                  <h3 className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: '#636e72' }}>
+                  <h3 className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: '#8a8f98' }}>
                     Tools Provided
                   </h3>
                   <div className="flex gap-2 flex-wrap">

@@ -88,24 +88,24 @@ function CollapsibleSection({
   return (
     <div
       className="rounded-xl overflow-hidden"
-      style={{ backgroundColor: '#1e1e28', border: '1px solid #2a2a35' }}
+      style={{ backgroundColor: '#191a1b', border: '1px solid #23252a' }}
     >
       <button
-        className="w-full flex items-center justify-between px-5 py-3 text-left transition-colors hover:bg-[#252530]"
-        style={{ borderBottom: open ? '1px solid #2a2a35' : 'none' }}
+        className="w-full flex items-center justify-between px-5 py-3 text-left transition-colors hover:bg-[#28282c]"
+        style={{ borderBottom: open ? '1px solid #23252a' : 'none' }}
         onClick={() => setOpen(!open)}
       >
         <div className="flex items-center gap-2">
           <span className="text-base">{icon}</span>
           <span
             className="text-sm font-semibold"
-            style={{ color: labelColor ?? '#636e72' }}
+            style={{ color: labelColor ?? '#8a8f98' }}
           >
             {label}
           </span>
           <span
             className="text-xs px-2 py-0.5 rounded-full"
-            style={{ backgroundColor: '#2a2a35', color: '#b2bec3' }}
+            style={{ backgroundColor: '#23252a', color: '#d0d6e0' }}
           >
             {count}
           </span>
@@ -113,7 +113,7 @@ function CollapsibleSection({
         <svg
           className="w-4 h-4 transition-transform"
           style={{
-            color: '#636e72',
+            color: '#8a8f98',
             transform: open ? 'rotate(0deg)' : 'rotate(-90deg)',
           }}
           fill="none"
@@ -148,15 +148,15 @@ function SessionRow({
 }) {
   return (
     <div
-      className="flex items-start gap-4 px-5 py-4 cursor-pointer transition-colors hover:bg-[#252530]"
-      style={{ borderBottom: isLast ? 'none' : '1px solid #2a2a35' }}
+      className="flex items-start gap-4 px-5 py-4 cursor-pointer transition-colors hover:bg-[#28282c]"
+      style={{ borderBottom: isLast ? 'none' : '1px solid #23252a' }}
       onClick={onClick}
     >
       {/* Status dot */}
       <span
         className="inline-block w-2.5 h-2.5 rounded-full shrink-0 mt-1.5"
         style={{
-          backgroundColor: session.alive ? '#00b894' : '#636e72',
+          backgroundColor: session.alive ? '#27a644' : '#8a8f98',
         }}
       />
 
@@ -165,7 +165,7 @@ function SessionRow({
         <div className="flex items-center gap-2 mb-1 flex-wrap">
           <span
             className="font-mono text-sm font-semibold"
-            style={{ color: '#a29bfe' }}
+            style={{ color: '#7170ff' }}
           >
             {session.sessionId}
           </span>
@@ -179,36 +179,36 @@ function SessionRow({
             />
           )}
           {session.projectConfig?.hasClaudeMd && (
-            <span className="text-xs" style={{ color: '#b2bec3' }} title="CLAUDE.md">
+            <span className="text-xs" style={{ color: '#d0d6e0' }} title="CLAUDE.md">
               📄
             </span>
           )}
           {session.projectConfig?.hasMcpJson && (
-            <span className="text-xs" style={{ color: '#b2bec3' }} title=".mcp.json">
+            <span className="text-xs" style={{ color: '#d0d6e0' }} title=".mcp.json">
               🔌
             </span>
           )}
           {session.projectConfig?.hasProjectSettings && (
-            <span className="text-xs" style={{ color: '#b2bec3' }} title="Project Settings">
+            <span className="text-xs" style={{ color: '#d0d6e0' }} title="Project Settings">
               ⚙️
             </span>
           )}
         </div>
 
         {/* Working directory */}
-        <p className="font-mono text-xs truncate" style={{ color: '#b2bec3' }}>
+        <p className="font-mono text-xs truncate" style={{ color: '#d0d6e0' }}>
           {session.cwd}
         </p>
 
         {/* Time + last message */}
         <div className="flex items-center gap-3 mt-1">
-          <span className="text-xs shrink-0" style={{ color: '#636e72' }}>
+          <span className="text-xs shrink-0" style={{ color: '#8a8f98' }}>
             {formatRelativeTime(session.startedAt)}
           </span>
           {session.lastMessage && (
             <span
               className="text-sm truncate"
-              style={{ color: '#b2bec3' }}
+              style={{ color: '#d0d6e0' }}
             >
               💬 {truncateMessage(session.lastMessage)}
             </span>
@@ -218,7 +218,7 @@ function SessionRow({
 
       <svg
         className="w-4 h-4 shrink-0 mt-0.5"
-        style={{ color: '#636e72' }}
+        style={{ color: '#8a8f98' }}
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -279,8 +279,8 @@ function SessionSlidePanel({
           width: '60%',
           minWidth: '480px',
           maxWidth: '900px',
-          backgroundColor: '#1e1e28',
-          borderLeft: '1px solid #2a2a35',
+          backgroundColor: '#191a1b',
+          borderLeft: '1px solid #23252a',
           transform: open ? 'translateX(0)' : 'translateX(100%)',
           transition: 'transform 0.25s ease-in-out',
           boxShadow: open ? '-8px 0 32px rgba(0, 0, 0, 0.4)' : 'none',
@@ -324,17 +324,17 @@ function SessionPanelContent({
       {/* Header bar */}
       <div
         className="flex items-center justify-between px-6 py-4 shrink-0"
-        style={{ borderBottom: '1px solid #2a2a35', backgroundColor: '#16161d' }}
+        style={{ borderBottom: '1px solid #23252a', backgroundColor: '#0f1011' }}
       >
         <div className="flex items-center gap-3 min-w-0">
           {/* Status dot */}
           <span
             className="inline-block w-3 h-3 rounded-full shrink-0"
             style={{
-              backgroundColor: session.alive ? '#00b894' : '#636e72',
+              backgroundColor: session.alive ? '#27a644' : '#8a8f98',
             }}
           />
-          <span className="text-base font-semibold" style={{ color: '#ffffff' }}>
+          <span className="text-base font-semibold" style={{ color: '#f7f8f8' }}>
             {session.pid > 0 ? `PID ${session.pid}` : 'Session'}
           </span>
           <Tag
@@ -349,8 +349,8 @@ function SessionPanelContent({
           )}
         </div>
         <button
-          className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors hover:bg-[#2a2a35]"
-          style={{ color: '#b2bec3' }}
+          className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors hover:bg-[#23252a]"
+          style={{ color: '#d0d6e0' }}
           onClick={onClose}
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -365,40 +365,40 @@ function SessionPanelContent({
         <section>
           <h3
             className="text-xs font-semibold uppercase tracking-wider mb-3"
-            style={{ color: '#636e72' }}
+            style={{ color: '#8a8f98' }}
           >
             Metadata
           </h3>
           <div
             className="rounded-lg p-4 space-y-3"
-            style={{ backgroundColor: '#16161d' }}
+            style={{ backgroundColor: '#0f1011' }}
           >
             <MetaRow label="Session ID">
-              <code className="text-xs font-mono break-all" style={{ color: '#a29bfe' }}>
+              <code className="text-xs font-mono break-all" style={{ color: '#7170ff' }}>
                 {session.sessionId}
               </code>
             </MetaRow>
             {session.pid > 0 && (
               <MetaRow label="PID">
-                <code className="text-xs font-mono" style={{ color: '#a29bfe' }}>
+                <code className="text-xs font-mono" style={{ color: '#7170ff' }}>
                   {session.pid}
                 </code>
               </MetaRow>
             )}
             <MetaRow label="Working Directory">
-              <code className="text-xs font-mono break-all" style={{ color: '#b2bec3' }}>
+              <code className="text-xs font-mono break-all" style={{ color: '#d0d6e0' }}>
                 {session.cwd}
               </code>
             </MetaRow>
             {session.projectDir && session.projectDir !== session.cwd && (
               <MetaRow label="Project Directory">
-                <code className="text-xs font-mono break-all" style={{ color: '#b2bec3' }}>
+                <code className="text-xs font-mono break-all" style={{ color: '#d0d6e0' }}>
                   {session.projectDir}
                 </code>
               </MetaRow>
             )}
             <MetaRow label="Started">
-              <span className="text-xs" style={{ color: '#b2bec3' }}>
+              <span className="text-xs" style={{ color: '#d0d6e0' }}>
                 {session.startedAt
                   ? `${new Date(session.startedAt).toLocaleString()} (${formatRelativeTime(session.startedAt)})`
                   : 'Unknown'}
@@ -406,9 +406,9 @@ function SessionPanelContent({
             </MetaRow>
             {session.ide && (
               <MetaRow label="IDE">
-                <span className="text-xs" style={{ color: '#b2bec3' }}>
+                <span className="text-xs" style={{ color: '#d0d6e0' }}>
                   {session.ide.name}
-                  <span style={{ color: '#636e72' }}> via </span>
+                  <span style={{ color: '#8a8f98' }}> via </span>
                   {session.ide.transport}
                 </span>
               </MetaRow>
@@ -428,7 +428,7 @@ function SessionPanelContent({
                   {!session.projectConfig.hasClaudeMd &&
                     !session.projectConfig.hasMcpJson &&
                     !session.projectConfig.hasProjectSettings && (
-                      <span className="text-xs" style={{ color: '#636e72' }}>
+                      <span className="text-xs" style={{ color: '#8a8f98' }}>
                         None detected
                       </span>
                     )}
@@ -442,13 +442,13 @@ function SessionPanelContent({
         <section>
           <h3
             className="text-xs font-semibold uppercase tracking-wider mb-3"
-            style={{ color: '#636e72' }}
+            style={{ color: '#8a8f98' }}
           >
             Instruction History
           </h3>
 
           {!session.historyFile ? (
-            <p className="text-xs" style={{ color: '#636e72' }}>
+            <p className="text-xs" style={{ color: '#8a8f98' }}>
               No history file available for this session.
             </p>
           ) : historyLoading ? (
@@ -456,16 +456,16 @@ function SessionPanelContent({
               <span
                 className="inline-block w-4 h-4 rounded-full border-2 animate-spin"
                 style={{
-                  borderColor: '#2a2a35',
-                  borderTopColor: '#a29bfe',
+                  borderColor: '#23252a',
+                  borderTopColor: '#7170ff',
                 }}
               />
-              <span className="text-xs" style={{ color: '#b2bec3' }}>
+              <span className="text-xs" style={{ color: '#d0d6e0' }}>
                 Loading history...
               </span>
             </div>
           ) : !history || history.length === 0 ? (
-            <p className="text-xs" style={{ color: '#636e72' }}>
+            <p className="text-xs" style={{ color: '#8a8f98' }}>
               No user messages found in session history.
             </p>
           ) : (
@@ -480,14 +480,14 @@ function SessionPanelContent({
               </div>
 
               {/* History count */}
-              <p className="text-xs mb-3" style={{ color: '#636e72' }}>
+              <p className="text-xs mb-3" style={{ color: '#8a8f98' }}>
                 {filteredHistory.length} of {history.length} message{history.length !== 1 ? 's' : ''}
               </p>
 
               {/* Scrollable instruction list */}
               <div className="space-y-2">
                 {filteredHistory.length === 0 ? (
-                  <p className="text-xs py-4 text-center" style={{ color: '#636e72' }}>
+                  <p className="text-xs py-4 text-center" style={{ color: '#8a8f98' }}>
                     No messages match your filter.
                   </p>
                 ) : (
@@ -496,19 +496,19 @@ function SessionPanelContent({
                       <div
                         key={i}
                         className="rounded-lg p-3"
-                        style={{ backgroundColor: '#16161d' }}
+                        style={{ backgroundColor: '#0f1011' }}
                       >
                         <div className="flex items-center justify-between mb-1">
                           <Tag label={entry.role ?? 'user'} variant="blue" />
                           {entry.timestamp && (
-                            <span className="text-xs" style={{ color: '#636e72' }}>
+                            <span className="text-xs" style={{ color: '#8a8f98' }}>
                               {new Date(entry.timestamp).toLocaleString()}
                             </span>
                           )}
                         </div>
                         <p
                           className="text-xs whitespace-pre-wrap break-words mt-2"
-                          style={{ color: '#b2bec3' }}
+                          style={{ color: '#d0d6e0' }}
                         >
                           {entry.text.length > 800
                             ? entry.text.slice(0, 800) + '...'
@@ -540,7 +540,7 @@ function MetaRow({
 }) {
   return (
     <div className="flex items-start justify-between gap-6">
-      <span className="text-xs shrink-0" style={{ color: '#636e72' }}>
+      <span className="text-xs shrink-0" style={{ color: '#8a8f98' }}>
         {label}
       </span>
       <div className="text-right">{children}</div>
@@ -614,7 +614,7 @@ export default function SessionsPage() {
 
   return (
     <div>
-      <div className="sticky top-0 z-10 bg-[#0f0f14]">
+      <div className="sticky top-0 z-10 bg-[#08090a]">
         <Header
           title="Sessions"
           subtitle={
@@ -629,8 +629,8 @@ export default function SessionsPage() {
           <button
             className="px-4 py-1.5 rounded-lg text-sm font-medium transition-colors"
             style={{
-              backgroundColor: tab === 'recent' ? '#6c5ce7' : 'transparent',
-              color: tab === 'recent' ? '#fff' : '#636e72',
+              backgroundColor: tab === 'recent' ? '#5e6ad2' : 'transparent',
+              color: tab === 'recent' ? '#f7f8f8' : '#8a8f98',
             }}
             onClick={() => setTab('recent')}
           >
@@ -639,8 +639,8 @@ export default function SessionsPage() {
           <button
             className="px-4 py-1.5 rounded-lg text-sm font-medium transition-colors"
             style={{
-              backgroundColor: tab === 'all' ? '#6c5ce7' : 'transparent',
-              color: tab === 'all' ? '#fff' : '#636e72',
+              backgroundColor: tab === 'all' ? '#5e6ad2' : 'transparent',
+              color: tab === 'all' ? '#f7f8f8' : '#8a8f98',
             }}
             onClick={() => setTab('all')}
           >
@@ -658,20 +658,20 @@ export default function SessionsPage() {
       </div>
 
       {isLoading ? (
-        <p style={{ color: '#b2bec3' }}>Loading...</p>
+        <p style={{ color: '#d0d6e0' }}>Loading...</p>
       ) : tab === 'recent' ? (
         /* Recent tab — flat list of last 10 */
         recentSessions.length === 0 ? (
           <div
             className="rounded-xl p-8 text-center"
-            style={{ backgroundColor: '#1e1e28', border: '1px solid #2a2a35' }}
+            style={{ backgroundColor: '#191a1b', border: '1px solid #23252a' }}
           >
-            <p className="text-sm" style={{ color: '#636e72' }}>No recent sessions.</p>
+            <p className="text-sm" style={{ color: '#8a8f98' }}>No recent sessions.</p>
           </div>
         ) : (
           <div
             className="rounded-xl overflow-hidden"
-            style={{ backgroundColor: '#1e1e28', border: '1px solid #2a2a35' }}
+            style={{ backgroundColor: '#191a1b', border: '1px solid #23252a' }}
           >
             {recentSessions.map((session, i) => (
               <SessionRow
@@ -686,12 +686,12 @@ export default function SessionsPage() {
       ) : filtered.length === 0 ? (
         <div
           className="rounded-xl p-8 text-center"
-          style={{ backgroundColor: '#1e1e28', border: '1px solid #2a2a35' }}
+          style={{ backgroundColor: '#191a1b', border: '1px solid #23252a' }}
         >
-          <p className="text-lg mb-2" style={{ color: '#636e72' }}>
+          <p className="text-lg mb-2" style={{ color: '#8a8f98' }}>
             {search ? 'No matching sessions' : 'No sessions found'}
           </p>
-          <p className="text-sm" style={{ color: '#4a4a55' }}>
+          <p className="text-sm" style={{ color: '#62666d' }}>
             {search
               ? 'Try a different search term.'
               : 'Sessions appear here when Claude Code instances are running or have conversation history.'}
@@ -706,7 +706,7 @@ export default function SessionsPage() {
               label="Running"
               count={running.length}
               defaultOpen={true}
-              labelColor="#00b894"
+              labelColor="#27a644"
             >
               {running.map((session, i) => (
                 <SessionRow

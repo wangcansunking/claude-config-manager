@@ -20,18 +20,18 @@ interface Command {
 function CollapsibleSection({ icon, label, count, children }: { icon: string; label: string; count: number; children: React.ReactNode }) {
   const [open, setOpen] = useState(true);
   return (
-    <div className="rounded-xl overflow-hidden" style={{ backgroundColor: '#1e1e28', border: '1px solid #2a2a35' }}>
+    <div className="rounded-xl overflow-hidden" style={{ backgroundColor: '#191a1b', border: '1px solid #23252a' }}>
       <button
-        className="w-full flex items-center justify-between px-5 py-3 text-left transition-colors hover:bg-[#252530]"
-        style={{ borderBottom: open ? '1px solid #2a2a35' : 'none' }}
+        className="w-full flex items-center justify-between px-5 py-3 text-left transition-colors hover:bg-[#28282c]"
+        style={{ borderBottom: open ? '1px solid #23252a' : 'none' }}
         onClick={() => setOpen(!open)}
       >
         <div className="flex items-center gap-2">
           <span className="text-base">{icon}</span>
-          <span className="text-sm font-semibold" style={{ color: label === 'User' ? '#a29bfe' : '#636e72' }}>{label}</span>
-          <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: '#2a2a35', color: '#b2bec3' }}>{count}</span>
+          <span className="text-sm font-semibold" style={{ color: label === 'User' ? '#7170ff' : '#8a8f98' }}>{label}</span>
+          <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: '#23252a', color: '#d0d6e0' }}>{count}</span>
         </div>
-        <svg className="w-4 h-4 transition-transform" style={{ color: '#636e72', transform: open ? 'rotate(0deg)' : 'rotate(-90deg)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-4 h-4 transition-transform" style={{ color: '#8a8f98', transform: open ? 'rotate(0deg)' : 'rotate(-90deg)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
       </button>
@@ -43,33 +43,33 @@ function CollapsibleSection({ icon, label, count, children }: { icon: string; la
 function CommandRow({ cmd, isLast, onClick }: { cmd: Command; isLast: boolean; onClick: () => void }) {
   return (
     <div
-      className="flex items-start gap-4 px-5 py-4 cursor-pointer transition-colors hover:bg-[#252530]"
-      style={{ borderBottom: isLast ? 'none' : '1px solid #2a2a35' }}
+      className="flex items-start gap-4 px-5 py-4 cursor-pointer transition-colors hover:bg-[#28282c]"
+      style={{ borderBottom: isLast ? 'none' : '1px solid #23252a' }}
       onClick={onClick}
     >
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1">
           <code
             className="text-sm font-mono font-semibold"
-            style={{ color: '#a29bfe' }}
+            style={{ color: '#7170ff' }}
           >
             /{cmd.name}
           </code>
           {cmd.args && cmd.args.length > 0 && (
-            <span className="text-xs font-mono" style={{ color: '#636e72' }}>
+            <span className="text-xs font-mono" style={{ color: '#8a8f98' }}>
               {cmd.args.map((a) => `[${a}]`).join(' ')}
             </span>
           )}
         </div>
         {cmd.description && (
-          <p className="text-sm" style={{ color: '#b2bec3' }}>
+          <p className="text-sm" style={{ color: '#d0d6e0' }}>
             {cmd.description}
           </p>
         )}
       </div>
       <svg
         className="w-4 h-4 shrink-0 mt-0.5"
-        style={{ color: '#636e72' }}
+        style={{ color: '#8a8f98' }}
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -108,13 +108,13 @@ export default function CommandsPage() {
       <Header title="Commands" />
 
       {loading ? (
-        <p style={{ color: '#b2bec3' }}>Loading...</p>
+        <p style={{ color: '#d0d6e0' }}>Loading...</p>
       ) : commands.length === 0 ? (
         <div
           className="rounded-xl p-10 text-center"
-          style={{ backgroundColor: '#1e1e28', border: '1px solid #2a2a35' }}
+          style={{ backgroundColor: '#191a1b', border: '1px solid #23252a' }}
         >
-          <p className="text-sm" style={{ color: '#636e72' }}>
+          <p className="text-sm" style={{ color: '#8a8f98' }}>
             No custom commands found.
           </p>
         </div>
@@ -144,40 +144,40 @@ export default function CommandsPage() {
       {selected && (
         <div
           className="fixed inset-0 z-50 flex flex-col"
-          style={{ backgroundColor: '#0f0f14' }}
+          style={{ backgroundColor: '#08090a' }}
         >
           {/* Header bar */}
           <div
             className="flex items-center justify-between px-6 py-4 shrink-0"
-            style={{ borderBottom: '1px solid #2a2a35', backgroundColor: '#16161d' }}
+            style={{ borderBottom: '1px solid #23252a', backgroundColor: '#0f1011' }}
           >
             <div className="flex items-center gap-3 min-w-0">
-              <code className="text-base font-mono font-semibold" style={{ color: '#a29bfe' }}>
+              <code className="text-base font-mono font-semibold" style={{ color: '#7170ff' }}>
                 /{selected.name}
               </code>
               <Tag label={selected.source === 'user' ? 'User' : 'System'} variant={selected.source === 'user' ? 'purple' : 'gray'} />
               {selected.description && (
-                <span className="text-xs truncate" style={{ color: '#636e72' }}>
+                <span className="text-xs truncate" style={{ color: '#8a8f98' }}>
                   — {selected.description}
                 </span>
               )}
             </div>
             <div className="flex items-center gap-3 shrink-0">
-              <code className="text-xs font-mono hidden lg:block" style={{ color: '#636e72' }}>
+              <code className="text-xs font-mono hidden lg:block" style={{ color: '#8a8f98' }}>
                 {selected.filePath}
               </code>
               {selected.source === 'user' && !editing && (
                 <button
                   onClick={() => { setEditing(true); setEditContent(selected.content ?? ''); }}
-                  className="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors hover:bg-[#2a2a35]"
-                  style={{ color: '#a29bfe' }}
+                  className="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors hover:bg-[#23252a]"
+                  style={{ color: '#7170ff' }}
                 >
                   Edit
                 </button>
               )}
               <button
-                className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors hover:bg-[#2a2a35]"
-                style={{ color: '#b2bec3' }}
+                className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors hover:bg-[#23252a]"
+                style={{ color: '#d0d6e0' }}
                 onClick={() => { setSelected(null); setEditing(false); }}
               >
                 ✕
@@ -193,7 +193,7 @@ export default function CommandsPage() {
                   value={editContent}
                   onChange={(e) => setEditContent(e.target.value)}
                   className="flex-1 w-full p-4 rounded-lg font-mono text-sm resize-none outline-none"
-                  style={{ backgroundColor: '#16161d', color: '#b2bec3', border: '1px solid #2a2a35', minHeight: '500px' }}
+                  style={{ backgroundColor: '#0f1011', color: '#d0d6e0', border: '1px solid #23252a', minHeight: '500px' }}
                 />
                 <div className="flex gap-3 mt-4 justify-end">
                   <button onClick={() => setEditing(false)} className="px-4 py-2 rounded-lg text-sm btn-secondary">Cancel</button>

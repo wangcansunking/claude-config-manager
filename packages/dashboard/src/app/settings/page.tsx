@@ -95,15 +95,15 @@ export default function SettingsPage() {
       <Header title="Settings" />
 
       {loading ? (
-        <p style={{ color: '#b2bec3' }}>Loading...</p>
+        <p style={{ color: '#d0d6e0' }}>Loading...</p>
       ) : (
         <div className="space-y-6 max-w-2xl">
           {/* Model Section */}
           <section
             className="rounded-xl p-5"
-            style={{ backgroundColor: '#1e1e28', border: '1px solid #2a2a35' }}
+            style={{ backgroundColor: '#191a1b', border: '1px solid #23252a' }}
           >
-            <h2 className="text-sm font-semibold mb-4" style={{ color: '#ffffff' }}>
+            <h2 className="text-sm font-semibold mb-4" style={{ color: '#f7f8f8' }}>
               Model Configuration
             </h2>
             <ModelSelector value={model} onChange={setModel} />
@@ -117,9 +117,9 @@ export default function SettingsPage() {
           {/* Environment Variables */}
           <section
             className="rounded-xl p-5"
-            style={{ backgroundColor: '#1e1e28', border: '1px solid #2a2a35' }}
+            style={{ backgroundColor: '#191a1b', border: '1px solid #23252a' }}
           >
-            <h2 className="text-sm font-semibold mb-4" style={{ color: '#ffffff' }}>
+            <h2 className="text-sm font-semibold mb-4" style={{ color: '#f7f8f8' }}>
               Environment Variables
             </h2>
             <EnvVarsEditor
@@ -132,9 +132,9 @@ export default function SettingsPage() {
           {/* Hooks */}
           <section
             className="rounded-xl p-5"
-            style={{ backgroundColor: '#1e1e28', border: '1px solid #2a2a35' }}
+            style={{ backgroundColor: '#191a1b', border: '1px solid #23252a' }}
           >
-            <h2 className="text-sm font-semibold mb-4" style={{ color: '#ffffff' }}>
+            <h2 className="text-sm font-semibold mb-4" style={{ color: '#f7f8f8' }}>
               Hooks
             </h2>
             <HooksEditor hooks={hooks} />

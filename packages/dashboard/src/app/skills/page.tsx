@@ -45,9 +45,9 @@ function CollapsibleSection({ icon, label, count, children }: { icon: string; la
         onClick={() => setOpen(!open)}
       >
         <span className="text-base">{icon}</span>
-        <h3 className="text-sm font-semibold" style={{ color: label === 'User' ? '#a29bfe' : '#636e72' }}>{label}</h3>
-        <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: '#2a2a35', color: '#b2bec3' }}>{count}</span>
-        <svg className="w-4 h-4 ml-auto transition-transform" style={{ color: '#636e72', transform: open ? 'rotate(0deg)' : 'rotate(-90deg)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <h3 className="text-sm font-semibold" style={{ color: label === 'User' ? '#7170ff' : '#8a8f98' }}>{label}</h3>
+        <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: '#23252a', color: '#d0d6e0' }}>{count}</span>
+        <svg className="w-4 h-4 ml-auto transition-transform" style={{ color: '#8a8f98', transform: open ? 'rotate(0deg)' : 'rotate(-90deg)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
       </button>
@@ -102,21 +102,21 @@ export default function SkillsPage() {
     return (
       <div
         key={skill.name}
-        className="flex items-start gap-4 px-5 py-3 cursor-pointer transition-colors hover:bg-[#252530]"
+        className="flex items-start gap-4 px-5 py-3 cursor-pointer transition-colors hover:bg-[#28282c]"
         style={{
-          borderBottom: i < total - 1 ? '1px solid #2a2a35' : 'none',
+          borderBottom: i < total - 1 ? '1px solid #23252a' : 'none',
         }}
         onClick={() => setSelected(skill)}
       >
         <code
           className="text-sm font-mono shrink-0"
-          style={{ color: '#a29bfe' }}
+          style={{ color: '#7170ff' }}
         >
           {skill.name}
         </code>
         <div className="flex-1 min-w-0">
           {skill.description && (
-            <p className="text-xs" style={{ color: '#b2bec3' }}>
+            <p className="text-xs" style={{ color: '#d0d6e0' }}>
               {skill.description}
             </p>
           )}
@@ -135,7 +135,7 @@ export default function SkillsPage() {
 
   return (
     <div>
-      <div className="sticky top-0 z-10 bg-[#0f0f14]">
+      <div className="sticky top-0 z-10 bg-[#08090a]">
         <Header title="Skills" />
 
         <div className="mb-4">
@@ -144,13 +144,13 @@ export default function SkillsPage() {
       </div>
 
       {loading ? (
-        <p style={{ color: '#b2bec3' }}>Loading...</p>
+        <p style={{ color: '#d0d6e0' }}>Loading...</p>
       ) : filtered.length === 0 ? (
         <div
           className="rounded-xl p-10 text-center"
-          style={{ backgroundColor: '#1e1e28', border: '1px solid #2a2a35' }}
+          style={{ backgroundColor: '#191a1b', border: '1px solid #23252a' }}
         >
-          <p className="text-sm" style={{ color: '#636e72' }}>
+          <p className="text-sm" style={{ color: '#8a8f98' }}>
             {search ? 'No skills match your search.' : 'No skills found.'}
           </p>
         </div>
@@ -161,7 +161,7 @@ export default function SkillsPage() {
             <CollapsibleSection icon="👤" label="User" count={userSkills.length}>
               <div
                 className="rounded-xl overflow-hidden"
-                style={{ backgroundColor: '#1e1e28', border: '1px solid #2a2a35' }}
+                style={{ backgroundColor: '#191a1b', border: '1px solid #23252a' }}
               >
                 {userSkills.map((skill, i) => renderSkillRow(skill, i, userSkills.length))}
               </div>
@@ -178,16 +178,16 @@ export default function SkillsPage() {
                     <div
                       key={plugin}
                       className="rounded-xl overflow-hidden"
-                      style={{ backgroundColor: '#1e1e28', border: '1px solid #2a2a35' }}
+                      style={{ backgroundColor: '#191a1b', border: '1px solid #23252a' }}
                     >
                       {/* Section header */}
                       <button
-                        className="w-full flex items-center justify-between px-5 py-3 text-left transition-colors hover:bg-[#252530]"
-                        style={{ borderBottom: isCollapsed ? 'none' : '1px solid #2a2a35' }}
+                        className="w-full flex items-center justify-between px-5 py-3 text-left transition-colors hover:bg-[#28282c]"
+                        style={{ borderBottom: isCollapsed ? 'none' : '1px solid #23252a' }}
                         onClick={() => toggleSection(plugin)}
                       >
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-semibold" style={{ color: '#ffffff' }}>
+                          <span className="text-sm font-semibold" style={{ color: '#f7f8f8' }}>
                             {plugin}
                           </span>
                           <Tag label={`${pluginSkills.length}`} variant="purple" />
@@ -195,7 +195,7 @@ export default function SkillsPage() {
                         <svg
                           className="w-4 h-4 transition-transform"
                           style={{
-                            color: '#636e72',
+                            color: '#8a8f98',
                             transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)',
                           }}
                           fill="none"
@@ -225,41 +225,41 @@ export default function SkillsPage() {
       {selected && (
         <div
           className="fixed inset-0 z-50 flex flex-col"
-          style={{ backgroundColor: '#0f0f14' }}
+          style={{ backgroundColor: '#08090a' }}
         >
           {/* Header bar */}
           <div
             className="flex items-center justify-between px-6 py-4 shrink-0"
-            style={{ borderBottom: '1px solid #2a2a35', backgroundColor: '#16161d' }}
+            style={{ borderBottom: '1px solid #23252a', backgroundColor: '#0f1011' }}
           >
             <div className="flex items-center gap-3 min-w-0">
-              <code className="text-base font-mono font-semibold" style={{ color: '#a29bfe' }}>
+              <code className="text-base font-mono font-semibold" style={{ color: '#7170ff' }}>
                 {selected.name}
               </code>
               <Tag label={selected.source === 'user' ? 'User' : 'System'} variant={selected.source === 'user' ? 'purple' : 'gray'} />
               <Tag label={getPluginName(selected.filePath)} variant="blue" />
               {selected.description && (
-                <span className="text-xs truncate" style={{ color: '#636e72' }}>
+                <span className="text-xs truncate" style={{ color: '#8a8f98' }}>
                   — {selected.description}
                 </span>
               )}
             </div>
             <div className="flex items-center gap-3 shrink-0">
-              <code className="text-xs font-mono hidden lg:block" style={{ color: '#636e72' }}>
+              <code className="text-xs font-mono hidden lg:block" style={{ color: '#8a8f98' }}>
                 {selected.filePath}
               </code>
               {selected.source === 'user' && !editing && (
                 <button
                   onClick={() => { setEditing(true); setEditContent(selected.content ?? ''); }}
-                  className="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors hover:bg-[#2a2a35]"
-                  style={{ color: '#a29bfe' }}
+                  className="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors hover:bg-[#23252a]"
+                  style={{ color: '#7170ff' }}
                 >
                   Edit
                 </button>
               )}
               <button
-                className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors hover:bg-[#2a2a35]"
-                style={{ color: '#b2bec3' }}
+                className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors hover:bg-[#23252a]"
+                style={{ color: '#d0d6e0' }}
                 onClick={() => { setSelected(null); setEditing(false); }}
               >
                 ✕
@@ -275,7 +275,7 @@ export default function SkillsPage() {
                   value={editContent}
                   onChange={(e) => setEditContent(e.target.value)}
                   className="flex-1 w-full p-4 rounded-lg font-mono text-sm resize-none outline-none"
-                  style={{ backgroundColor: '#16161d', color: '#b2bec3', border: '1px solid #2a2a35', minHeight: '500px' }}
+                  style={{ backgroundColor: '#0f1011', color: '#d0d6e0', border: '1px solid #23252a', minHeight: '500px' }}
                 />
                 <div className="flex gap-3 mt-4 justify-end">
                   <button onClick={() => setEditing(false)} className="px-4 py-2 rounded-lg text-sm btn-secondary">Cancel</button>
