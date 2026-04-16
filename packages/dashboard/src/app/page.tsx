@@ -70,15 +70,15 @@ function UsageBar({ entry, maxCount, barColor }: { entry: UsageEntry; maxCount: 
   const pct = maxCount > 0 ? (entry.usageCount / maxCount) * 100 : 0;
   const relTime = formatRelativeTime(entry.lastUsedAt);
   return (
-    <div className="flex items-center gap-3 px-5 py-2.5 transition-colors hover:bg-[#252530]">
+    <div className="flex items-center gap-3 px-5 py-2.5 transition-colors hover:bg-[#28282c]">
       <span
         className="font-mono text-xs shrink-0"
-        style={{ color: '#a29bfe', width: '200px' }}
+        style={{ color: '#7170ff', width: '200px' }}
         title={entry.name}
       >
         {entry.name.length > 28 ? entry.name.slice(0, 26) + '...' : entry.name}
       </span>
-      <div className="flex-1 h-5 rounded overflow-hidden" style={{ backgroundColor: '#16161d' }}>
+      <div className="flex-1 h-5 rounded overflow-hidden" style={{ backgroundColor: 'rgba(255, 255, 255, 0.03)' }}>
         <div
           className="h-full rounded"
           style={{
@@ -90,15 +90,15 @@ function UsageBar({ entry, maxCount, barColor }: { entry: UsageEntry; maxCount: 
         />
       </div>
       <span
-        className="text-xs font-semibold shrink-0 text-right"
-        style={{ color: '#b2bec3', width: '44px' }}
+        className="text-xs shrink-0 text-right"
+        style={{ color: '#d0d6e0', width: '44px', fontWeight: 510 }}
       >
         {entry.usageCount}
       </span>
       {relTime && (
         <span
           className="text-xs shrink-0 text-right"
-          style={{ color: '#636e72', width: '64px' }}
+          style={{ color: '#62666d', width: '64px' }}
         >
           {relTime}
         </span>
@@ -126,25 +126,28 @@ function McpServerSection({
   const maxCount = tools.length > 0 ? tools[0].usageCount : 0;
 
   return (
-    <div className="rounded-xl overflow-hidden bg-[#1e1e28] border border-[#2a2a35]">
+    <div
+      className="rounded-lg overflow-hidden"
+      style={{ backgroundColor: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.08)' }}
+    >
       <button
-        className="w-full flex items-center justify-between px-5 py-3 text-left transition-colors hover:bg-[#252530]"
-        style={{ borderBottom: open ? '1px solid #2a2a35' : 'none' }}
+        className="w-full flex items-center justify-between px-5 py-3 text-left transition-colors hover:bg-[#28282c]"
+        style={{ borderBottom: open ? '1px solid rgba(255, 255, 255, 0.05)' : 'none' }}
         onClick={() => setOpen(!open)}
       >
         <div className="flex items-center gap-3">
-          <span className="font-mono text-sm font-semibold" style={{ color: '#e17055' }}>
+          <span className="font-mono text-sm" style={{ color: '#d0d6e0', fontWeight: 510 }}>
             {server}
           </span>
           <span
             className="text-xs px-2 py-0.5 rounded-full"
-            style={{ backgroundColor: '#2a2a35', color: '#b2bec3' }}
+            style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)', color: '#d0d6e0' }}
           >
             {totalCalls} calls
           </span>
           <span
             className="text-xs px-2 py-0.5 rounded-full"
-            style={{ backgroundColor: '#2a2a35', color: '#636e72' }}
+            style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)', color: '#8a8f98' }}
           >
             {toolCount} tools
           </span>
@@ -152,7 +155,7 @@ function McpServerSection({
         <svg
           className="w-4 h-4 transition-transform"
           style={{
-            color: '#636e72',
+            color: '#62666d',
             transform: open ? 'rotate(0deg)' : 'rotate(-90deg)',
           }}
           fill="none"
@@ -165,7 +168,7 @@ function McpServerSection({
       {open && (
         <div className="py-1">
           {tools.map((tool) => (
-            <UsageBar key={tool.name} entry={tool} maxCount={maxCount} barColor="#e17055" />
+            <UsageBar key={tool.name} entry={tool} maxCount={maxCount} barColor="#5e6ad2" />
           ))}
         </div>
       )}
@@ -189,17 +192,20 @@ function McpUsageSection({
   if (metrics.mcpServerBreakdown.length === 0) return null;
 
   return (
-    <div className="rounded-xl overflow-hidden bg-[#1e1e28] border border-[#2a2a35]">
+    <div
+      className="rounded-lg overflow-hidden"
+      style={{ backgroundColor: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.08)' }}
+    >
       <button
-        className="w-full flex items-center justify-between px-5 py-3 text-left transition-colors hover:bg-[#252530]"
-        style={{ borderBottom: open ? '1px solid #2a2a35' : 'none' }}
+        className="w-full flex items-center justify-between px-5 py-3 text-left transition-colors hover:bg-[#28282c]"
+        style={{ borderBottom: open ? '1px solid rgba(255, 255, 255, 0.05)' : 'none' }}
         onClick={() => setOpen(!open)}
       >
-        <h2 className="text-lg font-semibold text-white">MCP Server Usage</h2>
+        <h2 className="text-lg" style={{ color: '#f7f8f8', fontWeight: 510 }}>MCP Server Usage</h2>
         <svg
           className="w-4 h-4 transition-transform"
           style={{
-            color: '#636e72',
+            color: '#62666d',
             transform: open ? 'rotate(0deg)' : 'rotate(-90deg)',
           }}
           fill="none"
@@ -252,7 +258,7 @@ export default function OverviewPage() {
       <Header title="Overview" />
 
       {loading ? (
-        <p style={{ color: '#b2bec3' }}>Loading...</p>
+        <p style={{ color: '#d0d6e0' }}>Loading...</p>
       ) : (
         <div className="space-y-6">
           {/* Row 1: Quick Stats — 5 cards */}
@@ -270,13 +276,13 @@ export default function OverviewPage() {
               <UsageChart
                 title="Top Skills"
                 entries={metrics.topSkills}
-                barColor="#6c5ce7"
+                barColor="#5e6ad2"
                 maxItems={8}
               />
               <UsageChart
                 title="Top Tools"
                 entries={metrics.topTools}
-                barColor="#0984e3"
+                barColor="#7170ff"
                 maxItems={8}
               />
             </div>

@@ -7,35 +7,29 @@ interface StatCardProps {
   color?: 'green' | 'blue' | 'orange' | 'purple';
 }
 
-const colorMap: Record<string, string> = {
-  green: '#00b894',
-  blue: '#0984e3',
-  orange: '#e17055',
-  purple: '#6c5ce7',
-};
-
-export function StatCard({ title, value, subtitle, color = 'purple' }: StatCardProps) {
-  const accentColor = colorMap[color] ?? colorMap['purple'];
-
+export function StatCard({ title, value, subtitle }: StatCardProps) {
   return (
     <div
-      className="rounded-xl p-5"
-      style={{ backgroundColor: '#1e1e28', border: '1px solid #2a2a35' }}
+      className="rounded-lg p-5"
+      style={{
+        backgroundColor: 'rgba(255, 255, 255, 0.02)',
+        border: '1px solid rgba(255, 255, 255, 0.08)',
+      }}
     >
       <p
-        className="text-xs font-semibold uppercase tracking-wider mb-2"
-        style={{ color: '#636e72' }}
+        className="text-xs uppercase tracking-wider mb-2"
+        style={{ color: '#8a8f98', fontWeight: 510 }}
       >
         {title}
       </p>
       <p
-        className="text-3xl font-bold mb-1"
-        style={{ color: accentColor }}
+        className="text-3xl mb-1"
+        style={{ color: '#f7f8f8', fontWeight: 510 }}
       >
         {value}
       </p>
       {subtitle && (
-        <p className="text-sm" style={{ color: '#b2bec3' }}>
+        <p className="text-sm" style={{ color: '#d0d6e0' }}>
           {subtitle}
         </p>
       )}

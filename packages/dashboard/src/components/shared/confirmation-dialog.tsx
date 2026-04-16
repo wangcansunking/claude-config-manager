@@ -32,7 +32,7 @@ export function ConfirmationDialog({
       onClick={onClose}
     >
       <div
-        className="rounded-xl p-6 w-full max-w-md mx-4"
+        className="rounded-lg p-6 w-full max-w-md mx-4"
         style={{
           backgroundColor: '#191a1b',
           border: '1px solid rgba(255, 255, 255, 0.08)',

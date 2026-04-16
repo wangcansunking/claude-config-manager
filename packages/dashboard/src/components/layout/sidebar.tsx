@@ -19,7 +19,6 @@ const primaryNavItems: NavItem[] = [
   { label: 'Commands', icon: '📝', href: '/commands' },
   { label: 'Settings', icon: '⚙\uFE0F', href: '/settings' },
   { label: 'Sessions', icon: '🖥\uFE0F', href: '/sessions' },
-  { label: 'Metrics', icon: '📈', href: '/metrics' },
 ];
 
 const secondaryNavItems: NavItem[] = [
@@ -42,8 +41,8 @@ export function Sidebar() {
       style={{
         width: '240px',
         minWidth: '240px',
-        backgroundColor: '#16161d',
-        borderRight: '1px solid #2a2a35',
+        backgroundColor: '#0f1011',
+        borderRight: '1px solid rgba(255, 255, 255, 0.05)',
         display: 'flex',
         flexDirection: 'column',
         height: '100vh',
@@ -54,19 +53,22 @@ export function Sidebar() {
       }}
     >
       {/* Logo area */}
-      <div className="p-4 border-b border-bg-tertiary">
+      <div
+        className="p-4"
+        style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}
+      >
         <div className="flex items-center gap-3">
           <div
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-bold"
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-medium"
             style={{
-              background: 'linear-gradient(135deg, #6c5ce7, #a29bfe)',
+              backgroundColor: '#5e6ad2',
             }}
           >
             C
           </div>
           <div>
-            <div className="text-text-primary font-semibold text-sm">Claude Config</div>
-            <div className="text-text-muted text-xs">{VERSION}</div>
+            <div className="text-sm" style={{ color: '#f7f8f8', fontWeight: 510 }}>Claude Config</div>
+            <div className="text-xs" style={{ color: '#62666d' }}>{VERSION}</div>
           </div>
         </div>
       </div>
@@ -81,9 +83,14 @@ export function Sidebar() {
                 prefetch={true}
                 className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
                   isActive(item.href)
-                    ? 'bg-accent-purple text-white'
-                    : 'text-text-secondary hover:bg-bg-tertiary hover:text-text-primary'
+                    ? 'text-white'
+                    : 'hover:text-text-primary'
                 }`}
+                style={
+                  isActive(item.href)
+                    ? { backgroundColor: '#5e6ad2', color: '#f7f8f8' }
+                    : { color: '#d0d6e0' }
+                }
               >
                 <span className="text-base">{item.icon}</span>
                 <span>{item.label}</span>
@@ -93,7 +100,7 @@ export function Sidebar() {
         </ul>
 
         {/* Divider */}
-        <div className="my-3 border-t border-bg-tertiary" />
+        <div className="my-3" style={{ borderTop: '1px solid rgba(255, 255, 255, 0.05)' }} />
 
         <ul className="space-y-1">
           {secondaryNavItems.map((item) => (
@@ -103,9 +110,14 @@ export function Sidebar() {
                 prefetch={true}
                 className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
                   isActive(item.href)
-                    ? 'bg-accent-purple text-white'
-                    : 'text-text-secondary hover:bg-bg-tertiary hover:text-text-primary'
+                    ? 'text-white'
+                    : 'hover:text-text-primary'
                 }`}
+                style={
+                  isActive(item.href)
+                    ? { backgroundColor: '#5e6ad2', color: '#f7f8f8' }
+                    : { color: '#d0d6e0' }
+                }
               >
                 <span className="text-base">{item.icon}</span>
                 <span>{item.label}</span>

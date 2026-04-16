@@ -8,9 +8,9 @@ interface StatusBadgeProps {
 }
 
 const statusConfig: Record<StatusType, { color: string; defaultLabel: string }> = {
-  connected:    { color: '#00b894', defaultLabel: 'Connected' },
-  disconnected: { color: '#ff4757', defaultLabel: 'Disconnected' },
-  pending:      { color: '#fdcb6e', defaultLabel: 'Pending' },
+  connected:    { color: '#27a644', defaultLabel: 'Connected' },
+  disconnected: { color: '#8a8f98', defaultLabel: 'Disconnected' },
+  pending:      { color: '#d0d6e0', defaultLabel: 'Pending' },
 };
 
 export function StatusBadge({ status, label }: StatusBadgeProps) {
@@ -23,7 +23,7 @@ export function StatusBadge({ status, label }: StatusBadgeProps) {
         className="inline-block w-2 h-2 rounded-full"
         style={{ backgroundColor: color }}
       />
-      <span className="text-sm" style={{ color: '#b2bec3' }}>
+      <span className="text-sm" style={{ color: '#d0d6e0' }}>
         {displayLabel}
       </span>
     </span>

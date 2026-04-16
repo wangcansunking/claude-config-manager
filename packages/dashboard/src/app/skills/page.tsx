@@ -45,8 +45,8 @@ function CollapsibleSection({ icon, label, count, children }: { icon: string; la
         onClick={() => setOpen(!open)}
       >
         <span className="text-base">{icon}</span>
-        <h3 className="text-sm font-semibold" style={{ color: label === 'User' ? '#7170ff' : '#8a8f98' }}>{label}</h3>
-        <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: '#23252a', color: '#d0d6e0' }}>{count}</span>
+        <h3 className="text-sm font-medium" style={{ color: label === 'User' ? '#7170ff' : '#8a8f98' }}>{label}</h3>
+        <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)', color: '#d0d6e0' }}>{count}</span>
         <svg className="w-4 h-4 ml-auto transition-transform" style={{ color: '#8a8f98', transform: open ? 'rotate(0deg)' : 'rotate(-90deg)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
@@ -104,7 +104,7 @@ export default function SkillsPage() {
         key={skill.name}
         className="flex items-start gap-4 px-5 py-3 cursor-pointer transition-colors hover:bg-[#28282c]"
         style={{
-          borderBottom: i < total - 1 ? '1px solid #23252a' : 'none',
+          borderBottom: i < total - 1 ? '1px solid rgba(255, 255, 255, 0.05)' : 'none',
         }}
         onClick={() => setSelected(skill)}
       >
@@ -147,8 +147,8 @@ export default function SkillsPage() {
         <p style={{ color: '#d0d6e0' }}>Loading...</p>
       ) : filtered.length === 0 ? (
         <div
-          className="rounded-xl p-10 text-center"
-          style={{ backgroundColor: '#191a1b', border: '1px solid #23252a' }}
+          className="rounded-lg p-10 text-center"
+          style={{ backgroundColor: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.08)' }}
         >
           <p className="text-sm" style={{ color: '#8a8f98' }}>
             {search ? 'No skills match your search.' : 'No skills found.'}
@@ -160,8 +160,8 @@ export default function SkillsPage() {
           {userSkills.length > 0 && (
             <CollapsibleSection icon="👤" label="User" count={userSkills.length}>
               <div
-                className="rounded-xl overflow-hidden"
-                style={{ backgroundColor: '#191a1b', border: '1px solid #23252a' }}
+                className="rounded-lg overflow-hidden"
+                style={{ backgroundColor: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.08)' }}
               >
                 {userSkills.map((skill, i) => renderSkillRow(skill, i, userSkills.length))}
               </div>
@@ -177,17 +177,17 @@ export default function SkillsPage() {
                   return (
                     <div
                       key={plugin}
-                      className="rounded-xl overflow-hidden"
-                      style={{ backgroundColor: '#191a1b', border: '1px solid #23252a' }}
+                      className="rounded-lg overflow-hidden"
+                      style={{ backgroundColor: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.08)' }}
                     >
                       {/* Section header */}
                       <button
                         className="w-full flex items-center justify-between px-5 py-3 text-left transition-colors hover:bg-[#28282c]"
-                        style={{ borderBottom: isCollapsed ? 'none' : '1px solid #23252a' }}
+                        style={{ borderBottom: isCollapsed ? 'none' : '1px solid rgba(255, 255, 255, 0.05)' }}
                         onClick={() => toggleSection(plugin)}
                       >
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-semibold" style={{ color: '#f7f8f8' }}>
+                          <span className="text-sm font-medium" style={{ color: '#f7f8f8' }}>
                             {plugin}
                           </span>
                           <Tag label={`${pluginSkills.length}`} variant="purple" />
@@ -230,10 +230,10 @@ export default function SkillsPage() {
           {/* Header bar */}
           <div
             className="flex items-center justify-between px-6 py-4 shrink-0"
-            style={{ borderBottom: '1px solid #23252a', backgroundColor: '#0f1011' }}
+            style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)', backgroundColor: '#0f1011' }}
           >
             <div className="flex items-center gap-3 min-w-0">
-              <code className="text-base font-mono font-semibold" style={{ color: '#7170ff' }}>
+              <code className="text-base font-mono font-medium" style={{ color: '#7170ff' }}>
                 {selected.name}
               </code>
               <Tag label={selected.source === 'user' ? 'User' : 'System'} variant={selected.source === 'user' ? 'purple' : 'gray'} />
@@ -251,14 +251,14 @@ export default function SkillsPage() {
               {selected.source === 'user' && !editing && (
                 <button
                   onClick={() => { setEditing(true); setEditContent(selected.content ?? ''); }}
-                  className="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors hover:bg-[#23252a]"
+                  className="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors hover:bg-[#28282c]"
                   style={{ color: '#7170ff' }}
                 >
                   Edit
                 </button>
               )}
               <button
-                className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors hover:bg-[#23252a]"
+                className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors hover:bg-[#28282c]"
                 style={{ color: '#d0d6e0' }}
                 onClick={() => { setSelected(null); setEditing(false); }}
               >
@@ -275,7 +275,7 @@ export default function SkillsPage() {
                   value={editContent}
                   onChange={(e) => setEditContent(e.target.value)}
                   className="flex-1 w-full p-4 rounded-lg font-mono text-sm resize-none outline-none"
-                  style={{ backgroundColor: '#0f1011', color: '#d0d6e0', border: '1px solid #23252a', minHeight: '500px' }}
+                  style={{ backgroundColor: '#0f1011', color: '#d0d6e0', border: '1px solid rgba(255, 255, 255, 0.08)', minHeight: '500px' }}
                 />
                 <div className="flex gap-3 mt-4 justify-end">
                   <button onClick={() => setEditing(false)} className="px-4 py-2 rounded-lg text-sm btn-secondary">Cancel</button>

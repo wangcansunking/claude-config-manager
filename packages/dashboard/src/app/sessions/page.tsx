@@ -87,25 +87,25 @@ function CollapsibleSection({
   const [open, setOpen] = useState(defaultOpen ?? true);
   return (
     <div
-      className="rounded-xl overflow-hidden"
-      style={{ backgroundColor: '#191a1b', border: '1px solid #23252a' }}
+      className="rounded-lg overflow-hidden"
+      style={{ backgroundColor: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.08)' }}
     >
       <button
         className="w-full flex items-center justify-between px-5 py-3 text-left transition-colors hover:bg-[#28282c]"
-        style={{ borderBottom: open ? '1px solid #23252a' : 'none' }}
+        style={{ borderBottom: open ? '1px solid rgba(255, 255, 255, 0.05)' : 'none' }}
         onClick={() => setOpen(!open)}
       >
         <div className="flex items-center gap-2">
           <span className="text-base">{icon}</span>
           <span
-            className="text-sm font-semibold"
+            className="text-sm font-medium"
             style={{ color: labelColor ?? '#8a8f98' }}
           >
             {label}
           </span>
           <span
             className="text-xs px-2 py-0.5 rounded-full"
-            style={{ backgroundColor: '#23252a', color: '#d0d6e0' }}
+            style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)', color: '#d0d6e0' }}
           >
             {count}
           </span>
@@ -149,7 +149,7 @@ function SessionRow({
   return (
     <div
       className="flex items-start gap-4 px-5 py-4 cursor-pointer transition-colors hover:bg-[#28282c]"
-      style={{ borderBottom: isLast ? 'none' : '1px solid #23252a' }}
+      style={{ borderBottom: isLast ? 'none' : '1px solid rgba(255, 255, 255, 0.05)' }}
       onClick={onClick}
     >
       {/* Status dot */}
@@ -164,7 +164,7 @@ function SessionRow({
         {/* Top row: session ID + PID + IDE + config icons */}
         <div className="flex items-center gap-2 mb-1 flex-wrap">
           <span
-            className="font-mono text-sm font-semibold"
+            className="font-mono text-sm font-medium"
             style={{ color: '#7170ff' }}
           >
             {session.sessionId}
@@ -279,8 +279,8 @@ function SessionSlidePanel({
           width: '60%',
           minWidth: '480px',
           maxWidth: '900px',
-          backgroundColor: '#191a1b',
-          borderLeft: '1px solid #23252a',
+          backgroundColor: 'rgba(255, 255, 255, 0.02)',
+          borderLeft: '1px solid rgba(255, 255, 255, 0.08)',
           transform: open ? 'translateX(0)' : 'translateX(100%)',
           transition: 'transform 0.25s ease-in-out',
           boxShadow: open ? '-8px 0 32px rgba(0, 0, 0, 0.4)' : 'none',
@@ -324,7 +324,7 @@ function SessionPanelContent({
       {/* Header bar */}
       <div
         className="flex items-center justify-between px-6 py-4 shrink-0"
-        style={{ borderBottom: '1px solid #23252a', backgroundColor: '#0f1011' }}
+        style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)', backgroundColor: '#0f1011' }}
       >
         <div className="flex items-center gap-3 min-w-0">
           {/* Status dot */}
@@ -334,7 +334,7 @@ function SessionPanelContent({
               backgroundColor: session.alive ? '#27a644' : '#8a8f98',
             }}
           />
-          <span className="text-base font-semibold" style={{ color: '#f7f8f8' }}>
+          <span className="text-base font-medium" style={{ color: '#f7f8f8' }}>
             {session.pid > 0 ? `PID ${session.pid}` : 'Session'}
           </span>
           <Tag
@@ -349,7 +349,7 @@ function SessionPanelContent({
           )}
         </div>
         <button
-          className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors hover:bg-[#23252a]"
+          className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors hover:bg-[#28282c]"
           style={{ color: '#d0d6e0' }}
           onClick={onClose}
         >
@@ -364,7 +364,7 @@ function SessionPanelContent({
         {/* ---- Metadata Section ---- */}
         <section>
           <h3
-            className="text-xs font-semibold uppercase tracking-wider mb-3"
+            className="text-xs font-medium uppercase tracking-wider mb-3"
             style={{ color: '#8a8f98' }}
           >
             Metadata
@@ -441,7 +441,7 @@ function SessionPanelContent({
         {/* ---- Instruction History Section ---- */}
         <section>
           <h3
-            className="text-xs font-semibold uppercase tracking-wider mb-3"
+            className="text-xs font-medium uppercase tracking-wider mb-3"
             style={{ color: '#8a8f98' }}
           >
             Instruction History
@@ -456,7 +456,7 @@ function SessionPanelContent({
               <span
                 className="inline-block w-4 h-4 rounded-full border-2 animate-spin"
                 style={{
-                  borderColor: '#23252a',
+                  borderColor: 'rgba(255, 255, 255, 0.08)',
                   borderTopColor: '#7170ff',
                 }}
               />
@@ -663,15 +663,15 @@ export default function SessionsPage() {
         /* Recent tab — flat list of last 10 */
         recentSessions.length === 0 ? (
           <div
-            className="rounded-xl p-8 text-center"
-            style={{ backgroundColor: '#191a1b', border: '1px solid #23252a' }}
+            className="rounded-lg p-8 text-center"
+            style={{ backgroundColor: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.08)' }}
           >
             <p className="text-sm" style={{ color: '#8a8f98' }}>No recent sessions.</p>
           </div>
         ) : (
           <div
-            className="rounded-xl overflow-hidden"
-            style={{ backgroundColor: '#191a1b', border: '1px solid #23252a' }}
+            className="rounded-lg overflow-hidden"
+            style={{ backgroundColor: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.08)' }}
           >
             {recentSessions.map((session, i) => (
               <SessionRow
@@ -685,8 +685,8 @@ export default function SessionsPage() {
         )
       ) : filtered.length === 0 ? (
         <div
-          className="rounded-xl p-8 text-center"
-          style={{ backgroundColor: '#191a1b', border: '1px solid #23252a' }}
+          className="rounded-lg p-8 text-center"
+          style={{ backgroundColor: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.08)' }}
         >
           <p className="text-lg mb-2" style={{ color: '#8a8f98' }}>
             {search ? 'No matching sessions' : 'No sessions found'}

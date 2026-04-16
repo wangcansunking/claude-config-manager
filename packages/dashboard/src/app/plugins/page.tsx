@@ -84,8 +84,8 @@ function InstalledTab() {
         <p style={{ color: '#d0d6e0' }}>Loading...</p>
       ) : filtered.length === 0 ? (
         <div
-          className="rounded-xl p-10 text-center"
-          style={{ backgroundColor: '#191a1b', border: '1px solid #23252a' }}
+          className="rounded-lg p-10 text-center"
+          style={{ backgroundColor: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.08)' }}
         >
           <p className="text-sm" style={{ color: '#8a8f98' }}>
             {search ? 'No plugins match your search.' : 'No plugins installed.'}
@@ -105,21 +105,21 @@ function InstalledTab() {
             return (
               <div
                 key={marketplace}
-                className="rounded-xl overflow-hidden"
-                style={{ backgroundColor: '#191a1b', border: '1px solid #23252a' }}
+                className="rounded-lg overflow-hidden"
+                style={{ backgroundColor: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.08)' }}
               >
                 <button
                   className="w-full flex items-center justify-between px-5 py-3 text-left transition-colors hover:bg-[#28282c]"
-                  style={{ borderBottom: isCollapsed ? 'none' : '1px solid #23252a' }}
+                  style={{ borderBottom: isCollapsed ? 'none' : '1px solid rgba(255, 255, 255, 0.05)' }}
                   onClick={() => setCollapsed(prev => ({ ...prev, [marketplace]: !prev[marketplace] }))}
                 >
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold" style={{ color: '#7170ff' }}>
+                    <span className="text-sm font-medium" style={{ color: '#7170ff' }}>
                       {marketplace}
                     </span>
                     <span
                       className="text-xs px-2 py-0.5 rounded-full"
-                      style={{ backgroundColor: '#23252a', color: '#d0d6e0' }}
+                      style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)', color: '#d0d6e0' }}
                     >
                       {marketplacePlugins.length}
                     </span>
@@ -159,7 +159,7 @@ function InstalledTab() {
         subtitle={selected?.marketplace}
         icon={
           <div
-            className="w-9 h-9 rounded-lg flex items-center justify-center text-white text-sm font-bold"
+            className="w-9 h-9 rounded-lg flex items-center justify-center text-[#f7f8f8] text-sm font-medium"
             style={{ background: 'linear-gradient(135deg, #5e6ad2, #7170ff)' }}
           >
             {selected?.name.charAt(0).toUpperCase()}
@@ -193,7 +193,7 @@ function InstalledTab() {
         {selected && (
           <div className="space-y-5">
             <section>
-              <h3 className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: '#8a8f98' }}>
+              <h3 className="text-xs font-medium uppercase tracking-wider mb-3" style={{ color: '#8a8f98' }}>
                 Metadata
               </h3>
               <div className="space-y-2">
@@ -217,7 +217,7 @@ function InstalledTab() {
             </section>
 
             <section>
-              <h3 className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: '#8a8f98' }}>
+              <h3 className="text-xs font-medium uppercase tracking-wider mb-3" style={{ color: '#8a8f98' }}>
                 Status
               </h3>
               <div className="flex gap-2">
@@ -275,7 +275,7 @@ function MarketplaceTab() {
         <select
           className="rounded-lg text-sm px-3 py-2 outline-none"
           style={{
-            backgroundColor: '#23252a',
+            backgroundColor: 'rgba(255, 255, 255, 0.05)',
             border: '1px solid #33363b',
             color: '#f7f8f8',
           }}
@@ -319,7 +319,7 @@ function MarketplaceTab() {
           style={{ backgroundColor: 'rgba(9, 132, 227, 0.12)', border: '1px solid rgba(9, 132, 227, 0.3)' }}
         >
           <div>
-            <p className="text-sm font-medium" style={{ color: '#74b9ff' }}>
+            <p className="text-sm font-medium" style={{ color: '#828fff' }}>
               Install via Claude Code
             </p>
             <code
@@ -330,7 +330,7 @@ function MarketplaceTab() {
             </code>
           </div>
           <button
-            className="shrink-0 p-1 rounded transition-colors hover:bg-[#23252a]"
+            className="shrink-0 p-1 rounded transition-colors hover:bg-[#28282c]"
             style={{ color: '#8a8f98' }}
             onClick={() => setShowInstallMsg(null)}
           >
@@ -346,8 +346,8 @@ function MarketplaceTab() {
         <p style={{ color: '#d0d6e0' }}>Loading...</p>
       ) : !activeMp ? (
         <div
-          className="rounded-xl p-10 text-center"
-          style={{ backgroundColor: '#191a1b', border: '1px solid #23252a' }}
+          className="rounded-lg p-10 text-center"
+          style={{ backgroundColor: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.08)' }}
         >
           <p className="text-sm" style={{ color: '#8a8f98' }}>
             No marketplaces configured. Add one in the &quot;Manage Marketplaces&quot; tab.
@@ -355,8 +355,8 @@ function MarketplaceTab() {
         </div>
       ) : filtered.length === 0 ? (
         <div
-          className="rounded-xl p-10 text-center"
-          style={{ backgroundColor: '#191a1b', border: '1px solid #23252a' }}
+          className="rounded-lg p-10 text-center"
+          style={{ backgroundColor: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.08)' }}
         >
           <p className="text-sm" style={{ color: '#8a8f98' }}>
             {search ? 'No plugins match your search.' : 'No plugins found in this marketplace.'}
@@ -367,29 +367,29 @@ function MarketplaceTab() {
           {sortedCategories.map(([category, catPlugins]) => (
             <div key={category}>
               <h3
-                className="text-xs font-semibold uppercase tracking-wider mb-2 px-1"
+                className="text-xs font-medium uppercase tracking-wider mb-2 px-1"
                 style={{ color: '#8a8f98' }}
               >
                 {category} ({catPlugins.length})
               </h3>
               <div
-                className="rounded-xl overflow-hidden"
-                style={{ backgroundColor: '#191a1b', border: '1px solid #23252a' }}
+                className="rounded-lg overflow-hidden"
+                style={{ backgroundColor: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.08)' }}
               >
                 {catPlugins.map((plugin, idx) => (
                   <div
                     key={plugin.name}
                     className="flex items-center gap-4 px-5 py-4 cursor-pointer transition-colors hover:bg-[#28282c]"
-                    style={{ borderBottom: idx < catPlugins.length - 1 ? '1px solid #23252a' : 'none' }}
+                    style={{ borderBottom: idx < catPlugins.length - 1 ? '1px solid rgba(255, 255, 255, 0.05)' : 'none' }}
                     onClick={() => setSelectedPlugin(plugin)}
                   >
                     {/* Icon */}
                     <div
-                      className="w-9 h-9 rounded-lg shrink-0 flex items-center justify-center text-white text-sm font-bold"
+                      className="w-9 h-9 rounded-lg shrink-0 flex items-center justify-center text-[#f7f8f8] text-sm font-medium"
                       style={{
                         background: plugin.installed
                           ? 'linear-gradient(135deg, #27a644, #4ade80)'
-                          : 'linear-gradient(135deg, #0984e3, #74b9ff)',
+                          : 'linear-gradient(135deg, #5e6ad2, #828fff)',
                       }}
                     >
                       {plugin.name.charAt(0).toUpperCase()}
@@ -458,11 +458,11 @@ function MarketplaceTab() {
         subtitle={selectedPlugin?.marketplace}
         icon={
           <div
-            className="w-9 h-9 rounded-lg flex items-center justify-center text-white text-sm font-bold"
+            className="w-9 h-9 rounded-lg flex items-center justify-center text-[#f7f8f8] text-sm font-medium"
             style={{
               background: selectedPlugin?.installed
                 ? 'linear-gradient(135deg, #27a644, #4ade80)'
-                : 'linear-gradient(135deg, #0984e3, #74b9ff)',
+                : 'linear-gradient(135deg, #5e6ad2, #828fff)',
             }}
           >
             {selectedPlugin?.name.charAt(0).toUpperCase()}
@@ -490,7 +490,7 @@ function MarketplaceTab() {
         {selectedPlugin && (
           <div className="space-y-5">
             <section>
-              <h3 className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: '#8a8f98' }}>
+              <h3 className="text-xs font-medium uppercase tracking-wider mb-3" style={{ color: '#8a8f98' }}>
                 Description
               </h3>
               <p className="text-sm" style={{ color: '#d0d6e0' }}>
@@ -499,7 +499,7 @@ function MarketplaceTab() {
             </section>
 
             <section>
-              <h3 className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: '#8a8f98' }}>
+              <h3 className="text-xs font-medium uppercase tracking-wider mb-3" style={{ color: '#8a8f98' }}>
                 Details
               </h3>
               <div className="space-y-2">
@@ -517,7 +517,7 @@ function MarketplaceTab() {
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-xs text-right break-all font-mono hover:underline"
-                        style={{ color: '#74b9ff', maxWidth: '240px' }}
+                        style={{ color: '#828fff', maxWidth: '240px' }}
                       >
                         {value}
                       </a>
@@ -536,7 +536,7 @@ function MarketplaceTab() {
 
             {!selectedPlugin.installed && (
               <section>
-                <h3 className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: '#8a8f98' }}>
+                <h3 className="text-xs font-medium uppercase tracking-wider mb-3" style={{ color: '#8a8f98' }}>
                   Installation
                 </h3>
                 <div
@@ -548,7 +548,7 @@ function MarketplaceTab() {
                   </p>
                   <code
                     className="text-xs block font-mono px-2 py-1 rounded"
-                    style={{ backgroundColor: '#23252a', color: '#7170ff' }}
+                    style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)', color: '#7170ff' }}
                   >
                     /plugin install {selectedPlugin.name}@{selectedPlugin.marketplace}
                   </code>
@@ -606,10 +606,10 @@ function ManageMarketplacesTab() {
     <>
       {/* Add Marketplace form */}
       <div
-        className="rounded-xl p-5 mb-6"
-        style={{ backgroundColor: '#191a1b', border: '1px solid #23252a' }}
+        className="rounded-lg p-5 mb-6"
+        style={{ backgroundColor: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.08)' }}
       >
-        <h3 className="text-sm font-semibold mb-4" style={{ color: '#f7f8f8' }}>
+        <h3 className="text-sm font-medium mb-4" style={{ color: '#f7f8f8' }}>
           Add Marketplace
         </h3>
         <div className="space-y-3">
@@ -624,7 +624,7 @@ function ManageMarketplacesTab() {
               placeholder="e.g., my-plugins"
               className="w-full px-3 py-2 rounded-lg text-sm outline-none"
               style={{
-                backgroundColor: '#23252a',
+                backgroundColor: 'rgba(255, 255, 255, 0.05)',
                 border: '1px solid #33363b',
                 color: '#f7f8f8',
               }}
@@ -641,7 +641,7 @@ function ManageMarketplacesTab() {
               placeholder="e.g., owner/repo-name"
               className="w-full px-3 py-2 rounded-lg text-sm outline-none"
               style={{
-                backgroundColor: '#23252a',
+                backgroundColor: 'rgba(255, 255, 255, 0.05)',
                 border: '1px solid #33363b',
                 color: '#f7f8f8',
               }}
@@ -666,7 +666,7 @@ function ManageMarketplacesTab() {
       </div>
 
       {/* Marketplace list */}
-      <h3 className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: '#8a8f98' }}>
+      <h3 className="text-xs font-medium uppercase tracking-wider mb-3" style={{ color: '#8a8f98' }}>
         Registered Marketplaces
       </h3>
 
@@ -674,8 +674,8 @@ function ManageMarketplacesTab() {
         <p style={{ color: '#d0d6e0' }}>Loading...</p>
       ) : marketplaces.length === 0 ? (
         <div
-          className="rounded-xl p-10 text-center"
-          style={{ backgroundColor: '#191a1b', border: '1px solid #23252a' }}
+          className="rounded-lg p-10 text-center"
+          style={{ backgroundColor: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.08)' }}
         >
           <p className="text-sm" style={{ color: '#8a8f98' }}>
             No marketplaces registered.
@@ -683,19 +683,19 @@ function ManageMarketplacesTab() {
         </div>
       ) : (
         <div
-          className="rounded-xl overflow-hidden"
-          style={{ backgroundColor: '#191a1b', border: '1px solid #23252a' }}
+          className="rounded-lg overflow-hidden"
+          style={{ backgroundColor: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.08)' }}
         >
           {marketplaces.map((mp, idx) => (
             <div
               key={mp.name}
               className="flex items-center gap-4 px-5 py-4"
-              style={{ borderBottom: idx < marketplaces.length - 1 ? '1px solid #23252a' : 'none' }}
+              style={{ borderBottom: idx < marketplaces.length - 1 ? '1px solid rgba(255, 255, 255, 0.05)' : 'none' }}
             >
               {/* Icon */}
               <div
-                className="w-9 h-9 rounded-lg shrink-0 flex items-center justify-center text-white text-sm font-bold"
-                style={{ background: 'linear-gradient(135deg, #e17055, #fab1a0)' }}
+                className="w-9 h-9 rounded-lg shrink-0 flex items-center justify-center text-[#f7f8f8] text-sm font-medium"
+                style={{ background: 'linear-gradient(135deg, #d0d6e0, #828fff)' }}
               >
                 {mp.name.charAt(0).toUpperCase()}
               </div>

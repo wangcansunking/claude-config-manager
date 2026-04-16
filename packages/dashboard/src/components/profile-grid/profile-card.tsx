@@ -40,7 +40,7 @@ export function ProfileCard({ profile, onActivate, onEdit, onExport, onDelete }:
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-3">
           <div
-            className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-base shrink-0"
+            className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-medium text-base shrink-0"
             style={{ backgroundColor: '#5e6ad2' }}
           >
             {profile.name.charAt(0).toUpperCase()}

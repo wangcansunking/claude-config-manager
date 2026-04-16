@@ -21,12 +21,12 @@ export function PluginItem({ plugin, onClick }: PluginItemProps) {
   return (
     <div
       className="flex items-center gap-4 px-5 py-4 cursor-pointer transition-colors hover:bg-[#28282c]"
-      style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}
+      style={{ borderBottom: '1px solid rgba(255, 255, 255,0.05)' }}
       onClick={onClick}
     >
       {/* Icon */}
       <div
-        className="w-9 h-9 rounded-lg shrink-0 flex items-center justify-center text-white text-sm font-bold"
+        className="w-9 h-9 rounded-lg shrink-0 flex items-center justify-center text-white text-sm font-medium"
         style={{ backgroundColor: '#5e6ad2' }}
       >
         {plugin.name.charAt(0).toUpperCase()}

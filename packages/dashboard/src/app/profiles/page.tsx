@@ -224,10 +224,10 @@ export default function ProfilesPage() {
       {/* New Profile Form */}
       {showNewForm && (
         <div
-          className="rounded-xl p-5 mb-6"
-          style={{ backgroundColor: '#191a1b', border: '1px solid #5e6ad2' }}
+          className="rounded-lg p-5 mb-6"
+          style={{ backgroundColor: 'rgba(255, 255, 255, 0.02)', border: '1px solid #5e6ad2' }}
         >
-          <h3 className="text-sm font-semibold mb-3" style={{ color: '#f7f8f8' }}>
+          <h3 className="text-sm font-medium mb-3" style={{ color: '#f7f8f8' }}>
             Create New Profile
           </h3>
           <div className="flex gap-3">
@@ -238,8 +238,8 @@ export default function ProfilesPage() {
               placeholder="Profile name..."
               className="flex-1 px-3 py-2 rounded-lg text-sm outline-none profile-input"
               style={{
-                backgroundColor: 'rgba(255,255,255,0.05)',
-                border: '1px solid rgba(255,255,255,0.08)',
+                backgroundColor: 'rgba(255, 255, 255,0.05)',
+                border: '1px solid rgba(255, 255, 255,0.08)',
                 color: '#f7f8f8',
               }}
               onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
@@ -259,8 +259,8 @@ export default function ProfilesPage() {
         <p style={{ color: '#d0d6e0' }}>Loading...</p>
       ) : profiles.length === 0 ? (
         <div
-          className="rounded-xl p-10 text-center"
-          style={{ backgroundColor: '#191a1b', border: '1px solid rgba(255,255,255,0.05)' }}
+          className="rounded-lg p-10 text-center"
+          style={{ backgroundColor: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.05)' }}
         >
           <p className="text-sm" style={{ color: '#8a8f98' }}>
             No profiles yet. Click &ldquo;New Profile&rdquo; to create one.
@@ -286,14 +286,14 @@ export default function ProfilesPage() {
                 >
                   {/* Profile Name (read-only label) & Description */}
                   <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: '#8a8f98' }}>
+                    <label className="block text-xs font-medium uppercase tracking-wider mb-2" style={{ color: '#8a8f98' }}>
                       Profile Name
                     </label>
                     <p className="text-sm font-medium" style={{ color: '#f7f8f8' }}>{editState.name}</p>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: '#8a8f98' }}>
+                    <label className="block text-xs font-medium uppercase tracking-wider mb-2" style={{ color: '#8a8f98' }}>
                       Description
                     </label>
                     <input
@@ -302,13 +302,13 @@ export default function ProfilesPage() {
                       onChange={(e) => setEditState((prev) => prev ? { ...prev, description: e.target.value } : prev)}
                       placeholder="Optional description..."
                       className="w-full px-3 py-2 rounded-lg text-sm outline-none profile-input"
-                      style={{ backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: '#f7f8f8' }}
+                      style={{ backgroundColor: 'rgba(255, 255, 255,0.05)', border: '1px solid rgba(255, 255, 255,0.08)', color: '#f7f8f8' }}
                     />
                   </div>
 
                   {/* Plugins */}
                   <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: '#8a8f98' }}>
+                    <label className="block text-xs font-medium uppercase tracking-wider mb-2" style={{ color: '#8a8f98' }}>
                       Plugins
                     </label>
                     {availablePlugins.length === 0 && Object.keys(editState.enabledPlugins).length === 0 ? (
@@ -343,7 +343,7 @@ export default function ProfilesPage() {
 
                   {/* MCP Servers */}
                   <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: '#8a8f98' }}>
+                    <label className="block text-xs font-medium uppercase tracking-wider mb-2" style={{ color: '#8a8f98' }}>
                       MCP Servers
                     </label>
                     {availableMcpServers.length === 0 && Object.keys(editState.enabledMcpServers).length === 0 ? (
@@ -377,7 +377,7 @@ export default function ProfilesPage() {
 
                   {/* Settings */}
                   <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: '#8a8f98' }}>
+                    <label className="block text-xs font-medium uppercase tracking-wider mb-2" style={{ color: '#8a8f98' }}>
                       Settings
                     </label>
                     <div className="space-y-2">
@@ -389,7 +389,7 @@ export default function ProfilesPage() {
                           onChange={(e) => setEditState((prev) => prev ? { ...prev, model: e.target.value } : prev)}
                           placeholder="e.g. claude-sonnet-4-20250514"
                           className="w-full px-3 py-2 rounded-lg text-sm outline-none profile-input"
-                          style={{ backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: '#f7f8f8' }}
+                          style={{ backgroundColor: 'rgba(255, 255, 255,0.05)', border: '1px solid rgba(255, 255, 255,0.08)', color: '#f7f8f8' }}
                         />
                       </div>
                     </div>

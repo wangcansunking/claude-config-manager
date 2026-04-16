@@ -39,7 +39,8 @@ export function Button({
       type={type}
       onClick={onClick}
       disabled={disabled}
-      className={`inline-flex items-center justify-center font-medium rounded-lg transition-colors ${sizeStyles[size]} ${variantClasses[variant]} ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+      className={`inline-flex items-center justify-center rounded-md transition-colors ${sizeStyles[size]} ${variantClasses[variant]} ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+      style={{ fontWeight: 510 }}
     >
       {children}
     </button>

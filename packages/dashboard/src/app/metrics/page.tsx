@@ -95,7 +95,7 @@ function UsageBar({
         />
       </div>
       <span
-        className="text-xs font-semibold shrink-0 text-right"
+        className="text-xs font-medium shrink-0 text-right"
         style={{ color: '#d0d6e0', width: '48px' }}
       >
         {entry.usageCount}
@@ -131,15 +131,15 @@ function UsageBarList({
 
   return (
     <div
-      className="rounded-xl overflow-hidden"
-      style={{ backgroundColor: '#191a1b', border: '1px solid rgba(255,255,255,0.05)' }}
+      className="rounded-lg overflow-hidden"
+      style={{ backgroundColor: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255,0.05)' }}
     >
       <div
         className="px-5 py-3"
-        style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}
+        style={{ borderBottom: '1px solid rgba(255, 255, 255,0.05)' }}
       >
         <h3
-          className="text-xs font-semibold uppercase tracking-wider"
+          className="text-xs font-medium uppercase tracking-wider"
           style={{ color: '#8a8f98' }}
         >
           {title}
@@ -185,30 +185,30 @@ function McpServerSection({
 
   return (
     <div
-      className="rounded-xl overflow-hidden"
-      style={{ backgroundColor: '#191a1b', border: '1px solid rgba(255,255,255,0.05)' }}
+      className="rounded-lg overflow-hidden"
+      style={{ backgroundColor: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255,0.05)' }}
     >
       <button
         className="w-full flex items-center justify-between px-5 py-3 text-left transition-colors hover:bg-[#28282c]"
-        style={{ borderBottom: open ? '1px solid rgba(255,255,255,0.05)' : 'none' }}
+        style={{ borderBottom: open ? '1px solid rgba(255, 255, 255,0.05)' : 'none' }}
         onClick={() => setOpen(!open)}
       >
         <div className="flex items-center gap-3">
           <span
-            className="font-mono text-sm font-semibold"
-            style={{ color: '#e17055' }}
+            className="font-mono text-sm font-medium"
+            style={{ color: '#d0d6e0' }}
           >
             {server}
           </span>
           <span
             className="text-xs px-2 py-0.5 rounded-full"
-            style={{ backgroundColor: 'rgba(255,255,255,0.05)', color: '#d0d6e0' }}
+            style={{ backgroundColor: 'rgba(255, 255, 255,0.05)', color: '#d0d6e0' }}
           >
             {totalCalls} calls
           </span>
           <span
             className="text-xs px-2 py-0.5 rounded-full"
-            style={{ backgroundColor: 'rgba(255,255,255,0.05)', color: '#8a8f98' }}
+            style={{ backgroundColor: 'rgba(255, 255, 255,0.05)', color: '#8a8f98' }}
           >
             {toolCount} tools
           </span>
@@ -238,7 +238,7 @@ function McpServerSection({
               key={tool.name}
               entry={tool}
               maxCount={maxCount}
-              barColor="#e17055"
+              barColor="#d0d6e0"
             />
           ))}
         </div>
@@ -283,8 +283,8 @@ export default function MetricsPage() {
         <p style={{ color: '#d0d6e0' }}>Loading...</p>
       ) : !metrics ? (
         <div
-          className="rounded-xl p-8 text-center"
-          style={{ backgroundColor: '#191a1b', border: '1px solid rgba(255,255,255,0.05)' }}
+          className="rounded-lg p-8 text-center"
+          style={{ backgroundColor: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255,0.05)' }}
         >
           <p className="text-lg mb-2" style={{ color: '#8a8f98' }}>
             No metrics available
@@ -330,7 +330,7 @@ export default function MetricsPage() {
             <UsageBarList
               title="Top Built-in Tools"
               entries={metrics.builtinTools}
-              barColor="#0984e3"
+              barColor="#5e6ad2"
               emptyMessage="No built-in tools have been used yet."
             />
           </div>
@@ -351,7 +351,7 @@ export default function MetricsPage() {
           {metrics.mcpServerBreakdown.length > 0 && (
             <div className="mb-8">
               <h2
-                className="text-lg font-semibold mb-3"
+                className="text-lg font-medium mb-3"
                 style={{ color: '#f7f8f8' }}
               >
                 MCP Server Breakdown

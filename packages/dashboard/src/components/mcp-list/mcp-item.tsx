@@ -26,7 +26,7 @@ export function McpItem({ server, onClick }: McpItemProps) {
   return (
     <div
       className="flex items-center gap-4 px-5 py-4 cursor-pointer transition-colors hover:bg-[#28282c]"
-      style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}
+      style={{ borderBottom: '1px solid rgba(255, 255, 255,0.05)' }}
       onClick={onClick}
     >
       {/* Status dot */}

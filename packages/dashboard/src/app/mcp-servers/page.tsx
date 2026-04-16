@@ -35,16 +35,16 @@ type SourceFilter = 'all' | 'mcp-registry' | 'npm' | 'smithery';
 function CollapsibleSection({ icon, label, count, children }: { icon: string; label: string; count: number; children: React.ReactNode }) {
   const [open, setOpen] = useState(true);
   return (
-    <div className="rounded-xl overflow-hidden" style={{ backgroundColor: '#191a1b', border: '1px solid #23252a' }}>
+    <div className="rounded-lg overflow-hidden" style={{ backgroundColor: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
       <button
         className="w-full flex items-center justify-between px-5 py-3 text-left transition-colors hover:bg-[#28282c]"
-        style={{ borderBottom: open ? '1px solid #23252a' : 'none' }}
+        style={{ borderBottom: open ? '1px solid rgba(255, 255, 255, 0.05)' : 'none' }}
         onClick={() => setOpen(!open)}
       >
         <div className="flex items-center gap-2">
           <span className="text-base">{icon}</span>
-          <span className="text-sm font-semibold" style={{ color: label === 'User' ? '#7170ff' : '#8a8f98' }}>{label}</span>
-          <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: '#23252a', color: '#d0d6e0' }}>{count}</span>
+          <span className="text-sm font-medium" style={{ color: label === 'User' ? '#7170ff' : '#8a8f98' }}>{label}</span>
+          <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)', color: '#d0d6e0' }}>{count}</span>
         </div>
         <svg className="w-4 h-4 transition-transform" style={{ color: '#8a8f98', transform: open ? 'rotate(0deg)' : 'rotate(-90deg)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -88,14 +88,14 @@ function RegistryResultCard({
 }) {
   return (
     <div
-      className="rounded-xl p-5 transition-colors hover:bg-[#28282c]"
-      style={{ backgroundColor: '#191a1b', border: '1px solid #23252a' }}
+      className="rounded-lg p-5 transition-colors hover:bg-[#28282c]"
+      style={{ backgroundColor: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.08)' }}
     >
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0">
           {/* Name row */}
           <div className="flex items-center gap-2 mb-1 flex-wrap">
-            <code className="text-sm font-mono font-semibold" style={{ color: '#7170ff' }}>
+            <code className="text-sm font-mono font-medium" style={{ color: '#7170ff' }}>
               {result.name}
             </code>
             <Tag label={sourceLabel(result.source)} variant={sourceBadgeVariant(result.source)} />
@@ -159,16 +159,16 @@ function SearchSkeleton() {
       {[1, 2, 3].map((i) => (
         <div
           key={i}
-          className="rounded-xl p-5 animate-pulse"
-          style={{ backgroundColor: '#191a1b', border: '1px solid #23252a' }}
+          className="rounded-lg p-5 animate-pulse"
+          style={{ backgroundColor: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.08)' }}
         >
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1">
-              <div className="h-4 rounded w-48 mb-2" style={{ backgroundColor: '#23252a' }} />
-              <div className="h-3 rounded w-full mb-1" style={{ backgroundColor: '#23252a' }} />
-              <div className="h-3 rounded w-2/3" style={{ backgroundColor: '#23252a' }} />
+              <div className="h-4 rounded w-48 mb-2" style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)' }} />
+              <div className="h-3 rounded w-full mb-1" style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)' }} />
+              <div className="h-3 rounded w-2/3" style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)' }} />
             </div>
-            <div className="h-8 w-16 rounded-lg" style={{ backgroundColor: '#23252a' }} />
+            <div className="h-8 w-16 rounded-lg" style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)' }} />
           </div>
         </div>
       ))}
@@ -238,7 +238,7 @@ function InstallDialog({
 
       {/* Dialog */}
       <div
-        className="fixed z-50 rounded-xl p-6 shadow-2xl"
+        className="fixed z-50 rounded-lg p-6 shadow-2xl"
         style={{
           top: '50%',
           left: '50%',
@@ -247,12 +247,12 @@ function InstallDialog({
           maxWidth: '95vw',
           maxHeight: '85vh',
           overflowY: 'auto',
-          backgroundColor: '#191a1b',
-          border: '1px solid #23252a',
+          backgroundColor: 'rgba(255, 255, 255, 0.02)',
+          border: '1px solid rgba(255, 255, 255, 0.08)',
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="text-lg font-semibold mb-1" style={{ color: '#f7f8f8' }}>
+        <h2 className="text-lg font-medium mb-1" style={{ color: '#f7f8f8' }}>
           Install MCP Server
         </h2>
         <p className="text-xs mb-5" style={{ color: '#8a8f98' }}>
@@ -274,7 +274,7 @@ function InstallDialog({
             value={name}
             onChange={(e) => setName(e.target.value)}
             className="w-full px-3 py-2 rounded-lg text-sm font-mono outline-none"
-            style={{ backgroundColor: '#0f1011', border: '1px solid #23252a', color: '#f7f8f8' }}
+            style={{ backgroundColor: '#0f1011', border: '1px solid rgba(255, 255, 255, 0.08)', color: '#f7f8f8' }}
           />
         </div>
 
@@ -288,7 +288,7 @@ function InstallDialog({
             value={command}
             onChange={(e) => setCommand(e.target.value)}
             className="w-full px-3 py-2 rounded-lg text-sm font-mono outline-none"
-            style={{ backgroundColor: '#0f1011', border: '1px solid #23252a', color: '#f7f8f8' }}
+            style={{ backgroundColor: '#0f1011', border: '1px solid rgba(255, 255, 255, 0.08)', color: '#f7f8f8' }}
           />
         </div>
 
@@ -302,7 +302,7 @@ function InstallDialog({
             value={args}
             onChange={(e) => setArgs(e.target.value)}
             className="w-full px-3 py-2 rounded-lg text-sm font-mono outline-none"
-            style={{ backgroundColor: '#0f1011', border: '1px solid #23252a', color: '#f7f8f8' }}
+            style={{ backgroundColor: '#0f1011', border: '1px solid rgba(255, 255, 255, 0.08)', color: '#f7f8f8' }}
           />
         </div>
 
@@ -331,7 +331,7 @@ function InstallDialog({
                 value={pair.key}
                 onChange={(e) => handleEnvChange(i, 'key', e.target.value)}
                 className="flex-1 px-2 py-1.5 rounded text-xs font-mono outline-none"
-                style={{ backgroundColor: '#0f1011', border: '1px solid #23252a', color: '#fdcb6e' }}
+                style={{ backgroundColor: '#0f1011', border: '1px solid rgba(255, 255, 255, 0.08)', color: '#7170ff' }}
               />
               <input
                 type="text"
@@ -339,7 +339,7 @@ function InstallDialog({
                 value={pair.value}
                 onChange={(e) => handleEnvChange(i, 'value', e.target.value)}
                 className="flex-1 px-2 py-1.5 rounded text-xs font-mono outline-none"
-                style={{ backgroundColor: '#0f1011', border: '1px solid #23252a', color: '#d0d6e0' }}
+                style={{ backgroundColor: '#0f1011', border: '1px solid rgba(255, 255, 255, 0.08)', color: '#d0d6e0' }}
               />
               <button
                 className="text-xs px-1.5 py-1 rounded transition-colors"
@@ -516,7 +516,7 @@ function McpStoreTab({ onInstalled }: { onInstalled: () => void }) {
             key={f.key}
             className="px-3 py-1 rounded-full text-xs font-medium transition-colors"
             style={{
-              backgroundColor: sourceFilter === f.key ? '#5e6ad2' : '#23252a',
+              backgroundColor: sourceFilter === f.key ? '#5e6ad2' : 'rgba(255, 255, 255, 0.04)',
               color: sourceFilter === f.key ? '#f7f8f8' : '#d0d6e0',
             }}
             onClick={() => setSourceFilter(f.key)}
@@ -551,8 +551,8 @@ function McpStoreTab({ onInstalled }: { onInstalled: () => void }) {
         <SearchSkeleton />
       ) : !searched ? (
         <div
-          className="rounded-xl p-10 text-center"
-          style={{ backgroundColor: '#191a1b', border: '1px solid #23252a' }}
+          className="rounded-lg p-10 text-center"
+          style={{ backgroundColor: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.08)' }}
         >
           <p className="text-sm mb-2" style={{ color: '#8a8f98' }}>
             Search for MCP servers across npm, Official MCP Registry, and Smithery.
@@ -563,8 +563,8 @@ function McpStoreTab({ onInstalled }: { onInstalled: () => void }) {
         </div>
       ) : filtered.length === 0 ? (
         <div
-          className="rounded-xl p-10 text-center"
-          style={{ backgroundColor: '#191a1b', border: '1px solid #23252a' }}
+          className="rounded-lg p-10 text-center"
+          style={{ backgroundColor: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.08)' }}
         >
           <p className="text-sm" style={{ color: '#8a8f98' }}>
             No results found for &ldquo;{search}&rdquo;
@@ -666,8 +666,8 @@ export default function McpServersPage() {
             <p style={{ color: '#d0d6e0' }}>Loading...</p>
           ) : servers.length === 0 ? (
             <div
-              className="rounded-xl p-10 text-center"
-              style={{ backgroundColor: '#191a1b', border: '1px solid #23252a' }}
+              className="rounded-lg p-10 text-center"
+              style={{ backgroundColor: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.08)' }}
             >
               <p className="text-sm" style={{ color: '#8a8f98' }}>
                 No MCP servers configured. Click &ldquo;Add Server&rdquo; to get started, or browse
@@ -723,7 +723,7 @@ export default function McpServersPage() {
               <div className="space-y-5">
                 {/* Connection config */}
                 <section>
-                  <h3 className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: '#8a8f98' }}>
+                  <h3 className="text-xs font-medium uppercase tracking-wider mb-3" style={{ color: '#8a8f98' }}>
                     Connection Config
                   </h3>
                   <div className="space-y-2">
@@ -751,7 +751,7 @@ export default function McpServersPage() {
                 {/* Environment Variables */}
                 {selected.config.env && Object.keys(selected.config.env).length > 0 && (
                   <section>
-                    <h3 className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: '#8a8f98' }}>
+                    <h3 className="text-xs font-medium uppercase tracking-wider mb-3" style={{ color: '#8a8f98' }}>
                       Environment Variables
                     </h3>
                     <div
@@ -760,7 +760,7 @@ export default function McpServersPage() {
                     >
                       {Object.entries(selected.config.env).map(([key]) => (
                         <div key={key} className="flex justify-between gap-4">
-                          <code className="text-xs font-mono" style={{ color: '#fdcb6e' }}>{key}</code>
+                          <code className="text-xs font-mono" style={{ color: '#7170ff' }}>{key}</code>
                           <code className="text-xs font-mono" style={{ color: '#8a8f98' }}>--------</code>
                         </div>
                       ))}
@@ -770,7 +770,7 @@ export default function McpServersPage() {
 
                 {/* Tools placeholder */}
                 <section>
-                  <h3 className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: '#8a8f98' }}>
+                  <h3 className="text-xs font-medium uppercase tracking-wider mb-3" style={{ color: '#8a8f98' }}>
                     Tools Provided
                   </h3>
                   <div className="flex gap-2 flex-wrap">

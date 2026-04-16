@@ -100,10 +100,10 @@ export default function SettingsPage() {
         <div className="space-y-6 max-w-2xl">
           {/* Model Section */}
           <section
-            className="rounded-xl p-5"
-            style={{ backgroundColor: '#191a1b', border: '1px solid #23252a' }}
+            className="rounded-lg p-5"
+            style={{ backgroundColor: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.08)' }}
           >
-            <h2 className="text-sm font-semibold mb-4" style={{ color: '#f7f8f8' }}>
+            <h2 className="text-sm mb-4" style={{ color: '#f7f8f8', fontWeight: 510 }}>
               Model Configuration
             </h2>
             <ModelSelector value={model} onChange={setModel} />
@@ -116,10 +116,10 @@ export default function SettingsPage() {
 
           {/* Environment Variables */}
           <section
-            className="rounded-xl p-5"
-            style={{ backgroundColor: '#191a1b', border: '1px solid #23252a' }}
+            className="rounded-lg p-5"
+            style={{ backgroundColor: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.08)' }}
           >
-            <h2 className="text-sm font-semibold mb-4" style={{ color: '#f7f8f8' }}>
+            <h2 className="text-sm mb-4" style={{ color: '#f7f8f8', fontWeight: 510 }}>
               Environment Variables
             </h2>
             <EnvVarsEditor
@@ -131,10 +131,10 @@ export default function SettingsPage() {
 
           {/* Hooks */}
           <section
-            className="rounded-xl p-5"
-            style={{ backgroundColor: '#191a1b', border: '1px solid #23252a' }}
+            className="rounded-lg p-5"
+            style={{ backgroundColor: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.08)' }}
           >
-            <h2 className="text-sm font-semibold mb-4" style={{ color: '#f7f8f8' }}>
+            <h2 className="text-sm mb-4" style={{ color: '#f7f8f8', fontWeight: 510 }}>
               Hooks
             </h2>
             <HooksEditor hooks={hooks} />

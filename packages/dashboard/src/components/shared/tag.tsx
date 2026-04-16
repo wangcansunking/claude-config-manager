@@ -8,14 +8,14 @@ interface TagProps {
 }
 
 const variantStyles: Record<TagVariant, { bg: string; color: string }> = {
-  green:  { bg: 'rgba(0, 184, 148, 0.15)',   color: '#00b894' },
-  blue:   { bg: 'rgba(9, 132, 227, 0.15)',    color: '#0984e3' },
-  orange: { bg: 'rgba(225, 112, 85, 0.15)',   color: '#e17055' },
-  purple: { bg: 'rgba(108, 92, 231, 0.15)',   color: '#a29bfe' },
+  green:  { bg: 'rgba(39, 166, 68, 0.15)',    color: '#27a644' },
+  blue:   { bg: 'rgba(94, 106, 210, 0.15)',   color: '#7170ff' },
+  orange: { bg: 'rgba(138, 143, 152, 0.15)',  color: '#d0d6e0' },
+  purple: { bg: 'rgba(94, 106, 210, 0.15)',   color: '#7170ff' },
   red:    { bg: 'rgba(255, 71, 87, 0.15)',    color: '#ff4757' },
-  yellow: { bg: 'rgba(253, 203, 110, 0.15)',  color: '#fdcb6e' },
-  pink:   { bg: 'rgba(253, 121, 168, 0.15)',  color: '#fd79a8' },
-  gray:   { bg: 'rgba(99, 110, 114, 0.2)',    color: '#b2bec3' },
+  yellow: { bg: 'rgba(138, 143, 152, 0.15)',  color: '#d0d6e0' },
+  pink:   { bg: 'rgba(94, 106, 210, 0.12)',   color: '#828fff' },
+  gray:   { bg: 'rgba(255, 255, 255, 0.05)',  color: '#8a8f98' },
 };
 
 export function Tag({ label, variant = 'gray' }: TagProps) {
@@ -23,8 +23,8 @@ export function Tag({ label, variant = 'gray' }: TagProps) {
 
   return (
     <span
-      className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
-      style={{ backgroundColor: styles.bg, color: styles.color }}
+      className="inline-flex items-center px-2 py-0.5 rounded text-xs"
+      style={{ backgroundColor: styles.bg, color: styles.color, fontWeight: 510 }}
     >
       {label}
     </span>
