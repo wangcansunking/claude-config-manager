@@ -594,20 +594,47 @@ export default function RecommendedPage() {
         </div>
       )}
 
-      {/* Grid */}
-      {filtered.length > 0 && (
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(2, 1fr)',
-            gap: '16px',
-          }}
-        >
-          {filtered.map((rec) => (
-            <RecommendationCard key={`${rec.type}-${rec.name}`} rec={rec} />
-          ))}
-        </div>
-      )}
+      {/* Grouped by Top / Trending */}
+      {filtered.length > 0 && (() => {
+        const topItems = filtered.filter(r => r.popularity === 'Top' || r.popularity === 'Popular');
+        const trendingItems = filtered.filter(r => r.popularity === 'Trending' || r.popularity === 'Rising' || r.popularity === 'New');
+        const otherItems = filtered.filter(r => !['Top','Popular','Trending','Rising','New'].includes(r.popularity));
+
+        return (
+          <div className="space-y-8">
+            {topItems.length > 0 && (
+              <div>
+                <h3 className="text-sm font-medium mb-3 flex items-center gap-2" style={{ color: 'var(--text-secondary)' }}>
+                  <span>🏆</span> Top / Most Popular
+                  <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: 'var(--border)', color: 'var(--text-muted)' }}>{topItems.length}</span>
+                </h3>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
+                  {topItems.map(rec => <RecommendationCard key={`${rec.type}-${rec.name}`} rec={rec} />)}
+                </div>
+              </div>
+            )}
+            {trendingItems.length > 0 && (
+              <div>
+                <h3 className="text-sm font-medium mb-3 flex items-center gap-2" style={{ color: 'var(--text-secondary)' }}>
+                  <span>🔥</span> Trending / Rising
+                  <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: 'var(--border)', color: 'var(--text-muted)' }}>{trendingItems.length}</span>
+                </h3>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
+                  {trendingItems.map(rec => <RecommendationCard key={`${rec.type}-${rec.name}`} rec={rec} />)}
+                </div>
+              </div>
+            )}
+            {otherItems.length > 0 && (
+              <div>
+                <h3 className="text-sm font-medium mb-3" style={{ color: 'var(--text-secondary)' }}>Other</h3>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
+                  {otherItems.map(rec => <RecommendationCard key={`${rec.type}-${rec.name}`} rec={rec} />)}
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       {/* No matches after filtering */}
       {recommendations.length > 0 && filtered.length === 0 && !isLoading && (
