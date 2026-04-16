@@ -1,0 +1,20 @@
+{
+  "name": "claude-config-manager",
+  "description": "Dashboard for managing Claude Code configurations — profiles, export/import, MCP store, plugin marketplace, sessions viewer, and usage metrics",
+  "version": "1.0.0-draft",
+  "author": {
+    "name": "Wang Can",
+    "email": "canwa@microsoft.com"
+  },
+  "homepage": "https://github.com/wangcansunking/claude-config-manager",
+  "repository": "https://github.com/wangcansunking/claude-config-manager",
+  "keywords": [
+    "configuration",
+    "dashboard",
+    "profiles",
+    "mcp-store",
+    "plugin-marketplace",
+    "sessions",
+    "metrics"
+  ]
+}

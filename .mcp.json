@@ -1,0 +1,6 @@
+{
+  "claude-config-manager": {
+    "command": "node",
+    "args": ["dist/mcp-server.mjs"]
+  }
+}
