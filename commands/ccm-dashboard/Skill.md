@@ -1,5 +1,5 @@
 ---
-name: dashboard
+name: ccm-dashboard
 description: Start the Claude Config Manager dashboard and open it in the browser
 ---
 

@@ -1,5 +1,5 @@
 ---
-name: generate-recommendations
+name: ccm-recommendations
 description: Generate personalized plugin, MCP server, and skill recommendations based on your Claude Code setup. Run this to refresh the Recommended page in the dashboard.
 ---
 

@@ -1,5 +1,5 @@
 ---
-name: profile
+name: ccm-profile
 description: Manage Claude Code configuration profiles — list, create, activate, export, import
 ---
 

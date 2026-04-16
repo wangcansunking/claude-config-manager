@@ -1,5 +1,5 @@
 ---
-name: config-dashboard
+name: ccm-dashboard
 description: Start and open the Claude Config Manager dashboard — a web UI for managing plugins, MCPs, skills, profiles, and sessions
 ---
 

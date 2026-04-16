@@ -1,5 +1,5 @@
 ---
-name: export-config
+name: ccm-export
 description: Export your Claude Code configuration profile to a portable JSON file
 ---
 

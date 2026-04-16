@@ -1,5 +1,5 @@
 ---
-name: import-config
+name: ccm-import
 description: Import a Claude Code configuration profile from a JSON file
 ---
 
