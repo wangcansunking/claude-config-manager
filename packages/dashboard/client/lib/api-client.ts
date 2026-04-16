@@ -141,7 +141,33 @@ export async function searchSkills(query: string): Promise<SkillStoreResult[]> {
   return res.json();
 }
 
+// ---- Skills Top -------------------------------------------------------------
+
+export async function fetchTopSkills(): Promise<SkillStoreResult[]> {
+  const res = await fetch('/api/skills/top');
+  if (!res.ok) throw new Error('Failed to fetch top skills');
+  return res.json();
+}
+
 // ---- MCP Registry -----------------------------------------------------------
+
+export async function fetchTopMcpServers() {
+  const res = await fetch('/api/mcp-registry/top');
+  if (!res.ok) throw new Error('Failed to fetch top MCP servers');
+  return res.json() as Promise<{
+    results: {
+      name: string;
+      description: string;
+      source: 'mcp-registry' | 'npm' | 'smithery';
+      version?: string;
+      installCommand?: string;
+      repositoryUrl?: string;
+      npmUrl?: string;
+      score?: number;
+    }[];
+    smitheryAvailable: boolean;
+  }>;
+}
 
 export async function searchMcpRegistry(query: string) {
   const res = await fetch(`/api/mcp-registry?q=${encodeURIComponent(query)}`);

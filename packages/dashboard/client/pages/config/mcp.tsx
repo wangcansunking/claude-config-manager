@@ -7,7 +7,7 @@ import { Tag } from '@/components/shared/tag';
 import { SearchBox } from '@/components/shared/search-box';
 import { McpItem } from '@/components/mcp-list/mcp-item';
 import type { McpServer } from '@/components/mcp-list/mcp-item';
-import { removeMcpServer, searchMcpRegistry, installMcpFromRegistry } from '@/lib/api-client';
+import { removeMcpServer, searchMcpRegistry, fetchTopMcpServers, installMcpFromRegistry } from '@/lib/api-client';
 import { useMcpServers } from '@/lib/use-data';
 
 // ---------------------------------------------------------------------------
@@ -413,14 +413,31 @@ function McpStoreTab({ onInstalled }: { onInstalled: () => void }) {
   const [search, setSearch] = useState('');
   const [sourceFilter, setSourceFilter] = useState<SourceFilter>('all');
   const [results, setResults] = useState<McpRegistryResult[]>([]);
+  const [topResults, setTopResults] = useState<McpRegistryResult[]>([]);
   const [smitheryAvailable, setSmitheryAvailable] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [topLoading, setTopLoading] = useState(true);
   const [searched, setSearched] = useState(false);
   const [installTarget, setInstallTarget] = useState<McpRegistryResult | null>(null);
   const [installing, setInstalling] = useState(false);
   const [installError, setInstallError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const topFetchedRef = useRef(false);
+
+  // Fetch top MCP servers on mount
+  useEffect(() => {
+    if (topFetchedRef.current) return;
+    topFetchedRef.current = true;
+    setTopLoading(true);
+    fetchTopMcpServers()
+      .then((data) => {
+        setTopResults(data.results);
+        setSmitheryAvailable(data.smitheryAvailable);
+      })
+      .catch(() => {})
+      .finally(() => setTopLoading(false));
+  }, []);
 
   // Debounced search
   const doSearch = useCallback(async (query: string) => {
@@ -464,11 +481,16 @@ function McpStoreTab({ onInstalled }: { onInstalled: () => void }) {
     return () => clearTimeout(t);
   }, [successMessage]);
 
+  // Determine which results to show: search results or top defaults
+  const showingSearch = search.trim().length > 0;
+  const baseResults = showingSearch ? results : topResults;
+  const isLoading = showingSearch ? loading : topLoading;
+
   // Filter by source
   const filtered =
     sourceFilter === 'all'
-      ? results
-      : results.filter((r) => r.source === sourceFilter);
+      ? baseResults
+      : baseResults.filter((r) => r.source === sourceFilter);
 
   const handleInstallConfirm = async (
     name: string,
@@ -546,9 +568,34 @@ function McpStoreTab({ onInstalled }: { onInstalled: () => void }) {
       )}
 
       {/* Results area */}
-      {loading ? (
+      {isLoading ? (
         <SearchSkeleton />
-      ) : !searched ? (
+      ) : showingSearch && searched && filtered.length === 0 ? (
+        <div
+          className="rounded-lg p-10 text-center"
+          style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--card-border)' }}
+        >
+          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+            No results found for &ldquo;{search}&rdquo;
+            {sourceFilter !== 'all' ? ` in ${sourceLabel(sourceFilter)}` : ''}.
+          </p>
+        </div>
+      ) : filtered.length > 0 ? (
+        <div className="space-y-3">
+          <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+            {showingSearch
+              ? `${filtered.length} result${filtered.length !== 1 ? 's' : ''}`
+              : `Top ${filtered.length} MCP Servers`}
+          </p>
+          {filtered.map((r) => (
+            <RegistryResultCard
+              key={`${r.source}-${r.name}`}
+              result={r}
+              onInstall={setInstallTarget}
+            />
+          ))}
+        </div>
+      ) : (
         <div
           className="rounded-lg p-10 text-center"
           style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--card-border)' }}
@@ -559,29 +606,6 @@ function McpStoreTab({ onInstalled }: { onInstalled: () => void }) {
           <p className="text-xs" style={{ color: 'var(--text-faint)' }}>
             Type a search term above to get started.
           </p>
-        </div>
-      ) : filtered.length === 0 ? (
-        <div
-          className="rounded-lg p-10 text-center"
-          style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--card-border)' }}
-        >
-          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-            No results found for &ldquo;{search}&rdquo;
-            {sourceFilter !== 'all' ? ` in ${sourceLabel(sourceFilter)}` : ''}.
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-            {filtered.length} result{filtered.length !== 1 ? 's' : ''}
-          </p>
-          {filtered.map((r) => (
-            <RegistryResultCard
-              key={`${r.source}-${r.name}`}
-              result={r}
-              onInstall={setInstallTarget}
-            />
-          ))}
         </div>
       )}
 

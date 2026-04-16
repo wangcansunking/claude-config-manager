@@ -5,7 +5,7 @@ import { SearchBox } from '@/components/shared/search-box';
 import { Tag } from '@/components/shared/tag';
 import { MarkdownViewer } from '@/components/shared/markdown-viewer';
 import { useSkills } from '@/lib/use-data';
-import { fetchSkillContent, updateSkillContent, searchSkills, type SkillStoreResult } from '@/lib/api-client';
+import { fetchSkillContent, updateSkillContent, searchSkills, fetchTopSkills, type SkillStoreResult } from '@/lib/api-client';
 
 interface Skill {
   name: string;
@@ -161,9 +161,23 @@ function SkillStoreCard({ result }: { result: SkillStoreResult }) {
 function SkillStoreTab() {
   const [search, setSearch] = useState('');
   const [results, setResults] = useState<SkillStoreResult[]>([]);
+  const [topResults, setTopResults] = useState<SkillStoreResult[]>([]);
   const [loading, setLoading] = useState(false);
+  const [topLoading, setTopLoading] = useState(true);
   const [searched, setSearched] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const topFetchedRef = useRef(false);
+
+  // Fetch top 20 skills on mount
+  useEffect(() => {
+    if (topFetchedRef.current) return;
+    topFetchedRef.current = true;
+    setTopLoading(true);
+    fetchTopSkills()
+      .then((data) => setTopResults(data))
+      .catch(() => {})
+      .finally(() => setTopLoading(false));
+  }, []);
 
   const doSearch = useCallback(async (query: string) => {
     if (!query.trim()) {
@@ -197,6 +211,11 @@ function SkillStoreTab() {
     };
   }, [search, doSearch]);
 
+  // Show search results when user has typed, otherwise show top 20
+  const showingSearch = search.trim().length > 0;
+  const displayResults = showingSearch ? results : topResults;
+  const isLoading = showingSearch ? loading : topLoading;
+
   return (
     <div>
       {/* Search box */}
@@ -209,9 +228,29 @@ function SkillStoreTab() {
       </div>
 
       {/* Results area */}
-      {loading ? (
+      {isLoading ? (
         <SkillSearchSkeleton />
-      ) : !searched ? (
+      ) : showingSearch && searched && results.length === 0 ? (
+        <div
+          className="rounded-lg p-10 text-center"
+          style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--card-border)' }}
+        >
+          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+            No results found for &ldquo;{search}&rdquo;.
+          </p>
+        </div>
+      ) : displayResults.length > 0 ? (
+        <div className="space-y-3">
+          <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+            {showingSearch
+              ? `${displayResults.length} result${displayResults.length !== 1 ? 's' : ''}`
+              : `Top ${displayResults.length} Skills`}
+          </p>
+          {displayResults.map((r) => (
+            <SkillStoreCard key={r.name} result={r} />
+          ))}
+        </div>
+      ) : (
         <div
           className="rounded-lg p-10 text-center"
           style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--card-border)' }}
@@ -222,24 +261,6 @@ function SkillStoreTab() {
           <p className="text-xs" style={{ color: 'var(--text-faint)' }}>
             Type a search term above to discover skills for Claude.
           </p>
-        </div>
-      ) : results.length === 0 ? (
-        <div
-          className="rounded-lg p-10 text-center"
-          style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--card-border)' }}
-        >
-          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-            No results found for &ldquo;{search}&rdquo;.
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-            {results.length} result{results.length !== 1 ? 's' : ''}
-          </p>
-          {results.map((r) => (
-            <SkillStoreCard key={r.name} result={r} />
-          ))}
         </div>
       )}
     </div>

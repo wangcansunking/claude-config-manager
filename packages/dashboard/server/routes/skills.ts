@@ -109,6 +109,37 @@ router.get('/search', async (req, res) => {
   }
 });
 
+// GET /api/skills/top — returns top 20 skills from skills.sh
+const topCache: { data: SkillResult[] | null; timestamp: number } = { data: null, timestamp: 0 };
+const TOP_CACHE_TTL = 10 * 60 * 1000; // 10 minutes
+
+router.get('/top', async (_req, res) => {
+  // Return cached if fresh
+  if (topCache.data && Date.now() - topCache.timestamp < TOP_CACHE_TTL) {
+    return res.json(topCache.data);
+  }
+
+  try {
+    const skillsBin = resolve(process.cwd(), '..', '..', 'node_modules', 'skills', 'bin', 'cli.mjs');
+    const { stdout } = await exec('node', [skillsBin, 'find', 'popular'], {
+      timeout: 15000,
+      env: { ...process.env, NO_COLOR: '1', FORCE_COLOR: '0' },
+    });
+
+    const results = parseSkillsOutput(stdout).slice(0, 20);
+    topCache.data = results;
+    topCache.timestamp = Date.now();
+    res.json(results);
+  } catch (err) {
+    console.error('[GET /api/skills/top]', err);
+    // Try returning stale cache if available
+    if (topCache.data) {
+      return res.json(topCache.data);
+    }
+    res.json([]);
+  }
+});
+
 // POST /api/skills/update
 router.post('/update', async (req, res) => {
   try {

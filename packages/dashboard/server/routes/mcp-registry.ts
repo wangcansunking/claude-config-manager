@@ -179,6 +179,110 @@ router.get('/', async (req, res) => {
 });
 
 // ---------------------------------------------------------------------------
+// GET /api/mcp-registry/top — returns top 20 MCP servers (npm popularity + official registry)
+// ---------------------------------------------------------------------------
+
+const topMcpCache: { data: { results: McpRegistryResult[]; smitheryAvailable: boolean } | null; timestamp: number } = { data: null, timestamp: 0 };
+const TOP_MCP_CACHE_TTL = 10 * 60 * 1000; // 10 minutes
+
+router.get('/top', async (_req, res) => {
+  // Return cached if fresh
+  if (topMcpCache.data && Date.now() - topMcpCache.timestamp < TOP_MCP_CACHE_TTL) {
+    return res.json(topMcpCache.data);
+  }
+
+  try {
+    // Fetch from npm (popular MCP servers) and official registry in parallel
+    const [npmResult, officialResult] = await Promise.allSettled([
+      (async () => {
+        const r = await fetch(
+          'https://registry.npmjs.org/-/v1/search?text=mcp+server&size=20&popularity=1.0',
+          { signal: AbortSignal.timeout(8000) },
+        );
+        if (!r.ok) return [];
+        const data = (await r.json()) as {
+          objects?: {
+            package: {
+              name?: string;
+              description?: string;
+              version?: string;
+              links?: { npm?: string; repository?: string };
+            };
+            score?: { final?: number };
+          }[];
+        };
+        if (!Array.isArray(data?.objects)) return [];
+        return data.objects.map((obj): McpRegistryResult => ({
+          name: obj.package.name ?? 'unknown',
+          description: obj.package.description ?? '',
+          source: 'npm' as const,
+          version: obj.package.version,
+          npmUrl: obj.package.links?.npm,
+          repositoryUrl: obj.package.links?.repository,
+          installCommand: obj.package.name ? `npx -y ${obj.package.name}` : undefined,
+          score: (obj.score?.final ?? 0.5) * 0.8,
+        }));
+      })(),
+      (async () => {
+        const r = await fetch(
+          'https://registry.modelcontextprotocol.io/v0.1/servers?limit=20',
+          { signal: AbortSignal.timeout(8000) },
+        );
+        if (!r.ok) return [];
+        const data = (await r.json()) as {
+          servers?: { name?: string; description?: string; repositoryUrl?: string }[];
+        };
+        if (!Array.isArray(data?.servers)) return [];
+        return data.servers.map((s): McpRegistryResult => ({
+          name: s.name ?? 'unknown',
+          description: s.description ?? '',
+          source: 'mcp-registry' as const,
+          repositoryUrl: s.repositoryUrl,
+          installCommand: s.name ? `npx -y ${s.name}` : undefined,
+          score: 0.9,
+        }));
+      })(),
+    ]);
+
+    const all: McpRegistryResult[] = [];
+    if (npmResult.status === 'fulfilled') all.push(...npmResult.value);
+    if (officialResult.status === 'fulfilled') all.push(...officialResult.value);
+
+    // Deduplicate by name (keep the one with highest score)
+    const deduped = new Map<string, McpRegistryResult>();
+    for (const item of all) {
+      const key = item.name.toLowerCase();
+      const existing = deduped.get(key);
+      if (!existing || (item.score ?? 0) > (existing.score ?? 0)) {
+        deduped.set(key, item);
+      }
+    }
+
+    // Sort by score descending, take top 20
+    const results = [...deduped.values()]
+      .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
+      .slice(0, 20);
+
+    const responseData = {
+      results,
+      smitheryAvailable: !!process.env.SMITHERY_API_KEY,
+    };
+
+    topMcpCache.data = responseData;
+    topMcpCache.timestamp = Date.now();
+
+    res.json(responseData);
+  } catch (err) {
+    console.error('[GET /api/mcp-registry/top]', err);
+    // Try returning stale cache if available
+    if (topMcpCache.data) {
+      return res.json(topMcpCache.data);
+    }
+    res.json({ results: [], smitheryAvailable: !!process.env.SMITHERY_API_KEY });
+  }
+});
+
+// ---------------------------------------------------------------------------
 // POST /api/mcp-registry/install
 // ---------------------------------------------------------------------------
 

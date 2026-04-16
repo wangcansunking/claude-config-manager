@@ -33970,6 +33970,30 @@ router4.get("/search", async (req, res) => {
     res.json([]);
   }
 });
+var topCache = { data: null, timestamp: 0 };
+var TOP_CACHE_TTL = 10 * 60 * 1e3;
+router4.get("/top", async (_req, res) => {
+  if (topCache.data && Date.now() - topCache.timestamp < TOP_CACHE_TTL) {
+    return res.json(topCache.data);
+  }
+  try {
+    const skillsBin = resolve(process.cwd(), "..", "..", "node_modules", "skills", "bin", "cli.mjs");
+    const { stdout } = await exec("node", [skillsBin, "find", "popular"], {
+      timeout: 15e3,
+      env: { ...process.env, NO_COLOR: "1", FORCE_COLOR: "0" }
+    });
+    const results = parseSkillsOutput(stdout).slice(0, 20);
+    topCache.data = results;
+    topCache.timestamp = Date.now();
+    res.json(results);
+  } catch (err) {
+    console.error("[GET /api/skills/top]", err);
+    if (topCache.data) {
+      return res.json(topCache.data);
+    }
+    res.json([]);
+  }
+});
 router4.post("/update", async (req, res) => {
   try {
     const { filePath, content } = req.body;
@@ -34362,6 +34386,78 @@ router11.get("/", async (req, res) => {
   };
   searchCache2.set(query, { data: responseData, timestamp: Date.now() });
   res.json(responseData);
+});
+var topMcpCache = { data: null, timestamp: 0 };
+var TOP_MCP_CACHE_TTL = 10 * 60 * 1e3;
+router11.get("/top", async (_req, res) => {
+  if (topMcpCache.data && Date.now() - topMcpCache.timestamp < TOP_MCP_CACHE_TTL) {
+    return res.json(topMcpCache.data);
+  }
+  try {
+    const [npmResult, officialResult] = await Promise.allSettled([
+      (async () => {
+        const r = await fetch(
+          "https://registry.npmjs.org/-/v1/search?text=mcp+server&size=20&popularity=1.0",
+          { signal: AbortSignal.timeout(8e3) }
+        );
+        if (!r.ok) return [];
+        const data = await r.json();
+        if (!Array.isArray(data?.objects)) return [];
+        return data.objects.map((obj) => ({
+          name: obj.package.name ?? "unknown",
+          description: obj.package.description ?? "",
+          source: "npm",
+          version: obj.package.version,
+          npmUrl: obj.package.links?.npm,
+          repositoryUrl: obj.package.links?.repository,
+          installCommand: obj.package.name ? `npx -y ${obj.package.name}` : void 0,
+          score: (obj.score?.final ?? 0.5) * 0.8
+        }));
+      })(),
+      (async () => {
+        const r = await fetch(
+          "https://registry.modelcontextprotocol.io/v0.1/servers?limit=20",
+          { signal: AbortSignal.timeout(8e3) }
+        );
+        if (!r.ok) return [];
+        const data = await r.json();
+        if (!Array.isArray(data?.servers)) return [];
+        return data.servers.map((s) => ({
+          name: s.name ?? "unknown",
+          description: s.description ?? "",
+          source: "mcp-registry",
+          repositoryUrl: s.repositoryUrl,
+          installCommand: s.name ? `npx -y ${s.name}` : void 0,
+          score: 0.9
+        }));
+      })()
+    ]);
+    const all = [];
+    if (npmResult.status === "fulfilled") all.push(...npmResult.value);
+    if (officialResult.status === "fulfilled") all.push(...officialResult.value);
+    const deduped = /* @__PURE__ */ new Map();
+    for (const item of all) {
+      const key = item.name.toLowerCase();
+      const existing = deduped.get(key);
+      if (!existing || (item.score ?? 0) > (existing.score ?? 0)) {
+        deduped.set(key, item);
+      }
+    }
+    const results = [...deduped.values()].sort((a, b) => (b.score ?? 0) - (a.score ?? 0)).slice(0, 20);
+    const responseData = {
+      results,
+      smitheryAvailable: !!process.env.SMITHERY_API_KEY
+    };
+    topMcpCache.data = responseData;
+    topMcpCache.timestamp = Date.now();
+    res.json(responseData);
+  } catch (err) {
+    console.error("[GET /api/mcp-registry/top]", err);
+    if (topMcpCache.data) {
+      return res.json(topMcpCache.data);
+    }
+    res.json({ results: [], smitheryAvailable: !!process.env.SMITHERY_API_KEY });
+  }
 });
 router11.post("/install", async (req, res) => {
   try {

@@ -3,7 +3,9 @@
   "version": "1.0.0-draft",
   "private": true,
   "packageManager": "npm@10.9.2",
-  "workspaces": ["packages/*"],
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
     "build": "turbo build",
     "bundle": "npm run bundle --workspace=@ccm/mcp",
@@ -22,10 +24,13 @@
     "claude-config": "./packages/cli/dist/index.js"
   },
   "devDependencies": {
+    "eslint": "^9.0.0",
+    "prettier": "^3.3.0",
     "turbo": "^2.0.0",
     "typescript": "^5.5.0",
-    "vitest": "^2.0.0",
-    "eslint": "^9.0.0",
-    "prettier": "^3.3.0"
+    "vitest": "^2.0.0"
+  },
+  "dependencies": {
+    "skills": "^1.5.0"
   }
 }
