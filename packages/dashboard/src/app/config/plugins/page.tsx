@@ -306,34 +306,7 @@ function MarketplaceTab() {
         )}
       </div>
 
-      {/* Install instruction toast */}
-      {showInstallMsg && (
-        <div
-          className="rounded-lg p-4 mb-4 flex items-start justify-between gap-3"
-          style={{ backgroundColor: 'rgba(9, 132, 227, 0.12)', border: '1px solid rgba(9, 132, 227, 0.3)' }}
-        >
-          <div>
-            <p className="text-sm font-medium" style={{ color: 'var(--accent-hover)' }}>
-              Install via Claude Code
-            </p>
-            <code
-              className="text-xs mt-1 block font-mono px-2 py-1 rounded"
-              style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-secondary)' }}
-            >
-              /plugin install {showInstallMsg}@{activeMp}
-            </code>
-          </div>
-          <button
-            className="shrink-0 p-1 rounded transition-colors hover:bg-bg-hover"
-            style={{ color: 'var(--text-muted)' }}
-            onClick={() => setShowInstallMsg(null)}
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-      )}
+      {/* (Install toast removed — install command shown inline) */}
 
       {/* Plugin list */}
       {pluginsLoading || marketplacesLoading ? (
@@ -412,18 +385,19 @@ function MarketplaceTab() {
                       </p>
                     </div>
 
-                    {/* Install / Info button */}
+                    {/* Install command */}
                     {!plugin.installed && (
-                      <Button
-                        variant="primary"
-                        size="sm"
+                      <code
+                        className="text-xs font-mono px-2 py-1 rounded shrink-0 cursor-pointer"
+                        style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--accent-light)', border: '1px solid var(--border)' }}
+                        title="Click to copy"
                         onClick={(e) => {
                           e.stopPropagation();
-                          setShowInstallMsg(plugin.name);
+                          navigator.clipboard.writeText(`/plugin install ${plugin.name}@${activeMp}`);
                         }}
                       >
-                        Install
-                      </Button>
+                        /plugin install {plugin.name}@{activeMp}
+                      </code>
                     )}
 
                     {/* Chevron */}
