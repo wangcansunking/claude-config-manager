@@ -1,7 +1,4 @@
 import { Router } from 'express';
-import { execFile } from 'child_process';
-import { promisify } from 'util';
-import { resolve } from 'path';
 import {
   RecommendationManager,
   PluginManager,
@@ -12,7 +9,6 @@ import {
 } from '@ccm/core';
 import type { Recommendation, AvailablePlugin } from '@ccm/core';
 
-const exec = promisify(execFile);
 const router = Router();
 
 // GET /api/recommendations
@@ -134,7 +130,7 @@ async function safeList<T>(fn: () => Promise<T[]>): Promise<T[]> {
 }
 
 // ---------------------------------------------------------------------------
-// Skills — via skills.sh CLI
+// Skills — via skills.sh public HTTP API
 // ---------------------------------------------------------------------------
 
 interface SkillResult {
@@ -144,56 +140,38 @@ interface SkillResult {
   installCommand: string;
 }
 
-function parseSkillsOutput(output: string): SkillResult[] {
-  const results: SkillResult[] = [];
-  const lines = output
-    .split('\n')
-    .map((l) => l.replace(/\x1b\[[0-9;]*m/g, '').trim())
-    .filter(Boolean);
-
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    // Match either "owner/repo@skill" or "owner@skill" (skills.sh allows both)
-    const match = line?.match(
-      /^([\w\-.]+(?:\/[\w\-.]+)?@[\w\-.:]+)\s+([\d.]+[KMB]?\s+installs?)$/,
-    );
-    if (match) {
-      const name = match[1] ?? '';
-      const installs = match[2] ?? '';
-      const urlLine = lines[i + 1] ?? '';
-      const urlMatch = urlLine.match(/(https:\/\/skills\.sh\/\S+)/);
-      const url = urlMatch ? urlMatch[1] : `https://skills.sh/${name.replace('@', '/')}`;
-      results.push({
-        name,
-        installs,
-        url,
-        installCommand: `npx skills add ${name}`,
-      });
-      i++;
-    }
-  }
-  return results;
+interface SkillsShApiEntry {
+  id: string;
+  skillId: string;
+  name: string;
+  installs: number;
+  source: string;
 }
 
-async function runSkillsFind(query: string): Promise<SkillResult[]> {
-  const skillsBin = resolve(
-    process.cwd(),
-    '..',
-    '..',
-    'node_modules',
-    'skills',
-    'bin',
-    'cli.mjs',
-  );
-  const { stdout } = await exec('node', [skillsBin, 'find', query], {
-    timeout: 15000,
-    env: { ...process.env, NO_COLOR: '1', FORCE_COLOR: '0' },
+function formatInstalls(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M installs`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K installs`;
+  return `${n} install${n !== 1 ? 's' : ''}`;
+}
+
+async function fetchSkillsShQuery(query: string): Promise<SkillResult[]> {
+  const url = `https://skills.sh/api/search?q=${encodeURIComponent(query)}`;
+  const resp = await fetch(url);
+  if (!resp.ok) throw new Error(`skills.sh returned ${resp.status}`);
+  const data = (await resp.json()) as { skills?: SkillsShApiEntry[] };
+  return (data.skills ?? []).map((entry) => {
+    const handle = `${entry.source}@${entry.skillId}`;
+    return {
+      name: handle,
+      installs: formatInstalls(entry.installs),
+      url: `https://skills.sh/${entry.source}/${entry.skillId}`,
+      installCommand: `npx skills add ${handle}`,
+    };
   });
-  return parseSkillsOutput(stdout);
 }
 
-async function runSkillsFindMany(queries: string[]): Promise<SkillResult[]> {
-  const settled = await Promise.allSettled(queries.map((q) => runSkillsFind(q)));
+async function fetchSkillsShMany(queries: string[]): Promise<SkillResult[]> {
+  const settled = await Promise.allSettled(queries.map((q) => fetchSkillsShQuery(q)));
   const all: SkillResult[] = [];
   for (const s of settled) {
     if (s.status === 'fulfilled') all.push(...s.value);
@@ -202,13 +180,11 @@ async function runSkillsFindMany(queries: string[]): Promise<SkillResult[]> {
 }
 
 async function fetchTopSkills(): Promise<SkillResult[]> {
-  // The skills.sh CLI typically returns only a handful of results per query.
-  // Aggregate across multiple "popular" style queries to reach >= 10.
-  return runSkillsFindMany(['popular', 'skills', 'best-practices', 'code']);
+  return fetchSkillsShMany(['agent', 'code', 'react', 'python', 'typescript']);
 }
 
 async function fetchTrendingSkills(): Promise<SkillResult[]> {
-  return runSkillsFindMany(['trending', 'new', 'agents', 'test']);
+  return fetchSkillsShMany(['git', 'test', 'skill', 'mcp', 'claude']);
 }
 
 function skillCategory(name: string): string {
