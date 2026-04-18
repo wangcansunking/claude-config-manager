@@ -2,6 +2,11 @@
 
 All notable changes to claude-config-manager are documented here.
 
+## [1.0.7] — 2026-04-17
+
+### Fixed
+- **`.mcp.json` schema**: Wrapped the MCP server entry in a `mcpServers` key. Previously used flat format `{ "claude-config-manager": {...} }` which caused `/doctor` to fail with "Does not adhere to MCP server configuration schema". Now properly structured as `{ "mcpServers": { "claude-config-manager": {...} } }`.
+
 ## [1.0.6] — 2026-04-17
 
 ### Fixed

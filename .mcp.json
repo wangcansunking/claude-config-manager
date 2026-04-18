@@ -1,6 +1,8 @@
 {
-  "claude-config-manager": {
-    "command": "node",
-    "args": ["${CLAUDE_PLUGIN_ROOT}/mcp-entry.mjs"]
+  "mcpServers": {
+    "claude-config-manager": {
+      "command": "node",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/mcp-entry.mjs"]
+    }
   }
 }
