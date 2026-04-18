@@ -20,7 +20,8 @@ Initial release of claude-config-manager — a Claude Code plugin that provides 
   - **Skills** — User / System sections; Skill Store tab with Top defaults + search; fullscreen markdown viewer with edit mode for user skills
   - **Commands** — fullscreen markdown viewer with edit mode for user commands
   - **Settings** — model selector, env vars editor, hooks editor
-- **Profiles page** — save, activate, export, delete; Export / Import sub-tab with merge / replace strategies
+- **Profiles page** — simplified to Activate / Export / Delete actions per profile; Export / Import sub-tab with merge / replace strategies
+- **Save to Profile** — button on Configuration sub-tabs snapshots live config into a named profile
 - **Activity page** — all Claude Code sessions across projects; Recent (last 10) / All tabs; session detail panel with instruction history
 - **Theme switcher** — System / Dark / Light modes via CSS variables
 - **Real-time sync** — SSE + SWR; config changes in terminal immediately reflected in dashboard
