@@ -4948,10 +4948,10 @@ var require_raw_body = __commonJS({
       if (done) {
         return readStream(stream, encoding, length, limit, wrap(done));
       }
-      return new Promise(function executor(resolve2, reject) {
+      return new Promise(function executor(resolve3, reject) {
         readStream(stream, encoding, length, limit, function onRead(err, buf) {
           if (err) return reject(err);
-          resolve2(buf);
+          resolve3(buf);
         });
       });
     }
@@ -18413,7 +18413,7 @@ var require_view = __commonJS({
     var basename = path.basename;
     var extname = path.extname;
     var join12 = path.join;
-    var resolve2 = path.resolve;
+    var resolve3 = path.resolve;
     module.exports = View;
     function View(name, options) {
       var opts = options || {};
@@ -18447,7 +18447,7 @@ var require_view = __commonJS({
       debug('lookup "%s"', name);
       for (var i = 0; i < roots.length && !path2; i++) {
         var root = roots[i];
-        var loc = resolve2(root, name);
+        var loc = resolve3(root, name);
         var dir = dirname4(loc);
         var file = basename(loc);
         path2 = this.resolve(dir, file);
@@ -18458,7 +18458,7 @@ var require_view = __commonJS({
       debug('render "%s"', this.path);
       this.engine(this.path, options, callback);
     };
-    View.prototype.resolve = function resolve3(dir, file) {
+    View.prototype.resolve = function resolve4(dir, file) {
       var ext = this.ext;
       var path2 = join12(dir, file);
       var stat2 = tryStat(path2);
@@ -19100,7 +19100,7 @@ var require_send = __commonJS({
     var extname = path.extname;
     var join12 = path.join;
     var normalize = path.normalize;
-    var resolve2 = path.resolve;
+    var resolve3 = path.resolve;
     var sep = path.sep;
     var BYTES_RANGE_REGEXP = /^ *bytes=/;
     var MAX_MAXAGE = 60 * 60 * 24 * 365 * 1e3;
@@ -19137,7 +19137,7 @@ var require_send = __commonJS({
       this._maxage = opts.maxAge || opts.maxage;
       this._maxage = typeof this._maxage === "string" ? ms(this._maxage) : Number(this._maxage);
       this._maxage = !isNaN(this._maxage) ? Math.min(Math.max(0, this._maxage), MAX_MAXAGE) : 0;
-      this._root = opts.root ? resolve2(opts.root) : null;
+      this._root = opts.root ? resolve3(opts.root) : null;
       if (!this._root && opts.from) {
         this.from(opts.from);
       }
@@ -19161,7 +19161,7 @@ var require_send = __commonJS({
       return this;
     }, "send.index: pass index as option");
     SendStream.prototype.root = function root(path2) {
-      this._root = resolve2(String(path2));
+      this._root = resolve3(String(path2));
       debug("root %s", this._root);
       return this;
     };
@@ -19325,7 +19325,7 @@ var require_send = __commonJS({
           return res;
         }
         parts = normalize(path2).split(sep);
-        path2 = resolve2(path2);
+        path2 = resolve3(path2);
       }
       if (containsDotFile(parts)) {
         var access2 = this._dotfiles;
@@ -20604,7 +20604,7 @@ var require_application = __commonJS({
     var deprecate = require_depd()("express");
     var flatten = require_array_flatten();
     var merge = require_utils_merge();
-    var resolve2 = __require("path").resolve;
+    var resolve3 = __require("path").resolve;
     var setPrototypeOf = require_setprototypeof();
     var hasOwnProperty = Object.prototype.hasOwnProperty;
     var slice = Array.prototype.slice;
@@ -20643,7 +20643,7 @@ var require_application = __commonJS({
       this.mountpath = "/";
       this.locals.settings = this.settings;
       this.set("view", View);
-      this.set("views", resolve2("views"));
+      this.set("views", resolve3("views"));
       this.set("jsonp callback name", "callback");
       if (env === "production") {
         this.enable("view cache");
@@ -21888,7 +21888,7 @@ var require_response = __commonJS({
     var send = require_send();
     var extname = path.extname;
     var mime = send.mime;
-    var resolve2 = path.resolve;
+    var resolve3 = path.resolve;
     var vary = require_vary();
     var res = Object.create(http.ServerResponse.prototype);
     module.exports = res;
@@ -22147,7 +22147,7 @@ var require_response = __commonJS({
       }
       opts = Object.create(opts);
       opts.headers = headers;
-      var fullPath = !opts.root ? resolve2(path2) : path2;
+      var fullPath = !opts.root ? resolve3(path2) : path2;
       return this.sendFile(fullPath, opts, done);
     };
     res.contentType = res.type = function contentType(type) {
@@ -22413,7 +22413,7 @@ var require_serve_static = __commonJS({
     var encodeUrl = require_encodeurl();
     var escapeHtml = require_escape_html();
     var parseUrl = require_parseurl();
-    var resolve2 = __require("path").resolve;
+    var resolve3 = __require("path").resolve;
     var send = require_send();
     var url = __require("url");
     module.exports = serveStatic;
@@ -22433,7 +22433,7 @@ var require_serve_static = __commonJS({
         throw new TypeError("option setHeaders must be function");
       }
       opts.maxage = opts.maxage || opts.maxAge || 0;
-      opts.root = resolve2(root);
+      opts.root = resolve3(root);
       var onDirectory = redirect ? createRedirectDirectoryListener() : createNotFoundDirectoryListener();
       return function serveStatic2(req, res, next) {
         if (req.method !== "GET" && req.method !== "HEAD") {
@@ -24616,12 +24616,12 @@ var require_readdirp = __commonJS({
     var fs = __require("fs");
     var { Readable } = __require("stream");
     var sysPath = __require("path");
-    var { promisify: promisify2 } = __require("util");
+    var { promisify: promisify3 } = __require("util");
     var picomatch = require_picomatch2();
-    var readdir5 = promisify2(fs.readdir);
-    var stat2 = promisify2(fs.stat);
-    var lstat = promisify2(fs.lstat);
-    var realpath = promisify2(fs.realpath);
+    var readdir5 = promisify3(fs.readdir);
+    var stat2 = promisify3(fs.stat);
+    var lstat = promisify3(fs.lstat);
+    var realpath = promisify3(fs.realpath);
     var BANG = "!";
     var RECURSIVE_ERROR_CODE = "READDIRP_RECURSIVE_ERROR";
     var NORMAL_FLOW_ERRORS = /* @__PURE__ */ new Set(["ENOENT", "EPERM", "EACCES", "ELOOP", RECURSIVE_ERROR_CODE]);
@@ -24827,9 +24827,9 @@ var require_readdirp = __commonJS({
       return new ReaddirpStream(options);
     };
     var readdirpPromise = (root, options = {}) => {
-      return new Promise((resolve2, reject) => {
+      return new Promise((resolve3, reject) => {
         const files = [];
-        readdirp(root, options).on("data", (entry) => files.push(entry)).on("end", () => resolve2(files)).on("error", (error) => reject(error));
+        readdirp(root, options).on("data", (entry) => files.push(entry)).on("end", () => resolve3(files)).on("error", (error) => reject(error));
       });
     };
     readdirp.promise = readdirpPromise;
@@ -26549,7 +26549,7 @@ var require_nodefs_handler = __commonJS({
     "use strict";
     var fs = __require("fs");
     var sysPath = __require("path");
-    var { promisify: promisify2 } = __require("util");
+    var { promisify: promisify3 } = __require("util");
     var isBinaryPath = require_is_binary_path();
     var {
       isWindows,
@@ -26570,11 +26570,11 @@ var require_nodefs_handler = __commonJS({
       STAR
     } = require_constants3();
     var THROTTLE_MODE_WATCH = "watch";
-    var open = promisify2(fs.open);
-    var stat2 = promisify2(fs.stat);
-    var lstat = promisify2(fs.lstat);
-    var close = promisify2(fs.close);
-    var fsrealpath = promisify2(fs.realpath);
+    var open = promisify3(fs.open);
+    var stat2 = promisify3(fs.stat);
+    var lstat = promisify3(fs.lstat);
+    var close = promisify3(fs.close);
+    var fsrealpath = promisify3(fs.realpath);
     var statMethods = { lstat, stat: stat2 };
     var foreach = (val, fn) => {
       if (val instanceof Set) {
@@ -26908,13 +26908,13 @@ var require_nodefs_handler = __commonJS({
           }
         }).on(EV_ERROR, this._boundHandleError);
         return new Promise(
-          (resolve2) => stream.once(STR_END, () => {
+          (resolve3) => stream.once(STR_END, () => {
             if (this.fsw.closed) {
               stream = void 0;
               return;
             }
             const wasThrottled = throttler ? throttler.clear() : false;
-            resolve2();
+            resolve3();
             previous.getChildren().filter((item) => {
               return item !== directory && !current.has(item) && // in case of intersecting globs;
               // a path may have been filtered out of this readdir, but
@@ -27040,7 +27040,7 @@ var require_fsevents_handler = __commonJS({
     "use strict";
     var fs = __require("fs");
     var sysPath = __require("path");
-    var { promisify: promisify2 } = __require("util");
+    var { promisify: promisify3 } = __require("util");
     var fsevents;
     try {
       fsevents = __require("fsevents");
@@ -27083,9 +27083,9 @@ var require_fsevents_handler = __commonJS({
       IDENTITY_FN
     } = require_constants3();
     var Depth = (value) => isNaN(value) ? {} : { depth: value };
-    var stat2 = promisify2(fs.stat);
-    var lstat = promisify2(fs.lstat);
-    var realpath = promisify2(fs.realpath);
+    var stat2 = promisify3(fs.stat);
+    var lstat = promisify3(fs.lstat);
+    var realpath = promisify3(fs.realpath);
     var statMethods = { stat: stat2, lstat };
     var FSEventsWatchers = /* @__PURE__ */ new Map();
     var consolidateThreshhold = 10;
@@ -27437,7 +27437,7 @@ var require_chokidar = __commonJS({
     var { EventEmitter } = __require("events");
     var fs = __require("fs");
     var sysPath = __require("path");
-    var { promisify: promisify2 } = __require("util");
+    var { promisify: promisify3 } = __require("util");
     var readdirp = require_readdirp();
     var anymatch = require_anymatch().default;
     var globParent = require_glob_parent();
@@ -27480,8 +27480,8 @@ var require_chokidar = __commonJS({
       isMacos,
       isIBMi
     } = require_constants3();
-    var stat2 = promisify2(fs.stat);
-    var readdir5 = promisify2(fs.readdir);
+    var stat2 = promisify3(fs.stat);
+    var readdir5 = promisify3(fs.readdir);
     var arrify = (value = []) => Array.isArray(value) ? value : [value];
     var flatten = (list, result = []) => {
       list.forEach((item) => {
@@ -34229,6 +34229,10 @@ router9.get("/", async (_req, res) => {
 
 // server/routes/recommendations.ts
 var import_express10 = __toESM(require_express2(), 1);
+import { execFile as execFile2 } from "child_process";
+import { promisify as promisify2 } from "util";
+import { resolve as resolve2 } from "path";
+var exec2 = promisify2(execFile2);
 var router10 = (0, import_express10.Router)();
 router10.get("/", async (_req, res) => {
   try {
@@ -34245,20 +34249,306 @@ router10.get("/", async (_req, res) => {
 });
 router10.post("/", async (_req, res) => {
   try {
-    const mgr = new RecommendationManager(getClaudeHome());
+    const home = getClaudeHome();
+    const mgr = new RecommendationManager(home);
+    const [installedPlugins, installedMcps, installedSkills] = await Promise.all([
+      safeList(() => new PluginManager(home).list()),
+      safeList(() => new McpManager(home).list()),
+      safeList(() => new SkillScanner(home).scan())
+    ]);
+    const installedPluginNames = new Set(
+      installedPlugins.map((p) => String(p.name).split("@")[0])
+    );
+    const installedMcpNames = new Set(installedMcps.map((m) => String(m.name)));
+    const installedSkillNames = new Set(installedSkills.map((s) => String(s.name)));
+    const [topSkillsRes, trendingSkillsRes, topMcpsRes, trendingMcpsRes, marketplacePluginsRes] = await Promise.allSettled([
+      fetchTopSkills(),
+      fetchTrendingSkills(),
+      fetchTopMcps(),
+      fetchTrendingMcps(),
+      fetchMarketplacePlugins(home)
+    ]);
+    const topSkills = topSkillsRes.status === "fulfilled" ? topSkillsRes.value : [];
+    const trendingSkills = trendingSkillsRes.status === "fulfilled" ? trendingSkillsRes.value : [];
+    const topMcps = topMcpsRes.status === "fulfilled" ? topMcpsRes.value : [];
+    const trendingMcps = trendingMcpsRes.status === "fulfilled" ? trendingMcpsRes.value : [];
+    const marketplacePlugins = marketplacePluginsRes.status === "fulfilled" ? marketplacePluginsRes.value : [];
+    const sortedPlugins = marketplacePlugins.slice();
+    const halfIdx = Math.ceil(sortedPlugins.length / 2);
+    const topPluginsSource = sortedPlugins.slice(0, halfIdx);
+    const trendingPluginsSource = sortedPlugins.slice(halfIdx);
+    const recommendations = [];
+    recommendations.push(...buildSkillRecs(topSkills, "Top", installedSkillNames));
+    recommendations.push(...buildSkillRecs(trendingSkills, "Trending", installedSkillNames));
+    recommendations.push(...buildMcpRecs(topMcps, "Top", installedMcpNames));
+    recommendations.push(...buildMcpRecs(trendingMcps, "Trending", installedMcpNames));
+    recommendations.push(
+      ...buildPluginRecs(topPluginsSource, "Top", installedPluginNames)
+    );
+    recommendations.push(
+      ...buildPluginRecs(trendingPluginsSource, "Trending", installedPluginNames)
+    );
     const staticRecs = getStaticRecommendations();
+    const typesWithAny = new Set(recommendations.map((r) => r.type));
+    for (const type of ["skill", "mcp", "plugin"]) {
+      if (!typesWithAny.has(type)) {
+        for (const rec of staticRecs.filter((r) => r.type === type)) {
+          recommendations.push(rec);
+        }
+      }
+    }
     const result = {
-      recommendations: staticRecs,
+      recommendations,
       generatedAt: (/* @__PURE__ */ new Date()).toISOString(),
-      model: "static"
+      model: "generated-v2"
     };
     await mgr.saveCache(result);
     res.json(result);
   } catch (err) {
     console.error("[POST /api/recommendations]", err);
-    res.status(500).json({ error: "Failed to generate recommendations" });
+    const staticRecs = getStaticRecommendations();
+    res.json({
+      recommendations: staticRecs,
+      generatedAt: (/* @__PURE__ */ new Date()).toISOString(),
+      model: "static-fallback"
+    });
   }
 });
+async function safeList(fn) {
+  try {
+    return await fn();
+  } catch {
+    return [];
+  }
+}
+function parseSkillsOutput2(output) {
+  const results = [];
+  const lines = output.split("\n").map((l) => l.replace(/\x1b\[[0-9;]*m/g, "").trim()).filter(Boolean);
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const match = line?.match(
+      /^([\w\-.]+(?:\/[\w\-.]+)?@[\w\-.:]+)\s+([\d.]+[KMB]?\s+installs?)$/
+    );
+    if (match) {
+      const name = match[1] ?? "";
+      const installs = match[2] ?? "";
+      const urlLine = lines[i + 1] ?? "";
+      const urlMatch = urlLine.match(/(https:\/\/skills\.sh\/\S+)/);
+      const url = urlMatch ? urlMatch[1] : `https://skills.sh/${name.replace("@", "/")}`;
+      results.push({
+        name,
+        installs,
+        url,
+        installCommand: `npx skills add ${name}`
+      });
+      i++;
+    }
+  }
+  return results;
+}
+async function runSkillsFind(query) {
+  const skillsBin = resolve2(
+    process.cwd(),
+    "..",
+    "..",
+    "node_modules",
+    "skills",
+    "bin",
+    "cli.mjs"
+  );
+  const { stdout } = await exec2("node", [skillsBin, "find", query], {
+    timeout: 15e3,
+    env: { ...process.env, NO_COLOR: "1", FORCE_COLOR: "0" }
+  });
+  return parseSkillsOutput2(stdout);
+}
+async function runSkillsFindMany(queries) {
+  const settled = await Promise.allSettled(queries.map((q) => runSkillsFind(q)));
+  const all = [];
+  for (const s of settled) {
+    if (s.status === "fulfilled") all.push(...s.value);
+  }
+  return dedupeByName(all);
+}
+async function fetchTopSkills() {
+  return runSkillsFindMany(["popular", "skills", "best-practices", "code"]);
+}
+async function fetchTrendingSkills() {
+  return runSkillsFindMany(["trending", "new", "agents", "test"]);
+}
+function skillCategory(name) {
+  const lower = name.toLowerCase();
+  if (/test|playwright|e2e|vitest|jest/.test(lower)) return "testing";
+  if (/react|vue|frontend|ui|design|css|tailwind/.test(lower)) return "design";
+  if (/azure|aws|gcp|kubernetes|docker|devops|cicd/.test(lower)) return "devops";
+  if (/db|sql|database|postgres|mongo/.test(lower)) return "database";
+  if (/ai|llm|prompt|agent/.test(lower)) return "ai";
+  return "development";
+}
+function buildSkillRecs(results, popularity, installed) {
+  const recs = [];
+  for (const s of results) {
+    if (recs.length >= 10) break;
+    const bare = s.name.split("@")[0] ?? s.name;
+    if (installed.has(s.name) || installed.has(bare)) continue;
+    const installs = s.installs || "";
+    const reason = popularity === "Top" ? `Among the most-installed skills${installs ? ` (${installs})` : ""}` : `Currently trending on skills.sh${installs ? ` (${installs})` : ""}`;
+    recs.push({
+      name: s.name,
+      type: "skill",
+      description: `Skill from ${s.name.split("@")[0]}`,
+      reason,
+      popularity,
+      installCommand: s.installCommand,
+      url: s.url,
+      category: skillCategory(s.name)
+    });
+  }
+  return recs;
+}
+function mcpCategoryFromName(name, description) {
+  const lower = `${name} ${description}`.toLowerCase();
+  if (/sql|postgres|mysql|mongo|redis|sqlite|database/.test(lower)) return "database";
+  if (/docker|kubernetes|aws|azure|gcp|devops|deploy/.test(lower)) return "devops";
+  if (/github|git|gitlab|linear|jira|notion/.test(lower)) return "productivity";
+  if (/test|playwright|browser|selenium/.test(lower)) return "testing";
+  if (/ai|llm|model|agent|prompt/.test(lower)) return "ai";
+  return "development";
+}
+async function fetchNpmMcps(sortParam) {
+  const url = `https://registry.npmjs.org/-/v1/search?text=mcp+server&size=30&${sortParam}`;
+  const r = await fetch(url, { signal: AbortSignal.timeout(1e4) });
+  if (!r.ok) return [];
+  const data = await r.json();
+  if (!Array.isArray(data.objects)) return [];
+  return data.objects.map((obj) => {
+    const name = obj.package.name;
+    if (!name) return null;
+    return {
+      name,
+      description: obj.package.description ?? "",
+      url: obj.package.links?.repository ?? obj.package.links?.npm,
+      installCommand: `npx -y ${name}`,
+      category: mcpCategoryFromName(name, obj.package.description ?? "")
+    };
+  }).filter((v) => v !== null);
+}
+async function fetchOfficialMcps() {
+  const r = await fetch(
+    "https://registry.modelcontextprotocol.io/v0.1/servers?limit=30",
+    { signal: AbortSignal.timeout(1e4) }
+  );
+  if (!r.ok) return [];
+  const data = await r.json();
+  if (!Array.isArray(data.servers)) return [];
+  return data.servers.map((s) => {
+    if (!s.name) return null;
+    return {
+      name: s.name,
+      description: s.description ?? "",
+      url: s.repositoryUrl,
+      installCommand: `npx -y ${s.name}`,
+      category: mcpCategoryFromName(s.name, s.description ?? "")
+    };
+  }).filter((v) => v !== null);
+}
+async function fetchTopMcps() {
+  const [npmRes, officialRes] = await Promise.allSettled([
+    fetchNpmMcps("popularity=1.0"),
+    fetchOfficialMcps()
+  ]);
+  const merged = [];
+  if (officialRes.status === "fulfilled") merged.push(...officialRes.value);
+  if (npmRes.status === "fulfilled") merged.push(...npmRes.value);
+  return dedupeByName(merged);
+}
+async function fetchTrendingMcps() {
+  return fetchNpmMcps("quality=1.0");
+}
+function dedupeByName(items) {
+  const seen = /* @__PURE__ */ new Set();
+  const out = [];
+  for (const it of items) {
+    const key = it.name.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(it);
+  }
+  return out;
+}
+function buildMcpRecs(results, popularity, installed) {
+  const recs = [];
+  for (const m of results) {
+    if (recs.length >= 10) break;
+    if (installed.has(m.name)) continue;
+    const bare = m.name.replace(/^@[^/]+\//, "");
+    if (installed.has(bare)) continue;
+    const reason = popularity === "Top" ? "Widely used MCP server across the community" : "Trending MCP server gaining traction";
+    recs.push({
+      name: m.name,
+      type: "mcp",
+      description: m.description || `MCP server: ${m.name}`,
+      reason,
+      popularity,
+      installCommand: m.installCommand ?? `npx -y ${m.name}`,
+      url: m.url,
+      category: m.category ?? "development"
+    });
+  }
+  return recs;
+}
+async function fetchMarketplacePlugins(home) {
+  const mm = new MarketplaceManager(home);
+  let marketplaces = [];
+  try {
+    marketplaces = await mm.listMarketplaces();
+  } catch {
+    return [];
+  }
+  if (marketplaces.length === 0) return [];
+  const allPlugins = [];
+  const perMarketplace = await Promise.allSettled(
+    marketplaces.map(async (m) => {
+      try {
+        const plugins = await mm.listAvailablePlugins(m.name);
+        return plugins.map((p) => ({
+          name: p.name,
+          description: p.description || `Plugin from ${m.name}`,
+          marketplace: m.name,
+          url: p.homepage,
+          category: p.category ?? "development"
+        }));
+      } catch {
+        return [];
+      }
+    })
+  );
+  for (const r of perMarketplace) {
+    if (r.status === "fulfilled") {
+      allPlugins.push(...r.value);
+    }
+  }
+  return dedupeByName(allPlugins);
+}
+function buildPluginRecs(results, popularity, installed) {
+  const recs = [];
+  for (const p of results) {
+    if (recs.length >= 10) break;
+    if (installed.has(p.name)) continue;
+    const reason = popularity === "Top" ? `Top plugin from the ${p.marketplace} marketplace` : `Trending plugin from the ${p.marketplace} marketplace`;
+    recs.push({
+      name: p.name,
+      type: "plugin",
+      description: p.description,
+      reason,
+      popularity,
+      installCommand: `/plugin install ${p.name}@${p.marketplace}`,
+      url: p.url,
+      category: p.category ?? "development"
+    });
+  }
+  return recs;
+}
 function getStaticRecommendations() {
   return [
     // Skills (5)
