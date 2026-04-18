@@ -2,6 +2,14 @@
 
 All notable changes to claude-config-manager are documented here.
 
+## [1.0.4] — 2026-04-17
+
+### Changed
+- **Info dialogs**: Replaced browser `alert()` popups with themed `InfoDialog` component. Displays command in a proper code block with Copy button, consistent with dashboard design.
+
+### Added
+- New shared `InfoDialog` component for CLI-hint actions.
+
 ## [1.0.3] — 2026-04-17
 
 ### Fixed

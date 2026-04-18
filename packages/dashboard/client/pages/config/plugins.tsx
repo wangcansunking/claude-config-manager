@@ -6,6 +6,7 @@ import { SearchBox } from '@/components/shared/search-box';
 import { Button } from '@/components/shared/button';
 import { Tag } from '@/components/shared/tag';
 import { Select } from '@/components/shared/select';
+import { InfoDialog } from '@/components/shared/info-dialog';
 import { PluginItem } from '@/components/plugin-list/plugin-item';
 import type { Plugin } from '@/components/plugin-list/plugin-item';
 import { removePlugin, togglePlugin, addMarketplace, removeMarketplace } from '@/lib/api-client';
@@ -45,6 +46,7 @@ function InstalledTab() {
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<Plugin | null>(null);
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+  const [infoDialog, setInfoDialog] = useState<{ title: string; message: string; command?: string; commandNote?: string } | null>(null);
 
   const filtered = plugins.filter((p) =>
     p.name.toLowerCase().includes(search.toLowerCase())
@@ -179,9 +181,12 @@ function InstalledTab() {
               onClick={() => {
                 const cmd = `/plugin marketplace update ${selected.marketplace}`;
                 navigator.clipboard.writeText(cmd);
-                alert(
-                  `Dashboard cannot check for updates directly.\n\nCommand copied to clipboard:\n${cmd}\n\nPaste it into Claude Code to refresh this marketplace and pull the latest plugin versions.`,
-                );
+                setInfoDialog({
+                  title: 'Check for Updates',
+                  message: 'Dashboard cannot fetch marketplace updates directly — this runs in Claude Code.',
+                  command: cmd,
+                  commandNote: 'The command has been copied to your clipboard. Paste it into Claude Code to refresh this marketplace.',
+                });
               }}
             >
               Check Updates
@@ -243,6 +248,15 @@ function InstalledTab() {
           </div>
         )}
       </DetailPanel>
+
+      <InfoDialog
+        open={infoDialog !== null}
+        onClose={() => setInfoDialog(null)}
+        title={infoDialog?.title ?? ''}
+        message={infoDialog?.message ?? ''}
+        command={infoDialog?.command}
+        commandNote={infoDialog?.commandNote}
+      />
     </>
   );
 }
