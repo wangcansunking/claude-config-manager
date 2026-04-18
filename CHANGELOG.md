@@ -2,6 +2,16 @@
 
 All notable changes to claude-config-manager are documented here.
 
+## [1.0.2] — 2026-04-17
+
+### Fixed
+- **Plugins "Check Updates" button**: Converted no-op button to CLI-hint — copies `/plugin marketplace update <name>` to clipboard with instructions.
+- **Marketplace Install button**: Previously silent no-op. Now copies `/plugin install <name>@<marketplace>` to clipboard with "Copied!" feedback.
+- **MCP Servers "Add Server" button**: Previously had no handler. Now switches to the MCP Store tab where installation happens.
+
+### Changed
+- Added optional `title` prop to shared Button component for native tooltips on CLI-hint actions.
+
 ## [1.0.1] — 2026-04-17
 
 ### Fixed
