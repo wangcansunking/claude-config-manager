@@ -32733,18 +32733,22 @@ var McpManager = class {
 import { join as join5 } from "path";
 import { readdir, readFile as readFile2 } from "fs/promises";
 function parseFrontmatter(content) {
-  const match = /^---\s*\n([\s\S]*?)\n---/.exec(content);
+  const match = /^---\s*\r?\n([\s\S]*?)\r?\n---/.exec(content);
   if (!match)
     return {};
   const block = match[1] ?? "";
   const result = {};
-  for (const line of block.split("\n")) {
-    const colonIdx = line.indexOf(":");
-    if (colonIdx === -1)
-      continue;
-    const key = line.slice(0, colonIdx).trim();
-    const value = line.slice(colonIdx + 1).trim();
-    result[key] = value;
+  let currentKey = null;
+  const lines = block.split(/\r?\n/);
+  for (const line of lines) {
+    const keyMatch = /^([A-Za-z_][A-Za-z0-9_-]*)\s*:\s*(.*)$/.exec(line);
+    if (keyMatch) {
+      const [, key, value] = keyMatch;
+      currentKey = key;
+      result[key] = value.trim();
+    } else if (currentKey && line.trim()) {
+      result[currentKey] = `${result[currentKey]} ${line.trim()}`.trim();
+    }
   }
   return {
     name: result["name"],

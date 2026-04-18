@@ -2,6 +2,12 @@
 
 All notable changes to claude-config-manager are documented here.
 
+## [1.0.3] — 2026-04-17
+
+### Fixed
+- **Skill/Command viewer**: Frontmatter was being displayed as markdown content. Now the YAML frontmatter block (`--- ... ---`) is stripped before rendering.
+- **Frontmatter parser**: Now supports CRLF line endings (Windows files) and multi-line values (YAML continuation lines). Previously multi-line descriptions were only parsed as the first line.
+
 ## [1.0.2] — 2026-04-17
 
 ### Fixed
