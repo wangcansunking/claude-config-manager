@@ -11,6 +11,7 @@ export interface SessionInfo {
   cwd: string;
   startedAt: number;
   alive: boolean;
+  name?: string;
   lastMessage?: string;
   ide?: {
     name: string;
@@ -131,6 +132,7 @@ export class SessionManager {
           sessionId: string;
           cwd: string;
           startedAt: number;
+          name?: string;
         };
 
         const alive = this.isProcessAlive(data.pid);
@@ -145,6 +147,7 @@ export class SessionManager {
           existing.startedAt = data.startedAt;
           existing.ide = ide;
           existing.projectConfig = projectConfig;
+          if (data.name) existing.name = data.name;
         } else {
           sessionMap.set(data.sessionId, {
             ...data,

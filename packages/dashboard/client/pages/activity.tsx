@@ -22,6 +22,7 @@ interface SessionInfo {
   cwd: string;
   startedAt: number;
   alive: boolean;
+  name?: string;
   lastMessage?: string;
   ide?: IdeInfo;
   projectConfig?: ProjectConfig;
@@ -62,6 +63,50 @@ function truncateMessage(msg: string, maxLen = 120): string {
   const oneLine = msg.replace(/\n/g, ' ').trim();
   if (oneLine.length <= maxLen) return oneLine;
   return oneLine.slice(0, maxLen) + '...';
+}
+
+function buildResumeCommand(sessionId: string): string {
+  return `claude --resume ${sessionId}`;
+}
+
+function CopyResumeButton({ sessionId, size = 'sm' }: { sessionId: string; size?: 'sm' | 'md' }) {
+  const [copied, setCopied] = useState(false);
+  const handle = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(buildResumeCommand(sessionId));
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1500);
+  };
+  const isSm = size === 'sm';
+  return (
+    <button
+      onClick={handle}
+      className="inline-flex items-center gap-1 rounded transition-colors hover:bg-bg-hover"
+      style={{
+        padding: isSm ? '2px 6px' : '4px 10px',
+        fontSize: isSm ? '11px' : '12px',
+        color: copied ? 'var(--status-green)' : 'var(--text-muted)',
+        border: '1px solid var(--card-border)',
+      }}
+      title={copied ? 'Copied!' : `Copy: ${buildResumeCommand(sessionId)}`}
+    >
+      {copied ? (
+        <>
+          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+          Copied
+        </>
+      ) : (
+        <>
+          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+          </svg>
+          Resume
+        </>
+      )}
+    </button>
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -160,14 +205,24 @@ function SessionRow({
       />
 
       <div className="flex-1 min-w-0">
-        {/* Top row: session ID + PID + IDE + config icons */}
+        {/* Top row: name (or sessionId) + PID + IDE + config icons + resume */}
         <div className="flex items-center gap-2 mb-1 flex-wrap">
-          <span
-            className="font-mono text-sm font-medium"
-            style={{ color: 'var(--accent-light)' }}
-          >
-            {session.sessionId}
-          </span>
+          {session.name ? (
+            <span
+              className="text-sm font-medium truncate max-w-full"
+              style={{ color: 'var(--text-primary)' }}
+              title={session.name}
+            >
+              {session.name}
+            </span>
+          ) : (
+            <span
+              className="font-mono text-sm font-medium"
+              style={{ color: 'var(--accent-light)' }}
+            >
+              {session.sessionId}
+            </span>
+          )}
           {session.pid > 0 && (
             <Tag label={`PID ${session.pid}`} variant="gray" />
           )}
@@ -192,7 +247,17 @@ function SessionRow({
               ⚙️
             </span>
           )}
+          <span className="ml-auto">
+            <CopyResumeButton sessionId={session.sessionId} />
+          </span>
         </div>
+
+        {/* If we have a name, show the sessionId as a secondary line */}
+        {session.name && (
+          <p className="font-mono text-xs truncate" style={{ color: 'var(--text-muted)' }}>
+            {session.sessionId}
+          </p>
+        )}
 
         {/* Working directory */}
         <p className="font-mono text-xs truncate" style={{ color: 'var(--text-secondary)' }}>
@@ -278,7 +343,7 @@ function SessionSlidePanel({
           width: '60%',
           minWidth: '480px',
           maxWidth: '900px',
-          backgroundColor: 'var(--card-bg)',
+          backgroundColor: 'var(--bg-secondary)',
           borderLeft: '1px solid var(--card-border)',
           transform: open ? 'translateX(0)' : 'translateX(100%)',
           transition: 'transform 0.25s ease-in-out',
@@ -322,10 +387,10 @@ function SessionPanelContent({
     <>
       {/* Header bar */}
       <div
-        className="flex items-center justify-between px-6 py-4 shrink-0"
-        style={{ borderBottom: '1px solid var(--border)', backgroundColor: 'var(--bg-secondary)' }}
+        className="flex items-center justify-between px-6 py-4 shrink-0 gap-3"
+        style={{ borderBottom: '1px solid var(--border)' }}
       >
-        <div className="flex items-center gap-3 min-w-0">
+        <div className="flex items-center gap-3 min-w-0 flex-1">
           {/* Status dot */}
           <span
             className="inline-block w-3 h-3 rounded-full shrink-0"
@@ -333,20 +398,34 @@ function SessionPanelContent({
               backgroundColor: session.alive ? 'var(--status-green)' : 'var(--text-muted)',
             }}
           />
-          <span className="text-base font-medium" style={{ color: 'var(--text-primary)' }}>
-            {session.pid > 0 ? `PID ${session.pid}` : 'Session'}
-          </span>
-          <Tag
-            label={session.alive ? 'Running' : 'Terminated'}
-            variant={session.alive ? 'green' : 'gray'}
-          />
-          {session.ide && (
-            <Tag
-              label={`${session.ide.name} (${session.ide.transport})`}
-              variant="purple"
-            />
-          )}
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span
+                className="text-base font-medium truncate"
+                style={{ color: 'var(--text-primary)' }}
+                title={session.name ?? undefined}
+              >
+                {session.name ?? (session.pid > 0 ? `PID ${session.pid}` : 'Session')}
+              </span>
+              <Tag
+                label={session.alive ? 'Running' : 'Terminated'}
+                variant={session.alive ? 'green' : 'gray'}
+              />
+              {session.ide && (
+                <Tag
+                  label={`${session.ide.name} (${session.ide.transport})`}
+                  variant="purple"
+                />
+              )}
+            </div>
+            {session.name && session.pid > 0 && (
+              <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
+                PID {session.pid}
+              </p>
+            )}
+          </div>
         </div>
+        <CopyResumeButton sessionId={session.sessionId} size="md" />
         <button
           className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors hover:bg-bg-hover"
           style={{ color: 'var(--text-secondary)' }}
@@ -370,7 +449,7 @@ function SessionPanelContent({
           </h3>
           <div
             className="rounded-lg p-4 space-y-3"
-            style={{ backgroundColor: 'var(--bg-secondary)' }}
+            style={{ backgroundColor: 'var(--bg-tertiary)', border: '1px solid var(--border)' }}
           >
             <MetaRow label="Session ID">
               <code className="text-xs font-mono break-all" style={{ color: 'var(--accent-light)' }}>
@@ -495,7 +574,7 @@ function SessionPanelContent({
                       <div
                         key={i}
                         className="rounded-lg p-3"
-                        style={{ backgroundColor: 'var(--bg-secondary)' }}
+                        style={{ backgroundColor: 'var(--bg-tertiary)', border: '1px solid var(--border)' }}
                       >
                         <div className="flex items-center justify-between mb-1">
                           <Tag label={entry.role ?? 'user'} variant="blue" />

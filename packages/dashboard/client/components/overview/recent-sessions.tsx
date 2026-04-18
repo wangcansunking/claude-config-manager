@@ -6,6 +6,7 @@ interface SessionInfo {
   cwd: string;
   startedAt: number;
   alive: boolean;
+  name?: string;
   lastMessage?: string;
   projectDir?: string;
 }
@@ -94,6 +95,17 @@ export function RecentSessions() {
               />
 
               <div className="flex-1 min-w-0">
+                {/* Session name (if set) */}
+                {session.name && (
+                  <p
+                    className="text-sm font-medium truncate mb-0.5"
+                    style={{ color: 'var(--text-primary)' }}
+                    title={session.name}
+                  >
+                    {session.name}
+                  </p>
+                )}
+
                 {/* Project path */}
                 <p
                   className="font-mono text-xs truncate mb-0.5"
