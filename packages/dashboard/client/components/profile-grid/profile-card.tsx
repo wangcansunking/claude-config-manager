@@ -17,12 +17,11 @@ export interface Profile {
 interface ProfileCardProps {
   profile: Profile;
   onActivate: () => void;
-  onEdit: () => void;
   onExport: () => void;
   onDelete: () => void;
 }
 
-export function ProfileCard({ profile, onActivate, onEdit, onExport, onDelete }: ProfileCardProps) {
+export function ProfileCard({ profile, onActivate, onExport, onDelete }: ProfileCardProps) {
   const pluginCount = profile.plugins?.length ?? 0;
   const mcpCount = Object.keys(profile.mcpServers ?? {}).length;
 
@@ -79,7 +78,6 @@ export function ProfileCard({ profile, onActivate, onEdit, onExport, onDelete }:
         >
           {profile.active ? 'Active' : 'Activate'}
         </Button>
-        <Button variant="secondary" size="sm" onClick={onEdit}>Edit</Button>
         <Button variant="secondary" size="sm" onClick={onExport}>Export</Button>
         <Button variant="danger" size="sm" onClick={onDelete}>Delete</Button>
       </div>
