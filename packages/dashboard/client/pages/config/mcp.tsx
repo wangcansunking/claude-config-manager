@@ -728,18 +728,14 @@ export default function McpServersPage() {
             tags={selected ? [
               { label: selected.enabled !== false ? 'Connected' : 'Disabled', variant: selected.enabled !== false ? 'green' : 'red' },
             ] : []}
-            actions={selected ? (
-              <>
-                <Button variant="secondary" size="sm">Edit Config</Button>
-                <Button variant="secondary" size="sm">Restart</Button>
-                <Button
-                  variant="danger"
-                  size="sm"
-                  onClick={() => handleRemove(selected.name)}
-                >
-                  Remove
-                </Button>
-              </>
+            actions={selected && selected.source !== 'system' ? (
+              <Button
+                variant="danger"
+                size="sm"
+                onClick={() => handleRemove(selected.name)}
+              >
+                Remove
+              </Button>
             ) : undefined}
           >
             {selected && (
