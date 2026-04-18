@@ -107,6 +107,8 @@ export class SessionManager {
                     existing.startedAt = data.startedAt;
                     existing.ide = ide;
                     existing.projectConfig = projectConfig;
+                    if (data.name)
+                        existing.name = data.name;
                 }
                 else {
                     sessionMap.set(data.sessionId, {

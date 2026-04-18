@@ -4,6 +4,7 @@ export interface SessionInfo {
     cwd: string;
     startedAt: number;
     alive: boolean;
+    name?: string;
     lastMessage?: string;
     ide?: {
         name: string;

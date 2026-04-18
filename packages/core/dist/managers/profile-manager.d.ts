@@ -10,8 +10,23 @@ export declare class ProfileManager {
     private readonly settingsPath;
     private readonly pluginsJsonPath;
     private readonly activeProfilePath;
+    private readonly userSkillsDir;
+    private readonly userCommandsDir;
     constructor(claudeHome: string);
     private profilePath;
+    /**
+     * Scan ~/.claude/skills/<name>/Skill.md or ~/.claude/commands/<name>/Skill.md
+     * and return full content for each user-created asset.
+     */
+    private collectUserAssets;
+    /**
+     * Merge two UserAsset arrays by name. Incoming assets override existing ones.
+     */
+    private mergeAssetsByName;
+    /**
+     * Write user skills/commands back to ~/.claude/skills/<name>/Skill.md or commands
+     */
+    private restoreUserAssets;
     private readSettings;
     private readInstalledPlugins;
     list(): Promise<ProfileSummary[]>;

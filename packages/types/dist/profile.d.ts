@@ -42,7 +42,26 @@ export declare const ProfileSchema: z.ZodObject<{
         env?: Record<string, string> | undefined;
     }>>;
     settings: z.ZodRecord<z.ZodString, z.ZodUnknown>;
-    commands: z.ZodArray<z.ZodUnknown, "many">;
+    commands: z.ZodArray<z.ZodObject<{
+        name: z.ZodString;
+        content: z.ZodString;
+    }, "strip", z.ZodTypeAny, {
+        name: string;
+        content: string;
+    }, {
+        name: string;
+        content: string;
+    }>, "many">;
+    skills: z.ZodOptional<z.ZodArray<z.ZodObject<{
+        name: z.ZodString;
+        content: z.ZodString;
+    }, "strip", z.ZodTypeAny, {
+        name: string;
+        content: string;
+    }, {
+        name: string;
+        content: string;
+    }>, "many">>;
     hooks: z.ZodRecord<z.ZodString, z.ZodUnknown>;
     description: z.ZodOptional<z.ZodString>;
 }, "strip", z.ZodTypeAny, {
@@ -65,7 +84,14 @@ export declare const ProfileSchema: z.ZodObject<{
         installedAt: string;
         lastUpdated: string;
     }[];
-    commands: unknown[];
+    commands: {
+        name: string;
+        content: string;
+    }[];
+    skills?: {
+        name: string;
+        content: string;
+    }[] | undefined;
     description?: string | undefined;
 }, {
     mcpServers: Record<string, {
@@ -87,7 +113,14 @@ export declare const ProfileSchema: z.ZodObject<{
         installedAt: string;
         lastUpdated: string;
     }[];
-    commands: unknown[];
+    commands: {
+        name: string;
+        content: string;
+    }[];
+    skills?: {
+        name: string;
+        content: string;
+    }[] | undefined;
     description?: string | undefined;
 }>;
 export type Profile = z.infer<typeof ProfileSchema>;
@@ -161,7 +194,26 @@ export declare const ProfileExportSchema: z.ZodObject<{
     }>>;
     settings: z.ZodRecord<z.ZodString, z.ZodUnknown>;
     hooks: z.ZodRecord<z.ZodString, z.ZodUnknown>;
-    commands: z.ZodArray<z.ZodUnknown, "many">;
+    commands: z.ZodArray<z.ZodObject<{
+        name: z.ZodString;
+        content: z.ZodString;
+    }, "strip", z.ZodTypeAny, {
+        name: string;
+        content: string;
+    }, {
+        name: string;
+        content: string;
+    }>, "many">;
+    skills: z.ZodOptional<z.ZodArray<z.ZodObject<{
+        name: z.ZodString;
+        content: z.ZodString;
+    }, "strip", z.ZodTypeAny, {
+        name: string;
+        content: string;
+    }, {
+        name: string;
+        content: string;
+    }>, "many">>;
     description: z.ZodOptional<z.ZodString>;
     exportedAt: z.ZodOptional<z.ZodString>;
 }, "strip", z.ZodTypeAny, {
@@ -187,7 +239,14 @@ export declare const ProfileExportSchema: z.ZodObject<{
             lastUpdated: string;
         }[];
     };
-    commands: unknown[];
+    commands: {
+        name: string;
+        content: string;
+    }[];
+    skills?: {
+        name: string;
+        content: string;
+    }[] | undefined;
     description?: string | undefined;
     exportedAt?: string | undefined;
 }, {
@@ -213,7 +272,14 @@ export declare const ProfileExportSchema: z.ZodObject<{
             lastUpdated: string;
         }[];
     };
-    commands: unknown[];
+    commands: {
+        name: string;
+        content: string;
+    }[];
+    skills?: {
+        name: string;
+        content: string;
+    }[] | undefined;
     description?: string | undefined;
     exportedAt?: string | undefined;
 }>;

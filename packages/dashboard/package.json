@@ -1,6 +1,6 @@
 {
   "name": "@ccm/dashboard",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "type": "module",
   "scripts": {
     "dev": "concurrently \"vite\" \"tsx watch server/index.ts\"",

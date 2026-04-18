@@ -4948,10 +4948,10 @@ var require_raw_body = __commonJS({
       if (done) {
         return readStream(stream, encoding, length, limit, wrap(done));
       }
-      return new Promise(function executor(resolve3, reject) {
+      return new Promise(function executor(resolve, reject) {
         readStream(stream, encoding, length, limit, function onRead(err, buf) {
           if (err) return reject(err);
-          resolve3(buf);
+          resolve(buf);
         });
       });
     }
@@ -18412,8 +18412,8 @@ var require_view = __commonJS({
     var dirname5 = path.dirname;
     var basename = path.basename;
     var extname = path.extname;
-    var join13 = path.join;
-    var resolve3 = path.resolve;
+    var join14 = path.join;
+    var resolve = path.resolve;
     module.exports = View;
     function View(name, options) {
       var opts = options || {};
@@ -18447,7 +18447,7 @@ var require_view = __commonJS({
       debug2('lookup "%s"', name);
       for (var i = 0; i < roots.length && !path2; i++) {
         var root = roots[i];
-        var loc = resolve3(root, name);
+        var loc = resolve(root, name);
         var dir = dirname5(loc);
         var file = basename(loc);
         path2 = this.resolve(dir, file);
@@ -18458,14 +18458,14 @@ var require_view = __commonJS({
       debug2('render "%s"', this.path);
       this.engine(this.path, options, callback);
     };
-    View.prototype.resolve = function resolve4(dir, file) {
+    View.prototype.resolve = function resolve2(dir, file) {
       var ext = this.ext;
-      var path2 = join13(dir, file);
+      var path2 = join14(dir, file);
       var stat2 = tryStat(path2);
       if (stat2 && stat2.isFile()) {
         return path2;
       }
-      path2 = join13(dir, basename(file, ext), "index" + ext);
+      path2 = join14(dir, basename(file, ext), "index" + ext);
       stat2 = tryStat(path2);
       if (stat2 && stat2.isFile()) {
         return path2;
@@ -19098,9 +19098,9 @@ var require_send = __commonJS({
     var Stream = __require("stream");
     var util2 = __require("util");
     var extname = path.extname;
-    var join13 = path.join;
+    var join14 = path.join;
     var normalize2 = path.normalize;
-    var resolve3 = path.resolve;
+    var resolve = path.resolve;
     var sep = path.sep;
     var BYTES_RANGE_REGEXP = /^ *bytes=/;
     var MAX_MAXAGE = 60 * 60 * 24 * 365 * 1e3;
@@ -19137,7 +19137,7 @@ var require_send = __commonJS({
       this._maxage = opts.maxAge || opts.maxage;
       this._maxage = typeof this._maxage === "string" ? ms(this._maxage) : Number(this._maxage);
       this._maxage = !isNaN(this._maxage) ? Math.min(Math.max(0, this._maxage), MAX_MAXAGE) : 0;
-      this._root = opts.root ? resolve3(opts.root) : null;
+      this._root = opts.root ? resolve(opts.root) : null;
       if (!this._root && opts.from) {
         this.from(opts.from);
       }
@@ -19161,7 +19161,7 @@ var require_send = __commonJS({
       return this;
     }, "send.index: pass index as option");
     SendStream.prototype.root = function root(path2) {
-      this._root = resolve3(String(path2));
+      this._root = resolve(String(path2));
       debug2("root %s", this._root);
       return this;
     };
@@ -19317,7 +19317,7 @@ var require_send = __commonJS({
           return res;
         }
         parts = path2.split(sep);
-        path2 = normalize2(join13(root, path2));
+        path2 = normalize2(join14(root, path2));
       } else {
         if (UP_PATH_REGEXP.test(path2)) {
           debug2('malicious path "%s"', path2);
@@ -19325,7 +19325,7 @@ var require_send = __commonJS({
           return res;
         }
         parts = normalize2(path2).split(sep);
-        path2 = resolve3(path2);
+        path2 = resolve(path2);
       }
       if (containsDotFile(parts)) {
         var access2 = this._dotfiles;
@@ -19452,7 +19452,7 @@ var require_send = __commonJS({
           if (err) return self.onStatError(err);
           return self.error(404);
         }
-        var p = join13(path2, self._index[i]);
+        var p = join14(path2, self._index[i]);
         debug2('stat "%s"', p);
         fs.stat(p, function(err2, stat2) {
           if (err2) return next(err2);
@@ -20604,7 +20604,7 @@ var require_application = __commonJS({
     var deprecate = require_depd()("express");
     var flatten = require_array_flatten();
     var merge = require_utils_merge();
-    var resolve3 = __require("path").resolve;
+    var resolve = __require("path").resolve;
     var setPrototypeOf = require_setprototypeof();
     var hasOwnProperty = Object.prototype.hasOwnProperty;
     var slice = Array.prototype.slice;
@@ -20643,7 +20643,7 @@ var require_application = __commonJS({
       this.mountpath = "/";
       this.locals.settings = this.settings;
       this.set("view", View);
-      this.set("views", resolve3("views"));
+      this.set("views", resolve("views"));
       this.set("jsonp callback name", "callback");
       if (env === "production") {
         this.enable("view cache");
@@ -21888,7 +21888,7 @@ var require_response = __commonJS({
     var send = require_send();
     var extname = path.extname;
     var mime = send.mime;
-    var resolve3 = path.resolve;
+    var resolve = path.resolve;
     var vary = require_vary();
     var res = Object.create(http.ServerResponse.prototype);
     module.exports = res;
@@ -22147,7 +22147,7 @@ var require_response = __commonJS({
       }
       opts = Object.create(opts);
       opts.headers = headers;
-      var fullPath = !opts.root ? resolve3(path2) : path2;
+      var fullPath = !opts.root ? resolve(path2) : path2;
       return this.sendFile(fullPath, opts, done);
     };
     res.contentType = res.type = function contentType(type) {
@@ -22413,7 +22413,7 @@ var require_serve_static = __commonJS({
     var encodeUrl = require_encodeurl();
     var escapeHtml = require_escape_html();
     var parseUrl = require_parseurl();
-    var resolve3 = __require("path").resolve;
+    var resolve = __require("path").resolve;
     var send = require_send();
     var url = __require("url");
     module.exports = serveStatic;
@@ -22433,7 +22433,7 @@ var require_serve_static = __commonJS({
         throw new TypeError("option setHeaders must be function");
       }
       opts.maxage = opts.maxage || opts.maxAge || 0;
-      opts.root = resolve3(root);
+      opts.root = resolve(root);
       var onDirectory = redirect ? createRedirectDirectoryListener() : createNotFoundDirectoryListener();
       return function serveStatic2(req, res, next) {
         if (req.method !== "GET" && req.method !== "HEAD") {
@@ -25361,12 +25361,12 @@ var require_readdirp = __commonJS({
     var fs = __require("fs");
     var { Readable } = __require("stream");
     var sysPath = __require("path");
-    var { promisify: promisify3 } = __require("util");
+    var { promisify } = __require("util");
     var picomatch = require_picomatch2();
-    var readdir5 = promisify3(fs.readdir);
-    var stat2 = promisify3(fs.stat);
-    var lstat = promisify3(fs.lstat);
-    var realpath = promisify3(fs.realpath);
+    var readdir5 = promisify(fs.readdir);
+    var stat2 = promisify(fs.stat);
+    var lstat = promisify(fs.lstat);
+    var realpath = promisify(fs.realpath);
     var BANG = "!";
     var RECURSIVE_ERROR_CODE = "READDIRP_RECURSIVE_ERROR";
     var NORMAL_FLOW_ERRORS = /* @__PURE__ */ new Set(["ENOENT", "EPERM", "EACCES", "ELOOP", RECURSIVE_ERROR_CODE]);
@@ -25572,9 +25572,9 @@ var require_readdirp = __commonJS({
       return new ReaddirpStream(options);
     };
     var readdirpPromise = (root, options = {}) => {
-      return new Promise((resolve3, reject) => {
+      return new Promise((resolve, reject) => {
         const files = [];
-        readdirp(root, options).on("data", (entry) => files.push(entry)).on("end", () => resolve3(files)).on("error", (error) => reject(error));
+        readdirp(root, options).on("data", (entry) => files.push(entry)).on("end", () => resolve(files)).on("error", (error) => reject(error));
       });
     };
     readdirp.promise = readdirpPromise;
@@ -27294,7 +27294,7 @@ var require_nodefs_handler = __commonJS({
     "use strict";
     var fs = __require("fs");
     var sysPath = __require("path");
-    var { promisify: promisify3 } = __require("util");
+    var { promisify } = __require("util");
     var isBinaryPath = require_is_binary_path();
     var {
       isWindows,
@@ -27315,11 +27315,11 @@ var require_nodefs_handler = __commonJS({
       STAR
     } = require_constants3();
     var THROTTLE_MODE_WATCH = "watch";
-    var open = promisify3(fs.open);
-    var stat2 = promisify3(fs.stat);
-    var lstat = promisify3(fs.lstat);
-    var close = promisify3(fs.close);
-    var fsrealpath = promisify3(fs.realpath);
+    var open = promisify(fs.open);
+    var stat2 = promisify(fs.stat);
+    var lstat = promisify(fs.lstat);
+    var close = promisify(fs.close);
+    var fsrealpath = promisify(fs.realpath);
     var statMethods = { lstat, stat: stat2 };
     var foreach = (val, fn) => {
       if (val instanceof Set) {
@@ -27653,13 +27653,13 @@ var require_nodefs_handler = __commonJS({
           }
         }).on(EV_ERROR, this._boundHandleError);
         return new Promise(
-          (resolve3) => stream.once(STR_END, () => {
+          (resolve) => stream.once(STR_END, () => {
             if (this.fsw.closed) {
               stream = void 0;
               return;
             }
             const wasThrottled = throttler ? throttler.clear() : false;
-            resolve3();
+            resolve();
             previous.getChildren().filter((item) => {
               return item !== directory && !current.has(item) && // in case of intersecting globs;
               // a path may have been filtered out of this readdir, but
@@ -27785,7 +27785,7 @@ var require_fsevents_handler = __commonJS({
     "use strict";
     var fs = __require("fs");
     var sysPath = __require("path");
-    var { promisify: promisify3 } = __require("util");
+    var { promisify } = __require("util");
     var fsevents;
     try {
       fsevents = __require("fsevents");
@@ -27828,9 +27828,9 @@ var require_fsevents_handler = __commonJS({
       IDENTITY_FN
     } = require_constants3();
     var Depth = (value) => isNaN(value) ? {} : { depth: value };
-    var stat2 = promisify3(fs.stat);
-    var lstat = promisify3(fs.lstat);
-    var realpath = promisify3(fs.realpath);
+    var stat2 = promisify(fs.stat);
+    var lstat = promisify(fs.lstat);
+    var realpath = promisify(fs.realpath);
     var statMethods = { stat: stat2, lstat };
     var FSEventsWatchers = /* @__PURE__ */ new Map();
     var consolidateThreshhold = 10;
@@ -28182,7 +28182,7 @@ var require_chokidar = __commonJS({
     var { EventEmitter: EventEmitter2 } = __require("events");
     var fs = __require("fs");
     var sysPath = __require("path");
-    var { promisify: promisify3 } = __require("util");
+    var { promisify } = __require("util");
     var readdirp = require_readdirp();
     var anymatch = require_anymatch().default;
     var globParent = require_glob_parent();
@@ -28225,8 +28225,8 @@ var require_chokidar = __commonJS({
       isMacos,
       isIBMi
     } = require_constants3();
-    var stat2 = promisify3(fs.stat);
-    var readdir5 = promisify3(fs.readdir);
+    var stat2 = promisify(fs.stat);
+    var readdir5 = promisify(fs.readdir);
     var arrify = (value = []) => Array.isArray(value) ? value : [value];
     var flatten = (list, result = []) => {
       list.forEach((item) => {
@@ -28923,7 +28923,7 @@ var require_chokidar = __commonJS({
 // server/index.ts
 var import_express15 = __toESM(require_express2(), 1);
 var import_cors = __toESM(require_lib3(), 1);
-import { join as join12, dirname as dirname4 } from "path";
+import { join as join13, dirname as dirname4 } from "path";
 import { fileURLToPath as fileURLToPath2 } from "url";
 
 // server/routes/stats.ts
@@ -33061,6 +33061,10 @@ var ClaudeSettingsSchema = external_exports.object({
 });
 
 // ../types/dist/profile.js
+var UserAssetSchema = external_exports.object({
+  name: external_exports.string(),
+  content: external_exports.string()
+});
 var ProfileSchema = external_exports.object({
   name: external_exports.string(),
   createdAt: external_exports.string(),
@@ -33068,7 +33072,8 @@ var ProfileSchema = external_exports.object({
   plugins: external_exports.array(InstalledPluginSchema),
   mcpServers: external_exports.record(McpServerConfigSchema),
   settings: external_exports.record(external_exports.unknown()),
-  commands: external_exports.array(external_exports.unknown()),
+  commands: external_exports.array(UserAssetSchema),
+  skills: external_exports.array(UserAssetSchema).optional(),
   hooks: external_exports.record(external_exports.unknown()),
   description: external_exports.string().optional()
 });
@@ -33083,7 +33088,8 @@ var ProfileExportSchema = external_exports.object({
   mcpServers: external_exports.record(McpServerConfigSchema),
   settings: external_exports.record(external_exports.unknown()),
   hooks: external_exports.record(external_exports.unknown()),
-  commands: external_exports.array(external_exports.unknown()),
+  commands: external_exports.array(UserAssetSchema),
+  skills: external_exports.array(UserAssetSchema).optional(),
   description: external_exports.string().optional(),
   exportedAt: external_exports.string().optional()
 });
@@ -33674,20 +33680,80 @@ var SkillScanner = class {
 
 // ../core/dist/managers/profile-manager.js
 import { join as join6 } from "path";
-import { readdir as readdir2 } from "fs/promises";
+import { readdir as readdir2, readFile as readFile3, writeFile as writeFile2, mkdir as mkdir2 } from "fs/promises";
 var ProfileManager = class {
   profilesDir;
   settingsPath;
   pluginsJsonPath;
   activeProfilePath;
+  userSkillsDir;
+  userCommandsDir;
   constructor(claudeHome) {
     this.profilesDir = join6(claudeHome, "plugins", "profiles");
     this.settingsPath = join6(claudeHome, "settings.json");
     this.pluginsJsonPath = join6(claudeHome, "plugins", "installed_plugins.json");
     this.activeProfilePath = join6(claudeHome, "plugins", "profiles", "active.json");
+    this.userSkillsDir = join6(claudeHome, "skills");
+    this.userCommandsDir = join6(claudeHome, "commands");
   }
   profilePath(name) {
     return join6(this.profilesDir, `${name}.json`);
+  }
+  /**
+   * Scan ~/.claude/skills/<name>/Skill.md or ~/.claude/commands/<name>/Skill.md
+   * and return full content for each user-created asset.
+   */
+  async collectUserAssets(dir) {
+    const assets = [];
+    if (!await fileExists(dir))
+      return assets;
+    let subdirs;
+    try {
+      const entries = await readdir2(dir, { withFileTypes: true });
+      subdirs = entries.filter((e) => e.isDirectory()).map((e) => e.name);
+    } catch {
+      return assets;
+    }
+    for (const name of subdirs) {
+      const skillPath = join6(dir, name, "Skill.md");
+      if (!await fileExists(skillPath))
+        continue;
+      try {
+        const content = await readFile3(skillPath, "utf-8");
+        assets.push({ name, content });
+      } catch {
+      }
+    }
+    return assets;
+  }
+  /**
+   * Merge two UserAsset arrays by name. Incoming assets override existing ones.
+   */
+  mergeAssetsByName(existing, incoming) {
+    const byName = /* @__PURE__ */ new Map();
+    for (const a of existing)
+      byName.set(a.name, a);
+    for (const a of incoming)
+      byName.set(a.name, a);
+    return Array.from(byName.values());
+  }
+  /**
+   * Write user skills/commands back to ~/.claude/skills/<name>/Skill.md or commands
+   */
+  async restoreUserAssets(dir, assets) {
+    if (!assets || assets.length === 0)
+      return;
+    await mkdir2(dir, { recursive: true });
+    for (const asset of assets) {
+      if (!asset.name || !asset.content)
+        continue;
+      const safeName = asset.name.replace(/[\\\/\.]/g, "_");
+      if (!safeName)
+        continue;
+      const targetDir = join6(dir, safeName);
+      await mkdir2(targetDir, { recursive: true });
+      await writeFile2(join6(targetDir, "Skill.md"), asset.content, "utf-8");
+    }
   }
   async readSettings() {
     try {
@@ -33777,6 +33843,8 @@ var ProfileManager = class {
       }
       return {};
     })();
+    const userSkills = await this.collectUserAssets(this.userSkillsDir);
+    const userCommands = await this.collectUserAssets(this.userCommandsDir);
     const now = (/* @__PURE__ */ new Date()).toISOString();
     const profile = {
       name,
@@ -33786,7 +33854,8 @@ var ProfileManager = class {
       mcpServers,
       settings,
       hooks,
-      commands: []
+      commands: userCommands,
+      skills: userSkills
     };
     await writeJsonFile(this.profilePath(name), profile);
     return profile;
@@ -33814,7 +33883,27 @@ var ProfileManager = class {
     }
     const data = await readJsonFile(filePath);
     const profile = data;
-    await writeJsonFile(this.settingsPath, profile.settings);
+    const mergedSettings = { ...profile.settings ?? {} };
+    if (profile.mcpServers && Object.keys(profile.mcpServers).length > 0) {
+      mergedSettings["mcpServers"] = profile.mcpServers;
+    }
+    if (profile.hooks && Object.keys(profile.hooks).length > 0) {
+      mergedSettings["hooks"] = profile.hooks;
+    }
+    const enabledPlugins = {};
+    for (const plugin of profile.plugins ?? []) {
+      enabledPlugins[plugin.name] = plugin.enabled;
+    }
+    if (Object.keys(enabledPlugins).length > 0) {
+      mergedSettings["enabledPlugins"] = enabledPlugins;
+    }
+    await writeJsonFile(this.settingsPath, mergedSettings);
+    if (profile.skills && Array.isArray(profile.skills)) {
+      await this.restoreUserAssets(this.userSkillsDir, profile.skills);
+    }
+    if (profile.commands && Array.isArray(profile.commands)) {
+      await this.restoreUserAssets(this.userCommandsDir, profile.commands);
+    }
     await writeJsonFile(this.activeProfilePath, { name });
   }
   async delete(name) {
@@ -33865,7 +33954,8 @@ var ProfileManager = class {
       mcpServers: data.mcpServers,
       settings: data.settings,
       hooks: data.hooks,
-      commands: data.commands,
+      commands: data.commands ?? [],
+      skills: data.skills ?? [],
       description: data.description,
       exportedAt: (/* @__PURE__ */ new Date()).toISOString()
     };
@@ -33884,6 +33974,8 @@ var ProfileManager = class {
     }
     const name = obj["name"];
     const now = (/* @__PURE__ */ new Date()).toISOString();
+    const commands = obj["commands"] ?? [];
+    const skills = obj["skills"] ?? [];
     let profile;
     if (obj["version"] && obj["plugins"] && typeof obj["plugins"] === "object" && !Array.isArray(obj["plugins"])) {
       const pluginsData = obj["plugins"];
@@ -33896,7 +33988,8 @@ var ProfileManager = class {
         mcpServers: obj["mcpServers"] ?? {},
         settings: obj["settings"] ?? {},
         hooks: obj["hooks"] ?? {},
-        commands: obj["commands"] ?? [],
+        commands,
+        skills,
         description: obj["description"]
       };
     } else {
@@ -33908,18 +34001,24 @@ var ProfileManager = class {
         mcpServers: obj["mcpServers"] ?? {},
         settings: obj["settings"] ?? {},
         hooks: obj["hooks"] ?? {},
-        commands: obj["commands"] ?? [],
+        commands,
+        skills,
         description: obj["description"]
       };
     }
     if (strategy === "merge") {
       const existing = await this.getProfileData(name);
       if (existing) {
+        const mergedCommands = this.mergeAssetsByName(existing.commands ?? [], profile.commands ?? []);
+        const mergedSkills = this.mergeAssetsByName(existing.skills ?? [], profile.skills ?? []);
         profile = {
           ...existing,
           ...profile,
           settings: { ...existing.settings, ...profile.settings },
           mcpServers: { ...existing.mcpServers, ...profile.mcpServers },
+          hooks: { ...existing.hooks, ...profile.hooks },
+          commands: mergedCommands,
+          skills: mergedSkills,
           updatedAt: now
         };
       }
@@ -33941,7 +34040,7 @@ var ProfileManager = class {
 
 // ../core/dist/managers/session-manager.js
 import { join as join7 } from "path";
-import { readdir as readdir3, stat, readFile as readFile3 } from "fs/promises";
+import { readdir as readdir3, stat, readFile as readFile4 } from "fs/promises";
 import { createReadStream } from "fs";
 import { createInterface } from "readline";
 var SessionManager = class {
@@ -33976,7 +34075,7 @@ var SessionManager = class {
     if (!await fileExists(historyPath))
       return;
     try {
-      const content = await readFile3(historyPath, "utf-8");
+      const content = await readFile4(historyPath, "utf-8");
       for (const line of content.split("\n")) {
         if (!line.trim())
           continue;
@@ -34035,6 +34134,8 @@ var SessionManager = class {
           existing.startedAt = data.startedAt;
           existing.ide = ide;
           existing.projectConfig = projectConfig;
+          if (data.name)
+            existing.name = data.name;
         } else {
           sessionMap.set(data.sessionId, {
             ...data,
@@ -34201,7 +34302,7 @@ var SessionManager = class {
 
 // ../core/dist/managers/marketplace-manager.js
 import { join as join8 } from "path";
-import { readdir as readdir4, mkdir as mkdir2 } from "fs/promises";
+import { readdir as readdir4, mkdir as mkdir3 } from "fs/promises";
 
 // ../../node_modules/simple-git/dist/esm/index.js
 var import_file_exists = __toESM(require_dist(), 1);
@@ -38838,7 +38939,7 @@ var MarketplaceManager = class {
     const installLocation = join8(this.claudeHome, "plugins", "marketplaces", name);
     const cloneUrl = repo.includes("://") || repo.startsWith("git@") ? repo : `https://github.com/${repo}.git`;
     try {
-      await mkdir2(join8(this.claudeHome, "plugins", "marketplaces"), { recursive: true });
+      await mkdir3(join8(this.claudeHome, "plugins", "marketplaces"), { recursive: true });
       const git = simpleGit();
       await git.clone(cloneUrl, installLocation, ["--depth", "1"]);
     } catch (err) {
@@ -39043,7 +39144,7 @@ var MetricsManager = class {
 
 // ../core/dist/managers/recommendation-manager.js
 import { join as join10 } from "path";
-import { readFile as readFile4, writeFile as writeFile2, mkdir as mkdir3 } from "fs/promises";
+import { readFile as readFile5, writeFile as writeFile3, mkdir as mkdir4 } from "fs/promises";
 var RecommendationManager = class {
   claudeHome;
   cacheDir;
@@ -39058,7 +39159,7 @@ var RecommendationManager = class {
     try {
       if (!await fileExists(this.cacheFile))
         return null;
-      const content = await readFile4(this.cacheFile, "utf-8");
+      const content = await readFile5(this.cacheFile, "utf-8");
       const data = JSON.parse(content);
       const age = Date.now() - new Date(data.generatedAt).getTime();
       if (age > 24 * 60 * 60 * 1e3)
@@ -39070,8 +39171,8 @@ var RecommendationManager = class {
   }
   /** Save recommendations to cache */
   async saveCache(result) {
-    await mkdir3(this.cacheDir, { recursive: true });
-    await writeFile2(this.cacheFile, JSON.stringify(result, null, 2));
+    await mkdir4(this.cacheDir, { recursive: true });
+    await writeFile3(this.cacheFile, JSON.stringify(result, null, 2));
   }
   /** Get current user context for personalized recommendations */
   async getUserContext() {
@@ -39141,7 +39242,33 @@ router.get("/", async (_req, res) => {
 
 // server/routes/plugins.ts
 var import_express2 = __toESM(require_express2(), 1);
+import { readFile as readFile6 } from "fs/promises";
+import { join as join11 } from "path";
 var router2 = (0, import_express2.Router)();
+async function readPluginMcpServers(installPath) {
+  const mcpPath = join11(installPath, ".mcp.json");
+  if (!await fileExists(mcpPath)) return [];
+  try {
+    const raw = await readFile6(mcpPath, "utf-8");
+    const parsed = JSON.parse(raw);
+    const wrapped = parsed["mcpServers"];
+    const servers = wrapped && typeof wrapped === "object" && !Array.isArray(wrapped) ? wrapped : parsed;
+    return Object.entries(servers).map(([name, cfg]) => {
+      const type = cfg.type === "http" || cfg.url ? "http" : "stdio";
+      return {
+        name,
+        type,
+        command: cfg.command,
+        args: cfg.args,
+        env: cfg.env,
+        url: cfg.url
+      };
+    });
+  } catch (err) {
+    console.warn(`[plugin-contents] failed to parse ${mcpPath}:`, err);
+    return [];
+  }
+}
 router2.get("/", async (_req, res) => {
   try {
     const home = getClaudeHome();
@@ -39177,6 +39304,81 @@ router2.delete("/:name", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
+router2.get("/:name/contents", async (req, res) => {
+  try {
+    const name = decodeURIComponent(req.params.name);
+    const home = getClaudeHome();
+    const plugin = await new PluginManager(home).getDetail(name);
+    if (!plugin) {
+      return res.status(404).json({ error: "Plugin not found" });
+    }
+    const scanner = new SkillScanner(home);
+    const [rawSkills, mcpServers] = await Promise.all([
+      scanner.scanPlugin(plugin.installPath).catch((err) => {
+        console.warn(`[plugin-contents] scanPlugin failed for ${name}:`, err);
+        return [];
+      }),
+      readPluginMcpServers(plugin.installPath)
+    ]);
+    const { readdir: readdir5 } = await import("fs/promises");
+    const commands = [];
+    const commandsDir = join11(plugin.installPath, "commands");
+    if (await fileExists(commandsDir)) {
+      try {
+        const entries = await readdir5(commandsDir, { withFileTypes: true });
+        for (const entry of entries) {
+          if (entry.isDirectory()) {
+            const skillFile = join11(commandsDir, entry.name, "Skill.md");
+            if (!await fileExists(skillFile)) continue;
+            const content = await readFile6(skillFile, "utf-8");
+            const fm = parseFrontmatterNameDesc(content);
+            commands.push({ name: fm.name ?? entry.name, description: fm.description, filePath: skillFile });
+          } else if (entry.isFile() && entry.name.endsWith(".md")) {
+            const mdFile = join11(commandsDir, entry.name);
+            const content = await readFile6(mdFile, "utf-8");
+            const fm = parseFrontmatterNameDesc(content);
+            const baseName = entry.name.replace(/\.md$/, "");
+            commands.push({ name: fm.name ?? baseName, description: fm.description, filePath: mdFile });
+          }
+        }
+      } catch (err) {
+        console.warn(`[plugin-contents] failed to scan commands for ${name}:`, err);
+      }
+    }
+    const skills = rawSkills.map((s) => ({
+      name: s.name,
+      description: s.description,
+      filePath: s.filePath
+    }));
+    res.json({
+      plugin: name,
+      version: plugin.version,
+      commands,
+      skills,
+      mcpServers
+    });
+  } catch (err) {
+    console.error("[GET /api/plugins/:name/contents]", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+function parseFrontmatterNameDesc(content) {
+  const match = /^---\s*\r?\n([\s\S]*?)\r?\n---/.exec(content);
+  if (!match) return {};
+  const block = match[1] ?? "";
+  const result = {};
+  let currentKey = null;
+  for (const line of block.split(/\r?\n/)) {
+    const keyMatch = /^([A-Za-z_][A-Za-z0-9_-]*)\s*:\s*(.*)$/.exec(line);
+    if (keyMatch) {
+      currentKey = keyMatch[1];
+      result[currentKey] = (keyMatch[2] ?? "").trim();
+    } else if (currentKey && line.trim()) {
+      result[currentKey] = `${result[currentKey]} ${line.trim()}`.trim();
+    }
+  }
+  return { name: result["name"], description: result["description"] };
+}
 router2.patch("/:name", async (req, res) => {
   try {
     const { name } = req.params;
@@ -39237,11 +39439,7 @@ router3.delete("/:name", async (req, res) => {
 
 // server/routes/skills.ts
 var import_express4 = __toESM(require_express2(), 1);
-import { writeFile as writeFile3 } from "fs/promises";
-import { execFile } from "child_process";
-import { promisify } from "util";
-import { resolve } from "path";
-var exec = promisify(execFile);
+import { writeFile as writeFile4 } from "fs/promises";
 var router4 = (0, import_express4.Router)();
 router4.get("/", async (_req, res) => {
   try {
@@ -39267,34 +39465,34 @@ router4.get("/content", async (req, res) => {
     res.status(404).json({ error: "Not found" });
   }
 });
+function formatInstalls(n) {
+  if (n >= 1e6) return `${(n / 1e6).toFixed(1)}M installs`;
+  if (n >= 1e3) return `${(n / 1e3).toFixed(1)}K installs`;
+  return `${n} install${n !== 1 ? "s" : ""}`;
+}
+function toSkillResult(entry) {
+  const handle = `${entry.source}@${entry.skillId}`;
+  return {
+    name: handle,
+    installs: formatInstalls(entry.installs),
+    url: `https://skills.sh/${entry.source}/${entry.skillId}`,
+    installCommand: `npx skills add ${handle}`
+  };
+}
+async function fetchFromSkillsSh(query, signal) {
+  const url = `https://skills.sh/api/search?q=${encodeURIComponent(query)}`;
+  const resp = await fetch(url, { signal });
+  if (!resp.ok) {
+    throw new Error(`skills.sh returned ${resp.status}`);
+  }
+  const data = await resp.json();
+  return (data.skills ?? []).map(toSkillResult);
+}
 var searchCache = /* @__PURE__ */ new Map();
 var CACHE_TTL = 5 * 60 * 1e3;
-function parseSkillsOutput(output) {
-  const results = [];
-  const lines = output.split("\n").map((l) => l.replace(/\x1b\[[0-9;]*m/g, "").trim()).filter(Boolean);
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    const match = line.match(/^([\w\-\.]+\/[\w\-\.]+@[\w\-\.:]+)\s+([\d\.]+[KMB]?\s+installs?)$/);
-    if (match) {
-      const name = match[1];
-      const installs = match[2];
-      const urlLine = lines[i + 1] ?? "";
-      const urlMatch = urlLine.match(/(https:\/\/skills\.sh\/\S+)/);
-      const url = urlMatch ? urlMatch[1] : `https://skills.sh/${name.replace("@", "/")}`;
-      results.push({
-        name,
-        installs,
-        url,
-        installCommand: `npx skills add ${name}`
-      });
-      i++;
-    }
-  }
-  return results;
-}
 router4.get("/search", async (req, res) => {
   const query = req.query.q ?? "";
-  if (!query.trim()) {
+  if (query.trim().length < 2) {
     return res.json([]);
   }
   const cached = searchCache.get(query);
@@ -39302,43 +39500,58 @@ router4.get("/search", async (req, res) => {
     return res.json(cached.data);
   }
   try {
-    const skillsBin = resolve(process.cwd(), "..", "..", "node_modules", "skills", "bin", "cli.mjs");
-    const { stdout } = await exec("node", [skillsBin, "find", query], {
-      timeout: 15e3,
-      env: { ...process.env, NO_COLOR: "1", FORCE_COLOR: "0" }
-    });
-    const results = parseSkillsOutput(stdout);
+    const results = await fetchFromSkillsSh(query);
     searchCache.set(query, { data: results, timestamp: Date.now() });
     res.json(results);
   } catch (err) {
     console.error("[GET /api/skills/search]", err);
-    res.json([]);
+    res.status(502).json({ error: "Failed to fetch from skills.sh", skills: [] });
   }
 });
 var topCache = { data: null, timestamp: 0 };
 var TOP_CACHE_TTL = 10 * 60 * 1e3;
+var TOP_QUERIES = ["agent", "code", "react", "python", "typescript", "git", "test"];
 router4.get("/top", async (_req, res) => {
   if (topCache.data && Date.now() - topCache.timestamp < TOP_CACHE_TTL) {
     return res.json(topCache.data);
   }
   try {
-    const skillsBin = resolve(process.cwd(), "..", "..", "node_modules", "skills", "bin", "cli.mjs");
-    const { stdout } = await exec("node", [skillsBin, "find", "popular"], {
-      timeout: 15e3,
-      env: { ...process.env, NO_COLOR: "1", FORCE_COLOR: "0" }
-    });
-    const results = parseSkillsOutput(stdout).slice(0, 20);
-    topCache.data = results;
-    topCache.timestamp = Date.now();
-    res.json(results);
+    const batches = await Promise.all(
+      TOP_QUERIES.map(
+        (q) => fetchFromSkillsSh(q).catch((err) => {
+          console.warn(`[skills/top] query "${q}" failed:`, err);
+          return [];
+        })
+      )
+    );
+    const byName = /* @__PURE__ */ new Map();
+    for (const batch of batches) {
+      for (const r of batch) {
+        if (!byName.has(r.name)) byName.set(r.name, r);
+      }
+    }
+    const merged = Array.from(byName.values());
+    merged.sort((a, b) => parseInstallsForSort(b.installs) - parseInstallsForSort(a.installs));
+    const top = merged.slice(0, 20);
+    if (top.length > 0) {
+      topCache.data = top;
+      topCache.timestamp = Date.now();
+    }
+    res.json(top);
   } catch (err) {
     console.error("[GET /api/skills/top]", err);
-    if (topCache.data) {
-      return res.json(topCache.data);
-    }
-    res.json([]);
+    if (topCache.data) return res.json(topCache.data);
+    res.status(502).json({ error: "Failed to fetch top skills", skills: [] });
   }
 });
+function parseInstallsForSort(s) {
+  const match = s.match(/^([\d.]+)\s*([KM]?)/);
+  if (!match) return 0;
+  const n = parseFloat(match[1]);
+  if (match[2] === "M") return n * 1e6;
+  if (match[2] === "K") return n * 1e3;
+  return n;
+}
 router4.post("/update", async (req, res) => {
   try {
     const { filePath, content } = req.body;
@@ -39349,7 +39562,7 @@ router4.post("/update", async (req, res) => {
     if (!normalizedPath.includes("/.claude/skills/") && !normalizedPath.includes("/.claude/commands/")) {
       return res.status(403).json({ error: "Cannot edit system files" });
     }
-    await writeFile3(filePath, content, "utf-8");
+    await writeFile4(filePath, content, "utf-8");
     res.json({ success: true });
   } catch (err) {
     console.error("[POST /api/skills/update]", err);
@@ -39574,10 +39787,6 @@ router9.get("/", async (_req, res) => {
 
 // server/routes/recommendations.ts
 var import_express10 = __toESM(require_express2(), 1);
-import { execFile as execFile2 } from "child_process";
-import { promisify as promisify2 } from "util";
-import { resolve as resolve2 } from "path";
-var exec2 = promisify2(execFile2);
 var router10 = (0, import_express10.Router)();
 router10.get("/", async (_req, res) => {
   try {
@@ -39666,49 +39875,28 @@ async function safeList(fn) {
     return [];
   }
 }
-function parseSkillsOutput2(output) {
-  const results = [];
-  const lines = output.split("\n").map((l) => l.replace(/\x1b\[[0-9;]*m/g, "").trim()).filter(Boolean);
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    const match = line?.match(
-      /^([\w\-.]+(?:\/[\w\-.]+)?@[\w\-.:]+)\s+([\d.]+[KMB]?\s+installs?)$/
-    );
-    if (match) {
-      const name = match[1] ?? "";
-      const installs = match[2] ?? "";
-      const urlLine = lines[i + 1] ?? "";
-      const urlMatch = urlLine.match(/(https:\/\/skills\.sh\/\S+)/);
-      const url = urlMatch ? urlMatch[1] : `https://skills.sh/${name.replace("@", "/")}`;
-      results.push({
-        name,
-        installs,
-        url,
-        installCommand: `npx skills add ${name}`
-      });
-      i++;
-    }
-  }
-  return results;
+function formatInstalls2(n) {
+  if (n >= 1e6) return `${(n / 1e6).toFixed(1)}M installs`;
+  if (n >= 1e3) return `${(n / 1e3).toFixed(1)}K installs`;
+  return `${n} install${n !== 1 ? "s" : ""}`;
 }
-async function runSkillsFind(query) {
-  const skillsBin = resolve2(
-    process.cwd(),
-    "..",
-    "..",
-    "node_modules",
-    "skills",
-    "bin",
-    "cli.mjs"
-  );
-  const { stdout } = await exec2("node", [skillsBin, "find", query], {
-    timeout: 15e3,
-    env: { ...process.env, NO_COLOR: "1", FORCE_COLOR: "0" }
+async function fetchSkillsShQuery(query) {
+  const url = `https://skills.sh/api/search?q=${encodeURIComponent(query)}`;
+  const resp = await fetch(url);
+  if (!resp.ok) throw new Error(`skills.sh returned ${resp.status}`);
+  const data = await resp.json();
+  return (data.skills ?? []).map((entry) => {
+    const handle = `${entry.source}@${entry.skillId}`;
+    return {
+      name: handle,
+      installs: formatInstalls2(entry.installs),
+      url: `https://skills.sh/${entry.source}/${entry.skillId}`,
+      installCommand: `npx skills add ${handle}`
+    };
   });
-  return parseSkillsOutput2(stdout);
 }
-async function runSkillsFindMany(queries) {
-  const settled = await Promise.allSettled(queries.map((q) => runSkillsFind(q)));
+async function fetchSkillsShMany(queries) {
+  const settled = await Promise.allSettled(queries.map((q) => fetchSkillsShQuery(q)));
   const all = [];
   for (const s of settled) {
     if (s.status === "fulfilled") all.push(...s.value);
@@ -39716,10 +39904,10 @@ async function runSkillsFindMany(queries) {
   return dedupeByName(all);
 }
 async function fetchTopSkills() {
-  return runSkillsFindMany(["popular", "skills", "best-practices", "code"]);
+  return fetchSkillsShMany(["agent", "code", "react", "python", "typescript"]);
 }
 async function fetchTrendingSkills() {
-  return runSkillsFindMany(["trending", "new", "agents", "test"]);
+  return fetchSkillsShMany(["git", "test", "skill", "mcp", "claude"]);
 }
 function skillCategory(name) {
   const lower = name.toLowerCase();
@@ -40257,24 +40445,24 @@ router13.get("/", (req, res) => {
 
 // server/routes/info.ts
 var import_express14 = __toESM(require_express2(), 1);
-import { readFile as readFile5 } from "fs/promises";
-import { join as join11, dirname as dirname3 } from "path";
+import { readFile as readFile7 } from "fs/promises";
+import { join as join12, dirname as dirname3 } from "path";
 import { fileURLToPath } from "url";
 var router14 = (0, import_express14.Router)();
 router14.get("/", async (_req, res) => {
   try {
     const __dirname2 = dirname3(fileURLToPath(import.meta.url));
     const candidates = [
-      join11(__dirname2, "..", "..", "..", "..", ".claude-plugin", "plugin.json"),
-      join11(__dirname2, "..", "..", "..", ".claude-plugin", "plugin.json"),
-      join11(__dirname2, "..", "..", ".claude-plugin", "plugin.json"),
-      join11(__dirname2, "..", ".claude-plugin", "plugin.json")
+      join12(__dirname2, "..", "..", "..", "..", ".claude-plugin", "plugin.json"),
+      join12(__dirname2, "..", "..", "..", ".claude-plugin", "plugin.json"),
+      join12(__dirname2, "..", "..", ".claude-plugin", "plugin.json"),
+      join12(__dirname2, "..", ".claude-plugin", "plugin.json")
     ];
     let version = "unknown";
     let name = "claude-config-manager";
     for (const path of candidates) {
       try {
-        const content = await readFile5(path, "utf-8");
+        const content = await readFile7(path, "utf-8");
         const pkg = JSON.parse(content);
         version = pkg.version ?? version;
         name = pkg.name ?? name;
@@ -40309,10 +40497,10 @@ app.use("/api/recommendations", router10);
 app.use("/api/mcp-registry", router11);
 app.use("/api/marketplaces", router12);
 app.use("/api/events", router13);
-var clientDir = join12(__dirname, "..", "dist", "client");
+var clientDir = join13(__dirname, "..", "dist", "client");
 app.use(import_express15.default.static(clientDir));
 app.get("*", (_req, res) => {
-  res.sendFile(join12(clientDir, "index.html"));
+  res.sendFile(join13(clientDir, "index.html"));
 });
 app.listen(PORT, () => {
   console.log(`Dashboard running at http://localhost:${PORT}`);

@@ -1,6 +1,10 @@
 import { z } from 'zod';
 import { McpServerConfigSchema } from './mcp-server.js';
 import { InstalledPluginSchema } from './plugin.js';
+const UserAssetSchema = z.object({
+    name: z.string(),
+    content: z.string(),
+});
 export const ProfileSchema = z.object({
     name: z.string(),
     createdAt: z.string(),
@@ -8,7 +12,8 @@ export const ProfileSchema = z.object({
     plugins: z.array(InstalledPluginSchema),
     mcpServers: z.record(McpServerConfigSchema),
     settings: z.record(z.unknown()),
-    commands: z.array(z.unknown()),
+    commands: z.array(UserAssetSchema),
+    skills: z.array(UserAssetSchema).optional(),
     hooks: z.record(z.unknown()),
     description: z.string().optional(),
 });
@@ -26,7 +31,8 @@ export const ProfileExportSchema = z.object({
     mcpServers: z.record(McpServerConfigSchema),
     settings: z.record(z.unknown()),
     hooks: z.record(z.unknown()),
-    commands: z.array(z.unknown()),
+    commands: z.array(UserAssetSchema),
+    skills: z.array(UserAssetSchema).optional(),
     description: z.string().optional(),
     exportedAt: z.string().optional(),
 });
