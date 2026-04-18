@@ -11,6 +11,7 @@ import { PluginItem } from '@/components/plugin-list/plugin-item';
 import type { Plugin } from '@/components/plugin-list/plugin-item';
 import { removePlugin, togglePlugin, addMarketplace, removeMarketplace } from '@/lib/api-client';
 import { usePlugins, useMarketplaces, useAvailablePlugins } from '@/lib/use-data';
+import { PluginContents } from '@/components/plugin-list/plugin-contents';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -245,6 +246,8 @@ function InstalledTab() {
                 />
               </div>
             </section>
+
+            <PluginContents pluginName={selected.name} />
           </div>
         )}
       </DetailPanel>
