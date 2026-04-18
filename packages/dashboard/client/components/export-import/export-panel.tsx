@@ -33,11 +33,9 @@ export function ExportPanel({ profiles }: ExportPanelProps) {
     if (!selectedProfile) return;
     setExporting(true);
     try {
-      const data = await exportProfile(selectedProfile);
-      const content = format === 'json'
-        ? JSON.stringify(data, null, 2)
-        : JSON.stringify(data, null, 2); // yaml conversion would require a lib
-      const blob = new Blob([content], {
+      const { data } = await exportProfile(selectedProfile);
+      // YAML conversion would require a lib, so we output JSON for both formats
+      const blob = new Blob([data], {
         type: format === 'json' ? 'application/json' : 'text/yaml',
       });
       const url = URL.createObjectURL(blob);

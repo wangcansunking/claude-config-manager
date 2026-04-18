@@ -240,14 +240,14 @@ export function deleteProfile(name: string) {
 }
 
 export function exportProfile(name: string) {
-  return request<string>('/export', {
+  return request<{ data: string }>('/profiles/export', {
     method: 'POST',
     body: JSON.stringify({ name }),
   });
 }
 
 export function importProfile(data: string, strategy: 'merge' | 'replace' = 'replace') {
-  return request<unknown>('/import', {
+  return request<unknown>('/profiles/import', {
     method: 'POST',
     body: JSON.stringify({ data, strategy }),
   });
