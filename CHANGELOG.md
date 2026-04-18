@@ -2,6 +2,11 @@
 
 All notable changes to claude-config-manager are documented here.
 
+## [1.0.1] — 2026-04-17
+
+### Fixed
+- **MCP detail panel**: Removed broken "Edit Config" and "Restart" buttons that had no onClick handlers. Only the working "Remove" button remains for user-managed MCP servers. System MCPs (from plugins) show no actions since they're managed via plugin install/remove.
+
 ## [1.0.0] — 2026-04-17
 
 Initial release of claude-config-manager — a Claude Code plugin that provides a dashboard, CLI, and MCP tools for managing plugins, MCP servers, skills, commands, profiles, and sessions.

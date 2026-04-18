@@ -172,7 +172,20 @@ function InstalledTab() {
         ] : []}
         actions={selected ? (
           <>
-            <Button variant="secondary" size="sm">Check Updates</Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              title="Dashboard cannot fetch marketplace updates. Run `/plugin marketplace update` in Claude Code — command copied to clipboard."
+              onClick={() => {
+                const cmd = `/plugin marketplace update ${selected.marketplace}`;
+                navigator.clipboard.writeText(cmd);
+                alert(
+                  `Dashboard cannot check for updates directly.\n\nCommand copied to clipboard:\n${cmd}\n\nPaste it into Claude Code to refresh this marketplace and pull the latest plugin versions.`,
+                );
+              }}
+            >
+              Check Updates
+            </Button>
             <Button
               variant="secondary"
               size="sm"
@@ -244,7 +257,7 @@ function MarketplaceTab() {
   const [selectedMp, setSelectedMp] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [selectedPlugin, setSelectedPlugin] = useState<AvailablePluginData | null>(null);
-  const [, setShowInstallMsg] = useState<string | null>(null);
+  const [installCopied, setInstallCopied] = useState(false);
 
   // Auto-select first marketplace
   const activeMp = selectedMp ?? (marketplaces.length > 0 ? marketplaces[0].name : null);
@@ -452,12 +465,15 @@ function MarketplaceTab() {
           <Button
             variant="primary"
             size="sm"
+            title="Plugin install must be run inside Claude Code. The command is copied to your clipboard."
             onClick={() => {
-              setShowInstallMsg(selectedPlugin.name);
-              setSelectedPlugin(null);
+              const cmd = `/plugin install ${selectedPlugin.name}@${selectedPlugin.marketplace}`;
+              navigator.clipboard.writeText(cmd);
+              setInstallCopied(true);
+              setTimeout(() => setInstallCopied(false), 2000);
             }}
           >
-            Install
+            {installCopied ? 'Copied!' : 'Copy Install Command'}
           </Button>
         ) : undefined}
       >

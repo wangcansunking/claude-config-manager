@@ -654,7 +654,13 @@ export default function McpServersPage() {
     <div>
       <div className="sticky top-0 z-10 bg-bg-primary">
         <Header title="MCP Servers">
-          <Button variant="primary" size="md">Add Server</Button>
+          <Button
+            variant="primary"
+            size="md"
+            onClick={() => setTab('store')}
+          >
+            Add Server
+          </Button>
         </Header>
 
         {/* Tabs */}

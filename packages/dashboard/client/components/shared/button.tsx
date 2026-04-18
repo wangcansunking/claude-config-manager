@@ -10,6 +10,7 @@ interface ButtonProps {
   onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
   disabled?: boolean;
   type?: 'button' | 'submit' | 'reset';
+  title?: string;
 }
 
 const variantClasses: Record<ButtonVariant, string> = {
@@ -31,12 +32,14 @@ export function Button({
   onClick,
   disabled = false,
   type = 'button',
+  title,
 }: ButtonProps) {
   return (
     <button
       type={type}
       onClick={onClick}
       disabled={disabled}
+      title={title}
       className={`inline-flex items-center justify-center rounded-md transition-colors ${sizeStyles[size]} ${variantClasses[variant]} ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
       style={{ fontWeight: 510 }}
     >
