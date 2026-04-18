@@ -1,7 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
+import useSWR from 'swr';
 import { useTheme } from '@/lib/theme-context';
-
-const VERSION = '1.0.0-draft';
 
 interface NavItem {
   label: string;
@@ -20,6 +19,8 @@ const navItems: NavItem[] = [
 export function Sidebar() {
   const { pathname } = useLocation();
   const { theme, setTheme } = useTheme();
+  const { data: info } = useSWR<{ version: string }>('/api/info', (url: string) => fetch(url).then(r => r.json()), { revalidateOnFocus: false });
+  const version = info?.version ?? '…';
 
   const isActive = (href: string) => {
     if (href === '/') {
@@ -60,7 +61,7 @@ export function Sidebar() {
           </div>
           <div>
             <div className="text-sm" style={{ color: 'var(--text-primary)', fontWeight: 510 }}>Claude Config</div>
-            <div className="text-xs" style={{ color: 'var(--text-faint)' }}>{VERSION}</div>
+            <div className="text-xs" style={{ color: 'var(--text-faint)' }}>{`v${version}`}</div>
           </div>
         </div>
       </div>

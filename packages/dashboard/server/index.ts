@@ -24,8 +24,10 @@ import { recommendationsRouter } from './routes/recommendations.js';
 import { mcpRegistryRouter } from './routes/mcp-registry.js';
 import { marketplacesRouter } from './routes/marketplaces.js';
 import { eventsRouter } from './routes/events.js';
+import { infoRouter } from './routes/info.js';
 
 // API routes
+app.use('/api/info', infoRouter);
 app.use('/api/stats', statsRouter);
 app.use('/api/plugins', pluginsRouter);
 app.use('/api/mcp-servers', mcpServersRouter);

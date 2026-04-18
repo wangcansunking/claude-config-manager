@@ -17989,17 +17989,17 @@ var require_router = __commonJS({
     var toString = Object.prototype.toString;
     var proto = module.exports = function(options) {
       var opts = options || {};
-      function router14(req, res, next) {
-        router14.handle(req, res, next);
+      function router15(req, res, next) {
+        router15.handle(req, res, next);
       }
-      setPrototypeOf(router14, proto);
-      router14.params = {};
-      router14._params = [];
-      router14.caseSensitive = opts.caseSensitive;
-      router14.mergeParams = opts.mergeParams;
-      router14.strict = opts.strict;
-      router14.stack = [];
-      return router14;
+      setPrototypeOf(router15, proto);
+      router15.params = {};
+      router15._params = [];
+      router15.caseSensitive = opts.caseSensitive;
+      router15.mergeParams = opts.mergeParams;
+      router15.strict = opts.strict;
+      router15.stack = [];
+      return router15;
     };
     proto.param = function param(name, fn) {
       if (typeof name === "function") {
@@ -18409,10 +18409,10 @@ var require_view = __commonJS({
     var debug2 = require_src()("express:view");
     var path = __require("path");
     var fs = __require("fs");
-    var dirname4 = path.dirname;
+    var dirname5 = path.dirname;
     var basename = path.basename;
     var extname = path.extname;
-    var join12 = path.join;
+    var join13 = path.join;
     var resolve3 = path.resolve;
     module.exports = View;
     function View(name, options) {
@@ -18448,7 +18448,7 @@ var require_view = __commonJS({
       for (var i = 0; i < roots.length && !path2; i++) {
         var root = roots[i];
         var loc = resolve3(root, name);
-        var dir = dirname4(loc);
+        var dir = dirname5(loc);
         var file = basename(loc);
         path2 = this.resolve(dir, file);
       }
@@ -18460,12 +18460,12 @@ var require_view = __commonJS({
     };
     View.prototype.resolve = function resolve4(dir, file) {
       var ext = this.ext;
-      var path2 = join12(dir, file);
+      var path2 = join13(dir, file);
       var stat2 = tryStat(path2);
       if (stat2 && stat2.isFile()) {
         return path2;
       }
-      path2 = join12(dir, basename(file, ext), "index" + ext);
+      path2 = join13(dir, basename(file, ext), "index" + ext);
       stat2 = tryStat(path2);
       if (stat2 && stat2.isFile()) {
         return path2;
@@ -19098,7 +19098,7 @@ var require_send = __commonJS({
     var Stream = __require("stream");
     var util2 = __require("util");
     var extname = path.extname;
-    var join12 = path.join;
+    var join13 = path.join;
     var normalize2 = path.normalize;
     var resolve3 = path.resolve;
     var sep = path.sep;
@@ -19317,7 +19317,7 @@ var require_send = __commonJS({
           return res;
         }
         parts = path2.split(sep);
-        path2 = normalize2(join12(root, path2));
+        path2 = normalize2(join13(root, path2));
       } else {
         if (UP_PATH_REGEXP.test(path2)) {
           debug2('malicious path "%s"', path2);
@@ -19452,7 +19452,7 @@ var require_send = __commonJS({
           if (err) return self.onStatError(err);
           return self.error(404);
         }
-        var p = join12(path2, self._index[i]);
+        var p = join13(path2, self._index[i]);
         debug2('stat "%s"', p);
         fs.stat(p, function(err2, stat2) {
           if (err2) return next(err2);
@@ -20591,7 +20591,7 @@ var require_application = __commonJS({
   "node_modules/express/lib/application.js"(exports, module) {
     "use strict";
     var finalhandler = require_finalhandler();
-    var Router14 = require_router();
+    var Router15 = require_router();
     var methods = require_methods();
     var middleware = require_init();
     var query = require_query();
@@ -20656,7 +20656,7 @@ var require_application = __commonJS({
     };
     app2.lazyrouter = function lazyrouter() {
       if (!this._router) {
-        this._router = new Router14({
+        this._router = new Router15({
           caseSensitive: this.enabled("case sensitive routing"),
           strict: this.enabled("strict routing")
         });
@@ -20665,17 +20665,17 @@ var require_application = __commonJS({
       }
     };
     app2.handle = function handle(req, res, callback) {
-      var router14 = this._router;
+      var router15 = this._router;
       var done = callback || finalhandler(req, res, {
         env: this.get("env"),
         onerror: logerror.bind(this)
       });
-      if (!router14) {
+      if (!router15) {
         debug2("no routes defined on app");
         done();
         return;
       }
-      router14.handle(req, res, done);
+      router15.handle(req, res, done);
     };
     app2.use = function use(fn) {
       var offset = 0;
@@ -20695,15 +20695,15 @@ var require_application = __commonJS({
         throw new TypeError("app.use() requires a middleware function");
       }
       this.lazyrouter();
-      var router14 = this._router;
+      var router15 = this._router;
       fns.forEach(function(fn2) {
         if (!fn2 || !fn2.handle || !fn2.set) {
-          return router14.use(path, fn2);
+          return router15.use(path, fn2);
         }
         debug2(".use app under %s", path);
         fn2.mountpath = path;
         fn2.parent = this;
-        router14.use(path, function mounted_app(req, res, next) {
+        router15.use(path, function mounted_app(req, res, next) {
           var orig = req.app;
           fn2.handle(req, res, function(err) {
             setPrototypeOf(req, orig.request);
@@ -22520,7 +22520,7 @@ var require_express = __commonJS({
     var mixin = require_merge_descriptors();
     var proto = require_application();
     var Route = require_route();
-    var Router14 = require_router();
+    var Router15 = require_router();
     var req = require_request();
     var res = require_response();
     exports = module.exports = createApplication;
@@ -22543,7 +22543,7 @@ var require_express = __commonJS({
     exports.request = req;
     exports.response = res;
     exports.Route = Route;
-    exports.Router = Router14;
+    exports.Router = Router15;
     exports.json = bodyParser.json;
     exports.query = require_query();
     exports.raw = bodyParser.raw;
@@ -27535,9 +27535,9 @@ var require_nodefs_handler = __commonJS({
         if (this.fsw.closed) {
           return;
         }
-        const dirname4 = sysPath.dirname(file);
+        const dirname5 = sysPath.dirname(file);
         const basename = sysPath.basename(file);
-        const parent = this.fsw._getWatchedDir(dirname4);
+        const parent = this.fsw._getWatchedDir(dirname5);
         let prevStats = stats;
         if (parent.has(basename)) return;
         const listener = async (path, newStats) => {
@@ -27559,7 +27559,7 @@ var require_nodefs_handler = __commonJS({
                 prevStats = newStats2;
               }
             } catch (error) {
-              this.fsw._remove(dirname4, basename);
+              this.fsw._remove(dirname5, basename);
             }
           } else if (parent.has(basename)) {
             const at = newStats.atimeMs;
@@ -28921,10 +28921,10 @@ var require_chokidar = __commonJS({
 });
 
 // server/index.ts
-var import_express14 = __toESM(require_express2(), 1);
+var import_express15 = __toESM(require_express2(), 1);
 var import_cors = __toESM(require_lib3(), 1);
-import { join as join11, dirname as dirname3 } from "path";
-import { fileURLToPath } from "url";
+import { join as join12, dirname as dirname4 } from "path";
+import { fileURLToPath as fileURLToPath2 } from "url";
 
 // server/routes/stats.ts
 var import_express = __toESM(require_express2(), 1);
@@ -40255,12 +40255,47 @@ router13.get("/", (req, res) => {
   });
 });
 
+// server/routes/info.ts
+var import_express14 = __toESM(require_express2(), 1);
+import { readFile as readFile5 } from "fs/promises";
+import { join as join11, dirname as dirname3 } from "path";
+import { fileURLToPath } from "url";
+var router14 = (0, import_express14.Router)();
+router14.get("/", async (_req, res) => {
+  try {
+    const __dirname2 = dirname3(fileURLToPath(import.meta.url));
+    const candidates = [
+      join11(__dirname2, "..", "..", "..", "..", ".claude-plugin", "plugin.json"),
+      join11(__dirname2, "..", "..", "..", ".claude-plugin", "plugin.json"),
+      join11(__dirname2, "..", "..", ".claude-plugin", "plugin.json"),
+      join11(__dirname2, "..", ".claude-plugin", "plugin.json")
+    ];
+    let version = "unknown";
+    let name = "claude-config-manager";
+    for (const path of candidates) {
+      try {
+        const content = await readFile5(path, "utf-8");
+        const pkg = JSON.parse(content);
+        version = pkg.version ?? version;
+        name = pkg.name ?? name;
+        break;
+      } catch {
+      }
+    }
+    res.json({ name, version });
+  } catch (err) {
+    console.error("[GET /api/info]", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 // server/index.ts
-var __dirname = dirname3(fileURLToPath(import.meta.url));
-var app = (0, import_express14.default)();
+var __dirname = dirname4(fileURLToPath2(import.meta.url));
+var app = (0, import_express15.default)();
 var PORT = Number(process.env.PORT || 3399);
 app.use((0, import_cors.default)());
-app.use(import_express14.default.json());
+app.use(import_express15.default.json());
+app.use("/api/info", router14);
 app.use("/api/stats", router);
 app.use("/api/plugins", router2);
 app.use("/api/mcp-servers", router3);
@@ -40274,10 +40309,10 @@ app.use("/api/recommendations", router10);
 app.use("/api/mcp-registry", router11);
 app.use("/api/marketplaces", router12);
 app.use("/api/events", router13);
-var clientDir = join11(__dirname, "..", "dist", "client");
-app.use(import_express14.default.static(clientDir));
+var clientDir = join12(__dirname, "..", "dist", "client");
+app.use(import_express15.default.static(clientDir));
 app.get("*", (_req, res) => {
-  res.sendFile(join11(clientDir, "index.html"));
+  res.sendFile(join12(clientDir, "index.html"));
 });
 app.listen(PORT, () => {
   console.log(`Dashboard running at http://localhost:${PORT}`);

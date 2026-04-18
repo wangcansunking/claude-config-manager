@@ -2,6 +2,14 @@
 
 All notable changes to claude-config-manager are documented here.
 
+## [1.0.6] — 2026-04-17
+
+### Fixed
+- **Sidebar version** — was hardcoded as `1.0.0-draft`. Now fetches from new `/api/info` endpoint and reflects the actual plugin version.
+
+### Added
+- **`GET /api/info`** — returns plugin name and version from `.claude-plugin/plugin.json`.
+
 ## [1.0.5] — 2026-04-17
 
 ### Fixed
