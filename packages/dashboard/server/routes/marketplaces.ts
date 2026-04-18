@@ -49,6 +49,20 @@ router.delete('/:name', async (req, res) => {
   }
 });
 
+// POST /api/marketplaces/:name/refresh — git pull to update
+router.post('/:name/refresh', async (req, res) => {
+  try {
+    const { name } = req.params;
+    const home = getClaudeHome();
+    await new MarketplaceManager(home).refreshMarketplace(decodeURIComponent(name));
+    res.json({ success: true });
+  } catch (err) {
+    console.error('[POST /api/marketplaces/:name/refresh]', err);
+    const message = err instanceof Error ? err.message : 'Internal server error';
+    res.status(400).json({ error: message });
+  }
+});
+
 // GET /api/marketplaces/:name/plugins
 router.get('/:name/plugins', async (req, res) => {
   try {

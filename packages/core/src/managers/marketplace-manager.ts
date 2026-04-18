@@ -1,5 +1,6 @@
 import { join } from 'path';
-import { readdir } from 'fs/promises';
+import { readdir, mkdir } from 'fs/promises';
+import { simpleGit } from 'simple-git';
 import { readJsonFile, writeJsonFile, fileExists } from '../utils/file-ops.js';
 import { FileNotFoundError } from '@ccm/types';
 
@@ -121,18 +122,62 @@ export class MarketplaceManager {
     if (data[name]) {
       throw new Error(`Marketplace "${name}" already exists`);
     }
+
+    const installLocation = join(this.claudeHome, 'plugins', 'marketplaces', name);
+
+    // Actually clone the repo so plugins are discoverable
+    // repo can be "owner/repo" or a full URL
+    const cloneUrl = repo.includes('://') || repo.startsWith('git@')
+      ? repo
+      : `https://github.com/${repo}.git`;
+
+    try {
+      await mkdir(join(this.claudeHome, 'plugins', 'marketplaces'), { recursive: true });
+      const git = simpleGit();
+      await git.clone(cloneUrl, installLocation, ['--depth', '1']);
+    } catch (err) {
+      throw new Error(
+        `Failed to clone marketplace repo ${cloneUrl}: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
+
     data[name] = {
       source: { source: 'github', repo },
-      installLocation: join(this.claudeHome, 'plugins', 'marketplaces', name),
+      installLocation,
       lastUpdated: new Date().toISOString(),
     };
     await this.writeKnownMarketplaces(data);
+  }
+
+  async refreshMarketplace(name: string): Promise<void> {
+    const data = await this.readKnownMarketplaces();
+    const entry = data[name];
+    if (!entry) {
+      throw new Error(`Marketplace "${name}" not found`);
+    }
+    try {
+      const git = simpleGit(entry.installLocation);
+      await git.pull();
+      entry.lastUpdated = new Date().toISOString();
+      await this.writeKnownMarketplaces(data);
+    } catch (err) {
+      throw new Error(
+        `Failed to refresh marketplace ${name}: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
   }
 
   async removeMarketplace(name: string): Promise<void> {
     const data = await this.readKnownMarketplaces();
     if (!data[name]) {
       throw new Error(`Marketplace "${name}" not found`);
+    }
+    // Remove the cloned directory (best effort)
+    try {
+      const { rm } = await import('fs/promises');
+      await rm(data[name].installLocation, { recursive: true, force: true });
+    } catch {
+      // ignore — file may be locked or already gone
     }
     delete data[name];
     await this.writeKnownMarketplaces(data);

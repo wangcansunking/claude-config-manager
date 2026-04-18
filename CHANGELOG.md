@@ -2,6 +2,16 @@
 
 All notable changes to claude-config-manager are documented here.
 
+## [1.0.5] — 2026-04-17
+
+### Fixed
+- **Adding a marketplace now actually clones the repo** — previously only wrote to `known_marketplaces.json`, so no plugins showed up in the Marketplace tab. Now uses `simple-git` to `git clone --depth 1` the repo to `~/.claude/plugins/marketplaces/<name>/`.
+- **Removing a marketplace** now deletes the cloned directory (best effort).
+
+### Added
+- **`POST /api/marketplaces/:name/refresh`** — `git pull` to update a marketplace's plugin list.
+- **`MarketplaceManager.refreshMarketplace()`** — programmatic refresh support.
+
 ## [1.0.4] — 2026-04-17
 
 ### Changed

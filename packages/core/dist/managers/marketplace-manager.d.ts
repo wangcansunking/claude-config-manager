@@ -29,6 +29,7 @@ export declare class MarketplaceManager {
     private readEnabledPlugins;
     listMarketplaces(): Promise<MarketplaceInfo[]>;
     addMarketplace(name: string, repo: string): Promise<void>;
+    refreshMarketplace(name: string): Promise<void>;
     removeMarketplace(name: string): Promise<void>;
     listAvailablePlugins(marketplaceName: string): Promise<AvailablePlugin[]>;
     private listFromManifest;
