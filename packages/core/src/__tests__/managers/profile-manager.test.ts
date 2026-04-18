@@ -303,4 +303,113 @@ describe('ProfileManager', () => {
       expect(profile.settings['theme']).toBe('dark');
     });
   });
+
+  describe('skills and commands round-trip', () => {
+    async function seedUserAsset(kind: 'skills' | 'commands', name: string, body: string) {
+      const dir = join(tempDir, kind, name);
+      await mkdir(dir, { recursive: true });
+      await writeFile(join(dir, 'Skill.md'), body, 'utf-8');
+    }
+
+    it('captures user skills with full content on create', async () => {
+      await writeSettingsJson({});
+      await writePluginsJson({ version: 2, plugins: {} });
+      await seedUserAsset('skills', 'my-skill', '---\nname: my-skill\n---\nHello');
+      await seedUserAsset('commands', 'my-cmd', '---\nname: my-cmd\n---\nCmd body');
+
+      const profile = await manager.create('snapshot');
+      expect(profile.skills).toEqual([{ name: 'my-skill', content: '---\nname: my-skill\n---\nHello' }]);
+      expect(profile.commands).toEqual([{ name: 'my-cmd', content: '---\nname: my-cmd\n---\nCmd body' }]);
+    });
+
+    it('includes skills and commands in exportProfile output', async () => {
+      await createProfileFile('work', {
+        ...sampleProfileData,
+        skills: [{ name: 's1', content: 'skill body' }],
+        commands: [{ name: 'c1', content: 'cmd body' }],
+      });
+      const exported = JSON.parse(await manager.exportProfile('work'));
+      expect(exported.skills).toEqual([{ name: 's1', content: 'skill body' }]);
+      expect(exported.commands).toEqual([{ name: 'c1', content: 'cmd body' }]);
+    });
+
+    it('round-trips skills through import in ProfileExport format', async () => {
+      const exportData = {
+        version: '1.0',
+        name: 'imported',
+        createdAt: '2026-01-01T00:00:00Z',
+        plugins: { installed: [], enabled: {} },
+        mcpServers: {},
+        settings: {},
+        hooks: {},
+        commands: [{ name: 'c1', content: 'cmd' }],
+        skills: [{ name: 's1', content: 'skill' }],
+      };
+      const profile = await manager.importProfile(JSON.stringify(exportData));
+      expect(profile.skills).toEqual([{ name: 's1', content: 'skill' }]);
+      expect(profile.commands).toEqual([{ name: 'c1', content: 'cmd' }]);
+    });
+
+    it('restores skill and command files on activate', async () => {
+      const { readFile } = await import('fs/promises');
+      await createProfileFile('active-me', {
+        ...sampleProfileData,
+        name: 'active-me',
+        skills: [{ name: 'my-skill', content: 'SKILL CONTENT' }],
+        commands: [{ name: 'my-cmd', content: 'CMD CONTENT' }],
+      });
+      await manager.activate('active-me');
+      const skillContent = await readFile(join(tempDir, 'skills', 'my-skill', 'Skill.md'), 'utf-8');
+      const cmdContent = await readFile(join(tempDir, 'commands', 'my-cmd', 'Skill.md'), 'utf-8');
+      expect(skillContent).toBe('SKILL CONTENT');
+      expect(cmdContent).toBe('CMD CONTENT');
+    });
+
+    it('merges mcpServers and hooks into settings on activate', async () => {
+      const { readFile } = await import('fs/promises');
+      await createProfileFile('merge-settings', {
+        ...sampleProfileData,
+        name: 'merge-settings',
+        settings: { model: 'claude-opus-4' },
+        mcpServers: { server1: { command: 'node', args: ['s.js'] } },
+        hooks: { PreToolUse: [{ command: 'echo' }] },
+        plugins: [
+          { name: 'p1', version: '1.0.0', marketplace: '', enabled: true, installPath: '', installedAt: '', lastUpdated: '' },
+        ],
+      });
+      await manager.activate('merge-settings');
+      const written = JSON.parse(await readFile(join(tempDir, 'settings.json'), 'utf-8'));
+      expect(written.model).toBe('claude-opus-4');
+      expect(written.mcpServers).toEqual({ server1: { command: 'node', args: ['s.js'] } });
+      expect(written.hooks).toEqual({ PreToolUse: [{ command: 'echo' }] });
+      expect(written.enabledPlugins).toEqual({ p1: true });
+    });
+
+    it('merge strategy combines skills by name, incoming overrides', async () => {
+      await createProfileFile('merge-skills', {
+        ...sampleProfileData,
+        name: 'merge-skills',
+        skills: [
+          { name: 'existing', content: 'OLD' },
+          { name: 'keep', content: 'keep-me' },
+        ],
+      });
+      const importData = {
+        name: 'merge-skills',
+        createdAt: '2026-01-01T00:00:00Z',
+        plugins: [],
+        mcpServers: {},
+        settings: {},
+        hooks: {},
+        commands: [],
+        skills: [
+          { name: 'existing', content: 'NEW' },
+          { name: 'added', content: 'brand-new' },
+        ],
+      };
+      const profile = await manager.importProfile(JSON.stringify(importData), 'merge');
+      const byName = Object.fromEntries((profile.skills ?? []).map((s) => [s.name, s.content]));
+      expect(byName).toEqual({ existing: 'NEW', keep: 'keep-me', added: 'brand-new' });
+    });
+  });
 });

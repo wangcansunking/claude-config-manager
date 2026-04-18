@@ -1,8 +1,13 @@
 import { join } from 'path';
-import { readdir } from 'fs/promises';
+import { readdir, readFile, writeFile, mkdir } from 'fs/promises';
 import { readJsonFile, writeJsonFile, fileExists } from '../utils/file-ops.js';
 import { FileNotFoundError, NotFoundError, ValidationError } from '@ccm/types';
 import type { Profile, ProfileExport } from '@ccm/types';
+
+interface UserAsset {
+  name: string;
+  content: string;
+}
 
 export interface ProfileSummary {
   name: string;
@@ -17,15 +22,74 @@ export class ProfileManager {
   private readonly pluginsJsonPath: string;
   private readonly activeProfilePath: string;
 
+  private readonly userSkillsDir: string;
+  private readonly userCommandsDir: string;
+
   constructor(claudeHome: string) {
     this.profilesDir = join(claudeHome, 'plugins', 'profiles');
     this.settingsPath = join(claudeHome, 'settings.json');
     this.pluginsJsonPath = join(claudeHome, 'plugins', 'installed_plugins.json');
     this.activeProfilePath = join(claudeHome, 'plugins', 'profiles', 'active.json');
+    this.userSkillsDir = join(claudeHome, 'skills');
+    this.userCommandsDir = join(claudeHome, 'commands');
   }
 
   private profilePath(name: string): string {
     return join(this.profilesDir, `${name}.json`);
+  }
+
+  /**
+   * Scan ~/.claude/skills/<name>/Skill.md or ~/.claude/commands/<name>/Skill.md
+   * and return full content for each user-created asset.
+   */
+  private async collectUserAssets(dir: string): Promise<UserAsset[]> {
+    const assets: UserAsset[] = [];
+    if (!(await fileExists(dir))) return assets;
+    let subdirs: string[];
+    try {
+      const entries = await readdir(dir, { withFileTypes: true });
+      subdirs = entries.filter((e) => e.isDirectory()).map((e) => e.name);
+    } catch {
+      return assets;
+    }
+    for (const name of subdirs) {
+      const skillPath = join(dir, name, 'Skill.md');
+      if (!(await fileExists(skillPath))) continue;
+      try {
+        const content = await readFile(skillPath, 'utf-8');
+        assets.push({ name, content });
+      } catch {
+        // skip unreadable
+      }
+    }
+    return assets;
+  }
+
+  /**
+   * Merge two UserAsset arrays by name. Incoming assets override existing ones.
+   */
+  private mergeAssetsByName(existing: UserAsset[], incoming: UserAsset[]): UserAsset[] {
+    const byName = new Map<string, UserAsset>();
+    for (const a of existing) byName.set(a.name, a);
+    for (const a of incoming) byName.set(a.name, a);
+    return Array.from(byName.values());
+  }
+
+  /**
+   * Write user skills/commands back to ~/.claude/skills/<name>/Skill.md or commands
+   */
+  private async restoreUserAssets(dir: string, assets: UserAsset[]): Promise<void> {
+    if (!assets || assets.length === 0) return;
+    await mkdir(dir, { recursive: true });
+    for (const asset of assets) {
+      if (!asset.name || !asset.content) continue;
+      // Sanitize name to prevent path traversal
+      const safeName = asset.name.replace(/[\\\/\.]/g, '_');
+      if (!safeName) continue;
+      const targetDir = join(dir, safeName);
+      await mkdir(targetDir, { recursive: true });
+      await writeFile(join(targetDir, 'Skill.md'), asset.content, 'utf-8');
+    }
   }
 
   private async readSettings(): Promise<Record<string, unknown>> {
@@ -123,6 +187,10 @@ export class ProfileManager {
       return {};
     })();
 
+    // Collect user-created skills and commands (with full file content)
+    const userSkills = await this.collectUserAssets(this.userSkillsDir);
+    const userCommands = await this.collectUserAssets(this.userCommandsDir);
+
     const now = new Date().toISOString();
     const profile: Profile = {
       name,
@@ -132,7 +200,8 @@ export class ProfileManager {
       mcpServers,
       settings,
       hooks,
-      commands: [],
+      commands: userCommands,
+      skills: userSkills,
     };
 
     await writeJsonFile(this.profilePath(name), profile);
@@ -164,8 +233,32 @@ export class ProfileManager {
     const data = await readJsonFile(filePath);
     const profile = data as Profile;
 
-    // Apply settings from profile
-    await writeJsonFile(this.settingsPath, profile.settings);
+    // Merge dedicated mcpServers/hooks fields into settings so that imports with
+    // only top-level fields (no nested settings.mcpServers) still apply correctly.
+    const mergedSettings: Record<string, unknown> = { ...(profile.settings ?? {}) };
+    if (profile.mcpServers && Object.keys(profile.mcpServers).length > 0) {
+      mergedSettings['mcpServers'] = profile.mcpServers;
+    }
+    if (profile.hooks && Object.keys(profile.hooks).length > 0) {
+      mergedSettings['hooks'] = profile.hooks;
+    }
+    // Ensure enabledPlugins reflects the profile's plugin list
+    const enabledPlugins: Record<string, boolean> = {};
+    for (const plugin of profile.plugins ?? []) {
+      enabledPlugins[plugin.name] = plugin.enabled;
+    }
+    if (Object.keys(enabledPlugins).length > 0) {
+      mergedSettings['enabledPlugins'] = enabledPlugins;
+    }
+    await writeJsonFile(this.settingsPath, mergedSettings);
+
+    // Restore user skills and commands (write Skill.md files)
+    if (profile.skills && Array.isArray(profile.skills)) {
+      await this.restoreUserAssets(this.userSkillsDir, profile.skills as UserAsset[]);
+    }
+    if (profile.commands && Array.isArray(profile.commands)) {
+      await this.restoreUserAssets(this.userCommandsDir, profile.commands as UserAsset[]);
+    }
 
     // Update active.json
     await writeJsonFile(this.activeProfilePath, { name });
@@ -226,7 +319,8 @@ export class ProfileManager {
       mcpServers: data.mcpServers,
       settings: data.settings,
       hooks: data.hooks,
-      commands: data.commands,
+      commands: data.commands ?? [],
+      skills: data.skills ?? [],
       description: data.description,
       exportedAt: new Date().toISOString(),
     };
@@ -254,6 +348,8 @@ export class ProfileManager {
     const now = new Date().toISOString();
 
     // Extract from ProfileExport format or Profile format
+    const commands = (obj['commands'] as UserAsset[] | undefined) ?? [];
+    const skills = (obj['skills'] as UserAsset[] | undefined) ?? [];
     let profile: Profile;
     if (obj['version'] && obj['plugins'] && typeof obj['plugins'] === 'object' && !Array.isArray(obj['plugins'])) {
       // ProfileExport format
@@ -267,7 +363,8 @@ export class ProfileManager {
         mcpServers: (obj['mcpServers'] as Profile['mcpServers']) ?? {},
         settings: (obj['settings'] as Record<string, unknown>) ?? {},
         hooks: (obj['hooks'] as Record<string, unknown>) ?? {},
-        commands: (obj['commands'] as unknown[]) ?? [],
+        commands,
+        skills,
         description: obj['description'] as string | undefined,
       };
     } else {
@@ -280,7 +377,8 @@ export class ProfileManager {
         mcpServers: (obj['mcpServers'] as Profile['mcpServers']) ?? {},
         settings: (obj['settings'] as Record<string, unknown>) ?? {},
         hooks: (obj['hooks'] as Record<string, unknown>) ?? {},
-        commands: (obj['commands'] as unknown[]) ?? [],
+        commands,
+        skills,
         description: obj['description'] as string | undefined,
       };
     }
@@ -288,11 +386,17 @@ export class ProfileManager {
     if (strategy === 'merge') {
       const existing = await this.getProfileData(name);
       if (existing) {
+        // Merge user assets by name — imported entries override existing ones
+        const mergedCommands = this.mergeAssetsByName(existing.commands ?? [], profile.commands ?? []);
+        const mergedSkills = this.mergeAssetsByName(existing.skills ?? [], profile.skills ?? []);
         profile = {
           ...existing,
           ...profile,
           settings: { ...existing.settings, ...profile.settings },
           mcpServers: { ...existing.mcpServers, ...profile.mcpServers },
+          hooks: { ...existing.hooks, ...profile.hooks },
+          commands: mergedCommands,
+          skills: mergedSkills,
           updatedAt: now,
         };
       }
