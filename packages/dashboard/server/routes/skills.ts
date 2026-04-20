@@ -3,31 +3,29 @@ import { SkillScanner, getClaudeHome } from '@ccm/core';
 import { writeFile } from 'fs/promises';
 
 const router = Router();
+const skillScanner = new SkillScanner(getClaudeHome());
 
 // GET /api/skills
-router.get('/', async (_req, res) => {
+router.get('/', async (_req, res, next) => {
   try {
-    const home = getClaudeHome();
-    const skills = await new SkillScanner(home).scan();
+    const skills = await skillScanner.scan();
     // Strip content from response to reduce payload size
     const lightweight = skills.map(({ content: _content, ...rest }) => rest);
     res.json(lightweight);
   } catch (err) {
-    console.error('[GET /api/skills]', err);
-    res.status(500).json({ error: 'Internal server error' });
+    next(err);
   }
 });
 
 // GET /api/skills/content?path=
-router.get('/content', async (req, res) => {
+router.get('/content', async (req, res, _next) => {
   const filePath = req.query.path as string | undefined;
   if (!filePath) {
-    return res.status(400).json({ error: 'Missing path parameter' });
+    res.status(400).json({ error: 'Missing path parameter' }); return;
   }
 
   try {
-    const scanner = new SkillScanner(getClaudeHome());
-    const content = await scanner.getSkillContent(filePath);
+    const content = await skillScanner.getSkillContent(filePath);
     res.json({ content });
   } catch {
     res.status(404).json({ error: 'Not found' });
@@ -89,15 +87,15 @@ async function fetchFromSkillsSh(query: string, signal?: AbortSignal): Promise<S
 const searchCache = new Map<string, { data: SkillResult[]; timestamp: number }>();
 const CACHE_TTL = 5 * 60 * 1000;
 
-router.get('/search', async (req, res) => {
+router.get('/search', async (req, res, _next) => {
   const query = (req.query.q as string) ?? '';
   if (query.trim().length < 2) {
-    return res.json([]);
+    res.json([]); return;
   }
 
   const cached = searchCache.get(query);
   if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-    return res.json(cached.data);
+    res.json(cached.data); return;
   }
 
   try {
@@ -115,9 +113,9 @@ const topCache: { data: SkillResult[] | null; timestamp: number } = { data: null
 const TOP_CACHE_TTL = 10 * 60 * 1000;
 const TOP_QUERIES = ['agent', 'code', 'react', 'python', 'typescript', 'git', 'test'];
 
-router.get('/top', async (_req, res) => {
+router.get('/top', async (_req, res, _next) => {
   if (topCache.data && Date.now() - topCache.timestamp < TOP_CACHE_TTL) {
-    return res.json(topCache.data);
+    res.json(topCache.data); return;
   }
 
   try {
@@ -149,7 +147,7 @@ router.get('/top', async (_req, res) => {
     res.json(top);
   } catch (err) {
     console.error('[GET /api/skills/top]', err);
-    if (topCache.data) return res.json(topCache.data);
+    if (topCache.data) res.json(topCache.data); return;
     res.status(502).json({ error: 'Failed to fetch top skills', skills: [] });
   }
 });
@@ -164,25 +162,24 @@ function parseInstallsForSort(s: string): number {
 }
 
 // POST /api/skills/update
-router.post('/update', async (req, res) => {
+router.post('/update', async (req, res, next) => {
   try {
     const { filePath, content } = req.body as { filePath?: string; content?: string };
 
     if (!filePath || !content) {
-      return res.status(400).json({ error: 'Missing required fields: filePath, content' });
+      res.status(400).json({ error: 'Missing required fields: filePath, content' }); return;
     }
 
     // Security: only allow writing to ~/.claude/skills/ and ~/.claude/commands/
     const normalizedPath = filePath.replace(/\\/g, '/');
     if (!normalizedPath.includes('/.claude/skills/') && !normalizedPath.includes('/.claude/commands/')) {
-      return res.status(403).json({ error: 'Cannot edit system files' });
+      res.status(403).json({ error: 'Cannot edit system files' }); return;
     }
 
     await writeFile(filePath, content, 'utf-8');
     res.json({ success: true });
   } catch (err) {
-    console.error('[POST /api/skills/update]', err);
-    res.status(500).json({ error: 'Failed to save' });
+    next(err);
   }
 });
 

@@ -2,107 +2,94 @@ import { Router } from 'express';
 import { ProfileManager, getClaudeHome } from '@ccm/core';
 
 const router = Router();
+const profileManager = new ProfileManager(getClaudeHome());
 
 // GET /api/profiles
-router.get('/', async (_req, res) => {
+router.get('/', async (_req, res, next) => {
   try {
-    const home = getClaudeHome();
-    const profiles = await new ProfileManager(home).list();
+    const profiles = await profileManager.list();
     res.json(profiles);
   } catch (err) {
-    console.error('[GET /api/profiles]', err);
-    res.status(500).json({ error: 'Internal server error' });
+    next(err);
   }
 });
 
 // POST /api/profiles
-router.post('/', async (req, res) => {
+router.post('/', async (req, res, next) => {
   try {
     const { name } = req.body as { name?: string };
     if (!name || typeof name !== 'string') {
-      return res.status(400).json({ error: 'Missing required field: name' });
+      res.status(400).json({ error: 'Missing required field: name' }); return;
     }
-    const home = getClaudeHome();
-    const profile = await new ProfileManager(home).create(name);
+    const profile = await profileManager.create(name);
     res.status(201).json(profile);
   } catch (err) {
-    console.error('[POST /api/profiles]', err);
-    res.status(500).json({ error: 'Internal server error' });
+    next(err);
   }
 });
 
 // POST /api/profiles/:name/activate
-router.post('/:name/activate', async (req, res) => {
+router.post('/:name/activate', async (req, res, next) => {
   try {
     const { name } = req.params;
-    const home = getClaudeHome();
-    await new ProfileManager(home).activate(decodeURIComponent(name));
+    await profileManager.activate(decodeURIComponent(name));
     res.json({ success: true });
   } catch (err) {
-    console.error('[POST /api/profiles/:name/activate]', err);
-    res.status(500).json({ error: 'Internal server error' });
+    next(err);
   }
 });
 
 // PATCH /api/profiles/:name
-router.patch('/:name', async (req, res) => {
+router.patch('/:name', async (req, res, next) => {
   try {
     const { name } = req.params;
     const body = req.body;
-    const home = getClaudeHome();
-    const updated = await new ProfileManager(home).update(decodeURIComponent(name), body);
+    const updated = await profileManager.update(decodeURIComponent(name), body);
     res.json(updated);
   } catch (err) {
-    console.error('[PATCH /api/profiles/:name]', err);
-    res.status(500).json({ error: 'Internal server error' });
+    next(err);
   }
 });
 
 // DELETE /api/profiles/:name
-router.delete('/:name', async (req, res) => {
+router.delete('/:name', async (req, res, next) => {
   try {
     const { name } = req.params;
-    const home = getClaudeHome();
-    await new ProfileManager(home).delete(decodeURIComponent(name));
+    await profileManager.delete(decodeURIComponent(name));
     res.json({ success: true });
   } catch (err) {
-    console.error('[DELETE /api/profiles/:name]', err);
-    res.status(500).json({ error: 'Internal server error' });
+    next(err);
   }
 });
 
 // POST /api/profiles/export (mapped from old /api/export)
-router.post('/export', async (req, res) => {
+router.post('/export', async (req, res, next) => {
   try {
     const { name } = req.body as { name?: string };
     if (!name || typeof name !== 'string') {
-      return res.status(400).json({ error: 'Missing required field: name' });
+      res.status(400).json({ error: 'Missing required field: name' }); return;
     }
-    const home = getClaudeHome();
-    const exported = await new ProfileManager(home).exportProfile(name);
+    const exported = await profileManager.exportProfile(name);
     res.json({ data: exported });
   } catch (err) {
-    console.error('[POST /api/profiles/export]', err);
-    res.status(500).json({ error: 'Internal server error' });
+    next(err);
   }
 });
 
 // POST /api/profiles/import (mapped from old /api/import)
-router.post('/import', async (req, res) => {
+router.post('/import', async (req, res, next) => {
   try {
     const { data, strategy = 'replace' } = req.body as { data?: string; strategy?: 'merge' | 'replace' };
     if (!data || typeof data !== 'string') {
-      return res.status(400).json({ error: 'Missing required field: data' });
+      res.status(400).json({ error: 'Missing required field: data' }); return;
     }
     if (strategy !== 'merge' && strategy !== 'replace') {
-      return res.status(400).json({ error: 'Invalid value for strategy: must be "merge" or "replace"' });
+      res.status(400).json({ error: 'Invalid value for strategy: must be "merge" or "replace"' }); return;
     }
-    const home = getClaudeHome();
-    const profile = await new ProfileManager(home).importProfile(data, strategy);
+    const profile = await profileManager.importProfile(data, strategy);
     res.status(201).json(profile);
   } catch (err) {
-    console.error('[POST /api/profiles/import]', err);
-    res.status(500).json({ error: 'Internal server error' });
+    next(err);
   }
 });
 

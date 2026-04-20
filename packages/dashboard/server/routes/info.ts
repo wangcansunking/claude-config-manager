@@ -6,7 +6,7 @@ import { fileURLToPath } from 'url';
 const router = Router();
 
 // GET /api/info — dashboard version + build info
-router.get('/', async (_req, res) => {
+router.get('/', async (_req, res, next) => {
   try {
     // Read version from plugin.json (relative to server bundle location)
     const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -34,8 +34,7 @@ router.get('/', async (_req, res) => {
 
     res.json({ name, version });
   } catch (err) {
-    console.error('[GET /api/info]', err);
-    res.status(500).json({ error: 'Internal server error' });
+    next(err);
   }
 });
 

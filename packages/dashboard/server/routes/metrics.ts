@@ -2,16 +2,15 @@ import { Router } from 'express';
 import { MetricsManager, getClaudeHome } from '@ccm/core';
 
 const router = Router();
+const metricsManager = new MetricsManager(getClaudeHome());
 
 // GET /api/metrics
-router.get('/', async (_req, res) => {
+router.get('/', async (_req, res, next) => {
   try {
-    const mgr = new MetricsManager(getClaudeHome());
-    const metrics = await mgr.getMetrics();
+    const metrics = await metricsManager.getMetrics();
     res.json(metrics);
   } catch (err) {
-    console.error('[GET /api/metrics]', err);
-    res.status(500).json({ error: 'Failed to load metrics' });
+    next(err);
   }
 });
 

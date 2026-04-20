@@ -5,6 +5,9 @@ import { join } from 'path';
 import { fileExists } from '@ccm/core';
 
 const router = Router();
+const home = getClaudeHome();
+const pluginManager = new PluginManager(home);
+const skillScanner = new SkillScanner(home);
 
 interface McpServerSummary {
   name: string;
@@ -56,60 +59,53 @@ async function readPluginMcpServers(installPath: string): Promise<McpServerSumma
 }
 
 // GET /api/plugins
-router.get('/', async (_req, res) => {
+router.get('/', async (_req, res, next) => {
   try {
-    const home = getClaudeHome();
-    const plugins = await new PluginManager(home).list();
+    const plugins = await pluginManager.list();
     res.json(plugins);
   } catch (err) {
-    console.error('[GET /api/plugins]', err);
-    res.status(500).json({ error: 'Internal server error' });
+    next(err);
   }
 });
 
 // POST /api/plugins
-router.post('/', async (req, res) => {
+router.post('/', async (req, res, next) => {
   try {
     const { name } = req.body as { name?: string };
     if (!name || typeof name !== 'string') {
-      return res.status(400).json({ error: 'Missing required field: name' });
+      res.status(400).json({ error: 'Missing required field: name' }); return;
     }
     // Install is a stub — actual installation requires CLI tooling
     res.status(501).json({
       message: `Plugin installation for "${name}" is not yet supported via the dashboard.`,
     });
   } catch (err) {
-    console.error('[POST /api/plugins]', err);
-    res.status(500).json({ error: 'Internal server error' });
+    next(err);
   }
 });
 
 // DELETE /api/plugins/:name
-router.delete('/:name', async (req, res) => {
+router.delete('/:name', async (req, res, next) => {
   try {
     const { name } = req.params;
-    const home = getClaudeHome();
-    await new PluginManager(home).remove(decodeURIComponent(name));
+    await pluginManager.remove(decodeURIComponent(name));
     res.json({ success: true });
   } catch (err) {
-    console.error('[DELETE /api/plugins/:name]', err);
-    res.status(500).json({ error: 'Internal server error' });
+    next(err);
   }
 });
 
 // GET /api/plugins/:name/contents — scan what this plugin provides
-router.get('/:name/contents', async (req, res) => {
+router.get('/:name/contents', async (req, res, next) => {
   try {
     const name = decodeURIComponent(req.params.name);
-    const home = getClaudeHome();
-    const plugin = await new PluginManager(home).getDetail(name);
+    const plugin = await pluginManager.getDetail(name);
     if (!plugin) {
-      return res.status(404).json({ error: 'Plugin not found' });
+      res.status(404).json({ error: 'Plugin not found' }); return;
     }
 
-    const scanner = new SkillScanner(home);
     const [rawSkills, mcpServers] = await Promise.all([
-      scanner.scanPlugin(plugin.installPath).catch((err) => {
+      skillScanner.scanPlugin(plugin.installPath).catch((err) => {
         console.warn(`[plugin-contents] scanPlugin failed for ${name}:`, err);
         return [];
       }),
@@ -159,8 +155,7 @@ router.get('/:name/contents', async (req, res) => {
       mcpServers,
     });
   } catch (err) {
-    console.error('[GET /api/plugins/:name/contents]', err);
-    res.status(500).json({ error: 'Internal server error' });
+    next(err);
   }
 });
 
@@ -184,19 +179,17 @@ function parseFrontmatterNameDesc(content: string): { name?: string; description
 }
 
 // PATCH /api/plugins/:name
-router.patch('/:name', async (req, res) => {
+router.patch('/:name', async (req, res, next) => {
   try {
     const { name } = req.params;
     const { enabled } = req.body as { enabled?: boolean };
     if (typeof enabled !== 'boolean') {
-      return res.status(400).json({ error: 'Missing required field: enabled (boolean)' });
+      res.status(400).json({ error: 'Missing required field: enabled (boolean)' }); return;
     }
-    const home = getClaudeHome();
-    await new PluginManager(home).toggle(decodeURIComponent(name), enabled);
+    await pluginManager.toggle(decodeURIComponent(name), enabled);
     res.json({ success: true });
   } catch (err) {
-    console.error('[PATCH /api/plugins/:name]', err);
-    res.status(500).json({ error: 'Internal server error' });
+    next(err);
   }
 });
 

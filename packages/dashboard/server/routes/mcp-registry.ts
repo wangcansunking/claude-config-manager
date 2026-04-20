@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { McpManager, getClaudeHome } from '@ccm/core';
 
 const router = Router();
+const mcpManager = new McpManager(getClaudeHome());
 
 // ---------------------------------------------------------------------------
 // Unified registry result type
@@ -128,16 +129,16 @@ const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 // GET /api/mcp-registry?q=search-term
 // ---------------------------------------------------------------------------
 
-router.get('/', async (req, res) => {
+router.get('/', async (req, res, _next) => {
   const query = (req.query.q as string)?.trim();
   if (!query) {
-    return res.json({ results: [], smitheryAvailable: !!process.env.SMITHERY_API_KEY });
+    res.json({ results: [], smitheryAvailable: !!process.env.SMITHERY_API_KEY }); return;
   }
 
   // Check cache
   const cached = searchCache.get(query);
   if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-    return res.json(cached.data);
+    res.json(cached.data); return;
   }
 
   // Fetch all sources in parallel — tolerant of individual failures
@@ -185,10 +186,10 @@ router.get('/', async (req, res) => {
 const topMcpCache: { data: { results: McpRegistryResult[]; smitheryAvailable: boolean } | null; timestamp: number } = { data: null, timestamp: 0 };
 const TOP_MCP_CACHE_TTL = 10 * 60 * 1000; // 10 minutes
 
-router.get('/top', async (_req, res) => {
+router.get('/top', async (_req, res, _next) => {
   // Return cached if fresh
   if (topMcpCache.data && Date.now() - topMcpCache.timestamp < TOP_MCP_CACHE_TTL) {
-    return res.json(topMcpCache.data);
+    res.json(topMcpCache.data); return;
   }
 
   try {
@@ -276,7 +277,7 @@ router.get('/top', async (_req, res) => {
     console.error('[GET /api/mcp-registry/top]', err);
     // Try returning stale cache if available
     if (topMcpCache.data) {
-      return res.json(topMcpCache.data);
+      res.json(topMcpCache.data); return;
     }
     res.json({ results: [], smitheryAvailable: !!process.env.SMITHERY_API_KEY });
   }
@@ -286,7 +287,7 @@ router.get('/top', async (_req, res) => {
 // POST /api/mcp-registry/install
 // ---------------------------------------------------------------------------
 
-router.post('/install', async (req, res) => {
+router.post('/install', async (req, res, next) => {
   try {
     const { name, command, args, env } = req.body as {
       name?: string;
@@ -296,29 +297,24 @@ router.post('/install', async (req, res) => {
     };
 
     if (!name || typeof name !== 'string') {
-      return res.status(400).json({ error: 'Missing required field: name' });
+      res.status(400).json({ error: 'Missing required field: name' }); return;
     }
     if (!command || typeof command !== 'string') {
-      return res.status(400).json({ error: 'Missing required field: command' });
+      res.status(400).json({ error: 'Missing required field: command' }); return;
     }
     if (args !== undefined && !Array.isArray(args)) {
-      return res.status(400).json({ error: 'Field args must be an array' });
+      res.status(400).json({ error: 'Field args must be an array' }); return;
     }
 
     const config: { command: string; args?: string[]; env?: Record<string, string> } = { command };
     if (args && args.length > 0) config.args = args;
     if (env && Object.keys(env).length > 0) config.env = env;
 
-    const home = getClaudeHome();
-    const manager = new McpManager(home);
-    await manager.add(name, config);
+    await mcpManager.add(name, config);
 
     res.status(201).json({ success: true });
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Internal server error';
-    const status = message.includes('already exists') ? 409 : 500;
-    console.error('[POST /api/mcp-registry/install]', err);
-    res.status(status).json({ error: message });
+    next(err);
   }
 });
 
