@@ -2,6 +2,11 @@
 
 All notable changes to claude-config-manager are documented here.
 
+## [1.1.1] — 2026-04-20
+
+### Added
+- **Dashboard favicon.** Browser tab now shows a terracotta-orange "C + gear" app icon instead of the default blank. Five assets shipped under `packages/dashboard/public/` (`favicon.ico` multi-res 16/32/48, plus standalone 32 / 192 / 512 PNG and the 691×691 trimmed source). `index.html` references them via `<link rel="icon">` and `apple-touch-icon`. Icon generated with Azure `gpt-image-1.5`, post-processed (whitespace trim + resize) with Pillow.
+
 ## [1.1.0] — 2026-04-20
 
 ### Changed
