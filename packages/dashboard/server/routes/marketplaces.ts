@@ -2,80 +2,67 @@ import { Router } from 'express';
 import { MarketplaceManager, getClaudeHome } from '@ccm/core';
 
 const router = Router();
+const marketplaceManager = new MarketplaceManager(getClaudeHome());
 
 // GET /api/marketplaces
-router.get('/', async (_req, res) => {
+router.get('/', async (_req, res, next) => {
   try {
-    const home = getClaudeHome();
-    const marketplaces = await new MarketplaceManager(home).listMarketplaces();
+    const marketplaces = await marketplaceManager.listMarketplaces();
     res.json(marketplaces);
   } catch (err) {
-    console.error('[GET /api/marketplaces]', err);
-    res.status(500).json({ error: 'Internal server error' });
+    next(err);
   }
 });
 
 // POST /api/marketplaces
-router.post('/', async (req, res) => {
+router.post('/', async (req, res, next) => {
   try {
     const { name, repo } = req.body as { name?: string; repo?: string };
     if (!name || typeof name !== 'string') {
-      return res.status(400).json({ error: 'Missing required field: name' });
+      res.status(400).json({ error: 'Missing required field: name' }); return;
     }
     if (!repo || typeof repo !== 'string') {
-      return res.status(400).json({ error: 'Missing required field: repo' });
+      res.status(400).json({ error: 'Missing required field: repo' }); return;
     }
-    const home = getClaudeHome();
-    await new MarketplaceManager(home).addMarketplace(name, repo);
+    await marketplaceManager.addMarketplace(name, repo);
     res.json({ success: true });
   } catch (err) {
-    console.error('[POST /api/marketplaces]', err);
-    const message = err instanceof Error ? err.message : 'Internal server error';
-    res.status(400).json({ error: message });
+    next(err);
   }
 });
 
 // DELETE /api/marketplaces/:name
-router.delete('/:name', async (req, res) => {
+router.delete('/:name', async (req, res, next) => {
   try {
     const { name } = req.params;
-    const home = getClaudeHome();
-    await new MarketplaceManager(home).removeMarketplace(decodeURIComponent(name));
+    await marketplaceManager.removeMarketplace(decodeURIComponent(name));
     res.json({ success: true });
   } catch (err) {
-    console.error('[DELETE /api/marketplaces/:name]', err);
-    const message = err instanceof Error ? err.message : 'Internal server error';
-    res.status(400).json({ error: message });
+    next(err);
   }
 });
 
 // POST /api/marketplaces/:name/refresh — git pull to update
-router.post('/:name/refresh', async (req, res) => {
+router.post('/:name/refresh', async (req, res, next) => {
   try {
     const { name } = req.params;
-    const home = getClaudeHome();
-    await new MarketplaceManager(home).refreshMarketplace(decodeURIComponent(name));
+    await marketplaceManager.refreshMarketplace(decodeURIComponent(name));
     res.json({ success: true });
   } catch (err) {
-    console.error('[POST /api/marketplaces/:name/refresh]', err);
-    const message = err instanceof Error ? err.message : 'Internal server error';
-    res.status(400).json({ error: message });
+    next(err);
   }
 });
 
 // GET /api/marketplaces/:name/plugins
-router.get('/:name/plugins', async (req, res) => {
+router.get('/:name/plugins', async (req, res, next) => {
   try {
     const { name } = req.params;
-    const home = getClaudeHome();
-    const plugins = await new MarketplaceManager(home).listAvailablePlugins(
+    const plugins = await marketplaceManager.listAvailablePlugins(
       decodeURIComponent(name),
     );
     res.json(plugins);
   } catch (err) {
-    console.error('[GET /api/marketplaces/:name/plugins]', err);
-    const message = err instanceof Error ? err.message : 'Internal server error';
-    res.status(400).json({ error: message });
+    next(err);
   }
 });
 

@@ -2,6 +2,30 @@
 
 All notable changes to claude-config-manager are documented here.
 
+## [1.1.0] — 2026-04-20
+
+### Changed
+- **MCP server slimmed from 9 → 2 tools.** `ccm_dashboard_status` and `ccm_open_dashboard` stay; every profile / plugin / MCP / skill / settings operation moved behind the `claude-config` CLI, which the `/ccm-*` slash commands shell into via Bash. Rationale: keep the model's tool-selection surface small (fewer tool descriptions = fewer tokens = better tool pick quality) while still exposing the full operational surface to users via CLI and to agents via slash commands.
+- **Slash commands (`/ccm`, `/ccm-dashboard`, `/ccm-export`, `/ccm-import`, `/ccm-profile`)** rewritten to invoke `claude-config` in Bash instead of calling MCP tools. CLI remains the single source of truth for state-changing operations.
+
+### Fixed
+- **Dashboard error surface hardened.** Per-route `res.status(500)` catch blocks replaced with a typed `errorHandler` middleware that maps domain errors to the right HTTP code: `NotFoundError`→404, `ValidationError`→400, `ConflictError`→409, `FileNotFoundError`→404, `PluginInstallError`→502. Response carries `{ error, code? }` where `code` is the `CcmError.code` for easier client-side branching.
+- **Dashboard now binds to `127.0.0.1` by default** instead of `0.0.0.0`. Overridable via `HOST` env var. Closes a LAN-exposure gap when the laptop joins a shared network.
+- **`express-rate-limit` on `/api/*`** at 120 req/min per IP (overridable via `CCM_RATE_LIMIT_MAX`). Protects against runaway clients without throttling the legitimate bursty dashboard page-load pattern.
+- **`@ccm/mcp` server version now reads from `package.json` at startup** instead of the hardcoded `"1.0.0-draft"` string. Eliminates the drift between advertised version and package version on every release.
+- **`profile-manager` path traversal hardening.** `restoreUserAssets` switched from a blacklist regex (`[\\/.]` → `_`) to a whitelist (`[^a-zA-Z0-9_-]` → `_`) and refuses names that start with `.`, defusing `..` / hidden-path attacks even on exotic filenames.
+- **`profile-manager` cleanup.** `unlink` hoisted to the top-level `fs/promises` import; previously imported dynamically twice inside `delete()`.
+- **Dashboard routes use manager singletons.** Every `new ProfileManager(home)` / `new PluginManager(home)` etc. across the 10 route files is now created once at module scope instead of per request.
+- **`@ccm/mcp` bundle no longer crashes at runtime.** `esbuild`'s ESM `--format=esm` output for `simple-git` (transitive CJS dep) produced a dynamic-require call that Node's ESM loader rejected. Added the same `createRequire` banner the dashboard bundle already uses.
+
+### Removed
+- **MCP tool groups `profile-tools`, `query-tools`, `mutation-tools`** — the source files, dist output, and their tests. Everything they did is now reachable via `claude-config <...>`.
+- **Stale `C:\Users\canwa\...` Windows paths** in `.claude/settings.local.json` (now gitignored) and `docs/migration/USE-CASES.md`.
+
+### Docs
+- README restructured to lead with the marketplace install block at the top (before the hero screenshot) and now documents the 2-tool / CLI-first architecture.
+- Workspace-level `CLAUDE.md` added at `personal-claude-code-workspace/CLAUDE.md` codifying the release rule: bump plugin version + README + CHANGELOG, then bump marketplace version + README.
+
 ## [1.0.8] — 2026-04-18
 
 ### Fixed

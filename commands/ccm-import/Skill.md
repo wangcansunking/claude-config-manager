@@ -3,21 +3,30 @@ name: ccm-import
 description: Import a Claude Code configuration profile from a JSON file
 ---
 
-Import a Claude Code configuration from an exported JSON file.
+Import a Claude Code configuration profile from an exported JSON file. All operations go through the `claude-config` CLI.
+
+```bash
+CCM="node ${CLAUDE_PLUGIN_ROOT}/packages/cli/dist/index.js"
+```
 
 ## Steps
 
-1. Ask the user for the file path (default: ~/claude-config-export.json)
-2. Read the file:
+1. Ask the user for the file path. Default to `~/claude-config-export.json` if they don't say.
+
+2. Import. The CLI merges by default (keep existing entries, layer incoming on top). Pass `--replace` if the user wants the incoming profile to fully overwrite. Pass `--activate` to switch to the profile right after import. Use `--dry-run` first if the user wants a preview:
 
 ```bash
-cat ~/claude-config-export.json
+$CCM import <file>                     # merge, do not activate
+$CCM import <file> --replace           # full overwrite
+$CCM import <file> --activate          # merge then activate
+$CCM import <file> --replace --activate
+$CCM import <file> --dry-run           # preview only, no writes
 ```
 
-3. Call `ccm_import_profile` with:
-   - `data`: the file contents
-   - `strategy`: ask the user — "merge" (keep existing + add new) or "replace" (overwrite everything)
+3. If the user didn't pass `--activate` and wants to activate now:
 
-4. Call `ccm_activate_profile` if the user wants to activate the imported profile
+```bash
+$CCM profile activate "<imported-name>"
+```
 
-5. Tell the user what was imported and whether it's now active.
+4. Summarize what was imported (name, plugin/MCP/skill counts from the CLI output) and whether it's now active.

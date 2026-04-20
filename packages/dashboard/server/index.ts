@@ -1,14 +1,29 @@
 import express from 'express';
 import cors from 'cors';
+import rateLimit from 'express-rate-limit';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { errorHandler } from './middleware/error-handler.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
 const PORT = Number(process.env.PORT || 3399);
+const HOST = process.env.HOST ?? '127.0.0.1';
+
+// Rate limiter for /api/*.
+// Default budget is generous (120 req/min) — the dashboard makes bursty
+// parallel calls on page load and we don't want to throttle the single-user
+// localhost case. Override via CCM_RATE_LIMIT_MAX if you need tighter control.
+const apiLimiter = rateLimit({
+  windowMs: 60_000,
+  max: Number(process.env.CCM_RATE_LIMIT_MAX ?? 120),
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 app.use(cors());
 app.use(express.json());
+app.use('/api', apiLimiter);
 
 // Import all route modules
 import { statsRouter } from './routes/stats.js';
@@ -51,8 +66,11 @@ app.get('*', (_req, res) => {
   res.sendFile(join(clientDir, 'index.html'));
 });
 
-app.listen(PORT, () => {
-  console.log(`Dashboard running at http://localhost:${PORT}`);
+// Typed error middleware — must be registered last
+app.use(errorHandler);
+
+app.listen(PORT, HOST, () => {
+  console.log(`Dashboard running at http://${HOST}:${PORT}`);
 });
 
 export { app };

@@ -9,17 +9,22 @@ import {
 } from '@ccm/core';
 
 const router = Router();
+const home = getClaudeHome();
+const pluginManager = new PluginManager(home);
+const mcpManager = new McpManager(home);
+const skillScanner = new SkillScanner(home);
+const profileManager = new ProfileManager(home);
+const sessionManager = new SessionManager(home);
 
 // GET /api/stats
-router.get('/', async (_req, res) => {
+router.get('/', async (_req, res, next) => {
   try {
-    const home = getClaudeHome();
     const [plugins, mcps, skills, profiles, sessions] = await Promise.all([
-      new PluginManager(home).list(),
-      new McpManager(home).list(),
-      new SkillScanner(home).scan(),
-      new ProfileManager(home).list(),
-      new SessionManager(home).getActiveSessions(),
+      pluginManager.list(),
+      mcpManager.list(),
+      skillScanner.scan(),
+      profileManager.list(),
+      sessionManager.getActiveSessions(),
     ]);
     res.json({
       plugins: plugins.length,
@@ -29,8 +34,7 @@ router.get('/', async (_req, res) => {
       sessions: sessions.length,
     });
   } catch (err) {
-    console.error('[GET /api/stats]', err);
-    res.status(500).json({ error: 'Internal server error' });
+    next(err);
   }
 });
 

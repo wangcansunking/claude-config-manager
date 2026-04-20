@@ -103,19 +103,33 @@ Browse past and live Claude Code sessions across all your projects. Click any se
 
 ## MCP Tools
 
-22 tools exposed by the local MCP server — reachable by Claude Code as `mcp__claude-config-manager__<tool>`:
+Only **2 tools** exposed — intentionally minimal so the model's tool-selection surface stays small:
 
-- **Profiles** — `ccm_list_profiles`, `ccm_create_profile`, `ccm_activate_profile`, `ccm_export_profile`, `ccm_import_profile`, `ccm_update_profile`, `ccm_delete_profile`
-- **Read** — `ccm_list_plugins`, `ccm_list_mcp_servers`, `ccm_list_skills`, `ccm_list_commands`, `ccm_get_config`, `ccm_get_component_detail`
-- **Dashboard** — `ccm_open_dashboard`, `ccm_dashboard_status`
-- **Mutations** — `ccm_install_plugin`, `ccm_update_plugin`, `ccm_remove_plugin`, `ccm_toggle_plugin`, `ccm_add_mcp_server`, `ccm_remove_mcp_server`, `ccm_update_config`
+| Tool | Purpose |
+|------|---------|
+| `ccm_dashboard_status` | Read-only: is the dashboard up, on what port, under what PID |
+| `ccm_open_dashboard`   | Return the dashboard URL + start hint |
+
+Everything else (profiles, plugins, MCP servers, skills, commands, settings) flows through the **`claude-config` CLI** — the single source of truth for operations. The `/ccm-*` slash commands shell into the CLI via Bash.
 
 ## CLI
 
-The plugin ships a `claude-config` CLI (bin in `packages/cli`) for scripted usage:
-
 ```bash
-npx claude-config --help
+node packages/cli/dist/index.js --help    # or via plugin: node ${CLAUDE_PLUGIN_ROOT}/packages/cli/dist/index.js
+```
+
+Surface:
+
+```
+claude-config start [--port <port>] [--no-open]
+claude-config list [--plugins | --mcps | --skills | --commands] [--json]
+claude-config profile list [--json]
+claude-config profile create <name>
+claude-config profile activate <name>
+claude-config profile delete <name>
+claude-config export <profile> [--output <file>] [--format json|yaml]
+claude-config import <file> [--replace] [--activate] [--dry-run]
+claude-config mcp-server                  # runs the MCP stdio server
 ```
 
 ## Repository Layout
@@ -131,7 +145,7 @@ claude-config-manager/
   packages/
     types/                           Shared TypeScript types
     core/                            Business logic (profiles, scanners, managers)
-    mcp/                             MCP server (22 tools)
+    mcp/                             MCP server (2 tools — dashboard status + open)
     dashboard/                       Express + Vite dashboard (UI + API)
     cli/                             `claude-config` CLI
   docs/                              Spec docs and screenshots

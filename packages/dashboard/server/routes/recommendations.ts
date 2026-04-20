@@ -10,33 +10,34 @@ import {
 import type { Recommendation, AvailablePlugin } from '@ccm/core';
 
 const router = Router();
+const home = getClaudeHome();
+const recommendationManager = new RecommendationManager(home);
+const pluginManager = new PluginManager(home);
+const mcpManager = new McpManager(home);
+const skillScanner = new SkillScanner(home);
+const marketplaceManager = new MarketplaceManager(home);
 
 // GET /api/recommendations
-router.get('/', async (_req, res) => {
+router.get('/', async (_req, res, next) => {
   try {
-    const mgr = new RecommendationManager(getClaudeHome());
-    const cached = await mgr.getCached();
+    const cached = await recommendationManager.getCached();
     if (cached) {
-      return res.json(cached);
+      res.json(cached); return;
     }
     res.json({ recommendations: [], generatedAt: null, model: null });
   } catch (err) {
-    console.error('[GET /api/recommendations]', err);
-    res.status(500).json({ error: 'Failed to load recommendations' });
+    next(err);
   }
 });
 
 // POST /api/recommendations
-router.post('/', async (_req, res) => {
+router.post('/', async (_req, res, _next) => {
   try {
-    const home = getClaudeHome();
-    const mgr = new RecommendationManager(home);
-
     // Get what's already installed (fail-safe each)
     const [installedPlugins, installedMcps, installedSkills] = await Promise.all([
-      safeList(() => new PluginManager(home).list()),
-      safeList(() => new McpManager(home).list()),
-      safeList(() => new SkillScanner(home).scan()),
+      safeList(() => pluginManager.list()),
+      safeList(() => mcpManager.list()),
+      safeList(() => skillScanner.scan()),
     ]);
 
     const installedPluginNames = new Set(
@@ -52,7 +53,7 @@ router.post('/', async (_req, res) => {
         fetchTrendingSkills(),
         fetchTopMcps(),
         fetchTrendingMcps(),
-        fetchMarketplacePlugins(home),
+        fetchMarketplacePlugins(),
       ]);
 
     const topSkills = topSkillsRes.status === 'fulfilled' ? topSkillsRes.value : [];
@@ -103,7 +104,7 @@ router.post('/', async (_req, res) => {
       model: 'generated-v2',
     };
 
-    await mgr.saveCache(result);
+    await recommendationManager.saveCache(result);
     res.json(result);
   } catch (err) {
     console.error('[POST /api/recommendations]', err);
@@ -383,11 +384,10 @@ interface PluginSource {
   category?: string;
 }
 
-async function fetchMarketplacePlugins(home: string): Promise<PluginSource[]> {
-  const mm = new MarketplaceManager(home);
+async function fetchMarketplacePlugins(): Promise<PluginSource[]> {
   let marketplaces: { name: string }[] = [];
   try {
-    marketplaces = await mm.listMarketplaces();
+    marketplaces = await marketplaceManager.listMarketplaces();
   } catch {
     return [];
   }
@@ -397,7 +397,7 @@ async function fetchMarketplacePlugins(home: string): Promise<PluginSource[]> {
   const perMarketplace = await Promise.allSettled(
     marketplaces.map(async (m) => {
       try {
-        const plugins = await mm.listAvailablePlugins(m.name);
+        const plugins = await marketplaceManager.listAvailablePlugins(m.name);
         return plugins.map((p: AvailablePlugin): PluginSource => ({
           name: p.name,
           description: p.description || `Plugin from ${m.name}`,

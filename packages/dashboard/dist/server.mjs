@@ -21446,7 +21446,7 @@ var require_request = __commonJS({
     "use strict";
     var accepts = require_accepts();
     var deprecate = require_depd()("express");
-    var isIP = __require("net").isIP;
+    var isIP2 = __require("net").isIP;
     var typeis = require_type_is();
     var http = __require("http");
     var fresh = require_fresh();
@@ -21552,7 +21552,7 @@ var require_request = __commonJS({
       var hostname = this.hostname;
       if (!hostname) return [];
       var offset = this.app.get("subdomain offset");
-      var subdomains2 = !isIP(hostname) ? hostname.split(".").reverse() : [hostname];
+      var subdomains2 = !isIP2(hostname) ? hostname.split(".").reverse() : [hostname];
       return subdomains2.slice(offset);
     });
     defineGetter(req, "path", function path() {
@@ -28923,22 +28923,780 @@ var require_chokidar = __commonJS({
 // server/index.ts
 var import_express15 = __toESM(require_express2(), 1);
 var import_cors = __toESM(require_lib3(), 1);
+
+// node_modules/express-rate-limit/dist/index.mjs
+import { Buffer as Buffer2 } from "node:buffer";
+import { createHash } from "node:crypto";
+import { isIP } from "node:net";
+var SUPPORTED_DRAFT_VERSIONS = [
+  "draft-6",
+  "draft-7",
+  "draft-8"
+];
+var getResetSeconds = (resetTime, windowMs) => {
+  let resetSeconds = void 0;
+  if (resetTime) {
+    const deltaSeconds = Math.ceil((resetTime.getTime() - Date.now()) / 1e3);
+    resetSeconds = Math.max(0, deltaSeconds);
+  } else if (windowMs) {
+    resetSeconds = Math.ceil(windowMs / 1e3);
+  }
+  return resetSeconds;
+};
+var getPartitionKey = (key) => {
+  const hash = createHash("sha256");
+  hash.update(key);
+  const partitionKey = hash.digest("hex").slice(0, 12);
+  return Buffer2.from(partitionKey).toString("base64");
+};
+var setLegacyHeaders = (response, info) => {
+  if (response.headersSent) return;
+  response.setHeader("X-RateLimit-Limit", info.limit.toString());
+  response.setHeader("X-RateLimit-Remaining", info.remaining.toString());
+  if (info.resetTime instanceof Date) {
+    response.setHeader("Date", (/* @__PURE__ */ new Date()).toUTCString());
+    response.setHeader(
+      "X-RateLimit-Reset",
+      Math.ceil(info.resetTime.getTime() / 1e3).toString()
+    );
+  }
+};
+var setDraft6Headers = (response, info, windowMs) => {
+  if (response.headersSent) return;
+  const windowSeconds = Math.ceil(windowMs / 1e3);
+  const resetSeconds = getResetSeconds(info.resetTime);
+  response.setHeader("RateLimit-Policy", `${info.limit};w=${windowSeconds}`);
+  response.setHeader("RateLimit-Limit", info.limit.toString());
+  response.setHeader("RateLimit-Remaining", info.remaining.toString());
+  if (resetSeconds)
+    response.setHeader("RateLimit-Reset", resetSeconds.toString());
+};
+var setDraft7Headers = (response, info, windowMs) => {
+  if (response.headersSent) return;
+  const windowSeconds = Math.ceil(windowMs / 1e3);
+  const resetSeconds = getResetSeconds(info.resetTime, windowMs);
+  response.setHeader("RateLimit-Policy", `${info.limit};w=${windowSeconds}`);
+  response.setHeader(
+    "RateLimit",
+    `limit=${info.limit}, remaining=${info.remaining}, reset=${resetSeconds}`
+  );
+};
+var setDraft8Headers = (response, info, windowMs, name, key) => {
+  if (response.headersSent) return;
+  const windowSeconds = Math.ceil(windowMs / 1e3);
+  const resetSeconds = getResetSeconds(info.resetTime, windowMs);
+  const partitionKey = getPartitionKey(key);
+  const policy = `q=${info.limit}; w=${windowSeconds}; pk=:${partitionKey}:`;
+  const header = `r=${info.remaining}; t=${resetSeconds}`;
+  response.append("RateLimit-Policy", `"${name}"; ${policy}`);
+  response.append("RateLimit", `"${name}"; ${header}`);
+};
+var setRetryAfterHeader = (response, info, windowMs) => {
+  if (response.headersSent) return;
+  const resetSeconds = getResetSeconds(info.resetTime, windowMs);
+  response.setHeader("Retry-After", resetSeconds.toString());
+};
+var ValidationError = class extends Error {
+  /**
+   * The code must be a string, in snake case and all capital, that starts with
+   * the substring `ERR_ERL_`.
+   *
+   * The message must be a string, starting with an uppercase character,
+   * describing the issue in detail.
+   */
+  constructor(code, message) {
+    const url = `https://express-rate-limit.github.io/${code}/`;
+    super(`${message} See ${url} for more information.`);
+    this.name = this.constructor.name;
+    this.code = code;
+    this.help = url;
+  }
+};
+var ChangeWarning = class extends ValidationError {
+};
+var usedStores = /* @__PURE__ */ new Set();
+var singleCountKeys = /* @__PURE__ */ new WeakMap();
+var validations = {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  enabled: {
+    default: true
+  },
+  // Should be EnabledValidations type, but that's a circular reference
+  disable() {
+    for (const k of Object.keys(this.enabled)) this.enabled[k] = false;
+  },
+  /**
+   * Checks whether the IP address is valid, and that it does not have a port
+   * number in it.
+   *
+   * See https://github.com/express-rate-limit/express-rate-limit/wiki/Error-Codes#err_erl_invalid_ip_address.
+   *
+   * @param ip {string | undefined} - The IP address provided by Express as request.ip.
+   *
+   * @returns {void}
+   */
+  ip(ip) {
+    if (ip === void 0) {
+      throw new ValidationError(
+        "ERR_ERL_UNDEFINED_IP_ADDRESS",
+        `An undefined 'request.ip' was detected. This might indicate a misconfiguration or the connection being destroyed prematurely.`
+      );
+    }
+    if (!isIP(ip)) {
+      throw new ValidationError(
+        "ERR_ERL_INVALID_IP_ADDRESS",
+        `An invalid 'request.ip' (${ip}) was detected. Consider passing a custom 'keyGenerator' function to the rate limiter.`
+      );
+    }
+  },
+  /**
+   * Makes sure the trust proxy setting is not set to `true`.
+   *
+   * See https://github.com/express-rate-limit/express-rate-limit/wiki/Error-Codes#err_erl_permissive_trust_proxy.
+   *
+   * @param request {Request} - The Express request object.
+   *
+   * @returns {void}
+   */
+  trustProxy(request) {
+    if (request.app.get("trust proxy") === true) {
+      throw new ValidationError(
+        "ERR_ERL_PERMISSIVE_TRUST_PROXY",
+        `The Express 'trust proxy' setting is true, which allows anyone to trivially bypass IP-based rate limiting.`
+      );
+    }
+  },
+  /**
+   * Makes sure the trust proxy setting is set in case the `X-Forwarded-For`
+   * header is present.
+   *
+   * See https://github.com/express-rate-limit/express-rate-limit/wiki/Error-Codes#err_erl_unset_trust_proxy.
+   *
+   * @param request {Request} - The Express request object.
+   *
+   * @returns {void}
+   */
+  xForwardedForHeader(request) {
+    if (request.headers["x-forwarded-for"] && request.app.get("trust proxy") === false) {
+      throw new ValidationError(
+        "ERR_ERL_UNEXPECTED_X_FORWARDED_FOR",
+        `The 'X-Forwarded-For' header is set but the Express 'trust proxy' setting is false (default). This could indicate a misconfiguration which would prevent express-rate-limit from accurately identifying users.`
+      );
+    }
+  },
+  /**
+   * Ensures totalHits value from store is a positive integer.
+   *
+   * @param hits {any} - The `totalHits` returned by the store.
+   */
+  positiveHits(hits) {
+    if (typeof hits !== "number" || hits < 1 || hits !== Math.round(hits)) {
+      throw new ValidationError(
+        "ERR_ERL_INVALID_HITS",
+        `The totalHits value returned from the store must be a positive integer, got ${hits}`
+      );
+    }
+  },
+  /**
+   * Ensures a single store instance is not used with multiple express-rate-limit instances
+   */
+  unsharedStore(store) {
+    if (usedStores.has(store)) {
+      const maybeUniquePrefix = store?.localKeys ? "" : " (with a unique prefix)";
+      throw new ValidationError(
+        "ERR_ERL_STORE_REUSE",
+        `A Store instance must not be shared across multiple rate limiters. Create a new instance of ${store.constructor.name}${maybeUniquePrefix} for each limiter instead.`
+      );
+    }
+    usedStores.add(store);
+  },
+  /**
+   * Ensures a given key is incremented only once per request.
+   *
+   * @param request {Request} - The Express request object.
+   * @param store {Store} - The store class.
+   * @param key {string} - The key used to store the client's hit count.
+   *
+   * @returns {void}
+   */
+  singleCount(request, store, key) {
+    let storeKeys = singleCountKeys.get(request);
+    if (!storeKeys) {
+      storeKeys = /* @__PURE__ */ new Map();
+      singleCountKeys.set(request, storeKeys);
+    }
+    const storeKey = store.localKeys ? store : store.constructor.name;
+    let keys = storeKeys.get(storeKey);
+    if (!keys) {
+      keys = [];
+      storeKeys.set(storeKey, keys);
+    }
+    const prefixedKey = `${store.prefix ?? ""}${key}`;
+    if (keys.includes(prefixedKey)) {
+      throw new ValidationError(
+        "ERR_ERL_DOUBLE_COUNT",
+        `The hit count for ${key} was incremented more than once for a single request.`
+      );
+    }
+    keys.push(prefixedKey);
+  },
+  /**
+   * Warns the user that the behaviour for `max: 0` / `limit: 0` is
+   * changing in the next major release.
+   *
+   * @param limit {number} - The maximum number of hits per client.
+   *
+   * @returns {void}
+   */
+  limit(limit) {
+    if (limit === 0) {
+      throw new ChangeWarning(
+        "WRN_ERL_MAX_ZERO",
+        `Setting limit or max to 0 disables rate limiting in express-rate-limit v6 and older, but will cause all requests to be blocked in v7`
+      );
+    }
+  },
+  /**
+   * Warns the user that the `draft_polli_ratelimit_headers` option is deprecated
+   * and will be removed in the next major release.
+   *
+   * @param draft_polli_ratelimit_headers {any | undefined} - The now-deprecated setting that was used to enable standard headers.
+   *
+   * @returns {void}
+   */
+  draftPolliHeaders(draft_polli_ratelimit_headers) {
+    if (draft_polli_ratelimit_headers) {
+      throw new ChangeWarning(
+        "WRN_ERL_DEPRECATED_DRAFT_POLLI_HEADERS",
+        `The draft_polli_ratelimit_headers configuration option is deprecated and has been removed in express-rate-limit v7, please set standardHeaders: 'draft-6' instead.`
+      );
+    }
+  },
+  /**
+   * Warns the user that the `onLimitReached` option is deprecated and
+   * will be removed in the next major release.
+   *
+   * @param onLimitReached {any | undefined} - The maximum number of hits per client.
+   *
+   * @returns {void}
+   */
+  onLimitReached(onLimitReached) {
+    if (onLimitReached) {
+      throw new ChangeWarning(
+        "WRN_ERL_DEPRECATED_ON_LIMIT_REACHED",
+        `The onLimitReached configuration option is deprecated and has been removed in express-rate-limit v7.`
+      );
+    }
+  },
+  /**
+   * Warns the user when an invalid/unsupported version of the draft spec is passed.
+   *
+   * @param version {any | undefined} - The version passed by the user.
+   *
+   * @returns {void}
+   */
+  headersDraftVersion(version) {
+    if (typeof version !== "string" || // @ts-expect-error This is fine. If version is not in the array, it will just return false.
+    !SUPPORTED_DRAFT_VERSIONS.includes(version)) {
+      const versionString = SUPPORTED_DRAFT_VERSIONS.join(", ");
+      throw new ValidationError(
+        "ERR_ERL_HEADERS_UNSUPPORTED_DRAFT_VERSION",
+        `standardHeaders: only the following versions of the IETF draft specification are supported: ${versionString}.`
+      );
+    }
+  },
+  /**
+   * Warns the user when the selected headers option requires a reset time but
+   * the store does not provide one.
+   *
+   * @param resetTime {Date | undefined} - The timestamp when the client's hit count will be reset.
+   *
+   * @returns {void}
+   */
+  headersResetTime(resetTime) {
+    if (!resetTime) {
+      throw new ValidationError(
+        "ERR_ERL_HEADERS_NO_RESET",
+        `standardHeaders:  'draft-7' requires a 'resetTime', but the store did not provide one. The 'windowMs' value will be used instead, which may cause clients to wait longer than necessary.`
+      );
+    }
+  },
+  /**
+   * Checks the options.validate setting to ensure that only recognized
+   * validations are enabled or disabled.
+   *
+   * If any unrecognized values are found, an error is logged that
+   * includes the list of supported vaidations.
+   */
+  validationsConfig() {
+    const supportedValidations = Object.keys(this).filter(
+      (k) => !["enabled", "disable"].includes(k)
+    );
+    supportedValidations.push("default");
+    for (const key of Object.keys(this.enabled)) {
+      if (!supportedValidations.includes(key)) {
+        throw new ValidationError(
+          "ERR_ERL_UNKNOWN_VALIDATION",
+          `options.validate.${key} is not recognized. Supported validate options are: ${supportedValidations.join(
+            ", "
+          )}.`
+        );
+      }
+    }
+  },
+  /**
+   * Checks to see if the instance was created inside of a request handler,
+   * which would prevent it from working correctly, with the default memory
+   * store (or any other store with localKeys.)
+   */
+  creationStack(store) {
+    const { stack } = new Error(
+      "express-rate-limit validation check (set options.validate.creationStack=false to disable)"
+    );
+    if (stack?.includes("Layer.handle [as handle_request]")) {
+      if (!store.localKeys) {
+        throw new ValidationError(
+          "ERR_ERL_CREATED_IN_REQUEST_HANDLER",
+          "express-rate-limit instance should *usually* be created at app initialization, not when responding to a request."
+        );
+      }
+      throw new ValidationError(
+        "ERR_ERL_CREATED_IN_REQUEST_HANDLER",
+        `express-rate-limit instance should be created at app initialization, not when responding to a request.`
+      );
+    }
+  }
+};
+var getValidations = (_enabled) => {
+  let enabled;
+  if (typeof _enabled === "boolean") {
+    enabled = {
+      default: _enabled
+    };
+  } else {
+    enabled = {
+      default: true,
+      ..._enabled
+    };
+  }
+  const wrappedValidations = {
+    enabled
+  };
+  for (const [name, validation] of Object.entries(validations)) {
+    if (typeof validation === "function")
+      wrappedValidations[name] = (...args) => {
+        if (!(enabled[name] ?? enabled.default)) {
+          return;
+        }
+        try {
+          ;
+          validation.apply(
+            wrappedValidations,
+            args
+          );
+        } catch (error) {
+          if (error instanceof ChangeWarning) console.warn(error);
+          else console.error(error);
+        }
+      };
+  }
+  return wrappedValidations;
+};
+var MemoryStore = class {
+  constructor() {
+    this.previous = /* @__PURE__ */ new Map();
+    this.current = /* @__PURE__ */ new Map();
+    this.localKeys = true;
+  }
+  /**
+   * Method that initializes the store.
+   *
+   * @param options {Options} - The options used to setup the middleware.
+   */
+  init(options) {
+    this.windowMs = options.windowMs;
+    if (this.interval) clearInterval(this.interval);
+    this.interval = setInterval(() => {
+      this.clearExpired();
+    }, this.windowMs);
+    if (this.interval.unref) this.interval.unref();
+  }
+  /**
+   * Method to fetch a client's hit count and reset time.
+   *
+   * @param key {string} - The identifier for a client.
+   *
+   * @returns {ClientRateLimitInfo | undefined} - The number of hits and reset time for that client.
+   *
+   * @public
+   */
+  async get(key) {
+    return this.current.get(key) ?? this.previous.get(key);
+  }
+  /**
+   * Method to increment a client's hit counter.
+   *
+   * @param key {string} - The identifier for a client.
+   *
+   * @returns {ClientRateLimitInfo} - The number of hits and reset time for that client.
+   *
+   * @public
+   */
+  async increment(key) {
+    const client = this.getClient(key);
+    const now = Date.now();
+    if (client.resetTime.getTime() <= now) {
+      this.resetClient(client, now);
+    }
+    client.totalHits++;
+    return client;
+  }
+  /**
+   * Method to decrement a client's hit counter.
+   *
+   * @param key {string} - The identifier for a client.
+   *
+   * @public
+   */
+  async decrement(key) {
+    const client = this.getClient(key);
+    if (client.totalHits > 0) client.totalHits--;
+  }
+  /**
+   * Method to reset a client's hit counter.
+   *
+   * @param key {string} - The identifier for a client.
+   *
+   * @public
+   */
+  async resetKey(key) {
+    this.current.delete(key);
+    this.previous.delete(key);
+  }
+  /**
+   * Method to reset everyone's hit counter.
+   *
+   * @public
+   */
+  async resetAll() {
+    this.current.clear();
+    this.previous.clear();
+  }
+  /**
+   * Method to stop the timer (if currently running) and prevent any memory
+   * leaks.
+   *
+   * @public
+   */
+  shutdown() {
+    clearInterval(this.interval);
+    void this.resetAll();
+  }
+  /**
+   * Recycles a client by setting its hit count to zero, and reset time to
+   * `windowMs` milliseconds from now.
+   *
+   * NOT to be confused with `#resetKey()`, which removes a client from both the
+   * `current` and `previous` maps.
+   *
+   * @param client {Client} - The client to recycle.
+   * @param now {number} - The current time, to which the `windowMs` is added to get the `resetTime` for the client.
+   *
+   * @return {Client} - The modified client that was passed in, to allow for chaining.
+   */
+  resetClient(client, now = Date.now()) {
+    client.totalHits = 0;
+    client.resetTime.setTime(now + this.windowMs);
+    return client;
+  }
+  /**
+   * Retrieves or creates a client, given a key. Also ensures that the client being
+   * returned is in the `current` map.
+   *
+   * @param key {string} - The key under which the client is (or is to be) stored.
+   *
+   * @returns {Client} - The requested client.
+   */
+  getClient(key) {
+    if (this.current.has(key)) return this.current.get(key);
+    let client;
+    if (this.previous.has(key)) {
+      client = this.previous.get(key);
+      this.previous.delete(key);
+    } else {
+      client = { totalHits: 0, resetTime: /* @__PURE__ */ new Date() };
+      this.resetClient(client);
+    }
+    this.current.set(key, client);
+    return client;
+  }
+  /**
+   * Move current clients to previous, create a new map for current.
+   *
+   * This function is called every `windowMs`.
+   */
+  clearExpired() {
+    this.previous = this.current;
+    this.current = /* @__PURE__ */ new Map();
+  }
+};
+var isLegacyStore = (store) => (
+  // Check that `incr` exists but `increment` does not - store authors might want
+  // to keep both around for backwards compatibility.
+  typeof store.incr === "function" && typeof store.increment !== "function"
+);
+var promisifyStore = (passedStore) => {
+  if (!isLegacyStore(passedStore)) {
+    return passedStore;
+  }
+  const legacyStore = passedStore;
+  class PromisifiedStore {
+    async increment(key) {
+      return new Promise((resolve, reject) => {
+        legacyStore.incr(
+          key,
+          (error, totalHits, resetTime) => {
+            if (error) reject(error);
+            resolve({ totalHits, resetTime });
+          }
+        );
+      });
+    }
+    async decrement(key) {
+      return legacyStore.decrement(key);
+    }
+    async resetKey(key) {
+      return legacyStore.resetKey(key);
+    }
+    /* istanbul ignore next */
+    async resetAll() {
+      if (typeof legacyStore.resetAll === "function")
+        return legacyStore.resetAll();
+    }
+  }
+  return new PromisifiedStore();
+};
+var getOptionsFromConfig = (config) => {
+  const { validations: validations2, ...directlyPassableEntries } = config;
+  return {
+    ...directlyPassableEntries,
+    validate: validations2.enabled
+  };
+};
+var omitUndefinedOptions = (passedOptions) => {
+  const omittedOptions = {};
+  for (const k of Object.keys(passedOptions)) {
+    const key = k;
+    if (passedOptions[key] !== void 0) {
+      omittedOptions[key] = passedOptions[key];
+    }
+  }
+  return omittedOptions;
+};
+var parseOptions = (passedOptions) => {
+  const notUndefinedOptions = omitUndefinedOptions(passedOptions);
+  const validations2 = getValidations(notUndefinedOptions?.validate ?? true);
+  validations2.validationsConfig();
+  validations2.draftPolliHeaders(
+    // @ts-expect-error see the note above.
+    notUndefinedOptions.draft_polli_ratelimit_headers
+  );
+  validations2.onLimitReached(notUndefinedOptions.onLimitReached);
+  let standardHeaders = notUndefinedOptions.standardHeaders ?? false;
+  if (standardHeaders === true) standardHeaders = "draft-6";
+  const config = {
+    windowMs: 60 * 1e3,
+    limit: passedOptions.max ?? 5,
+    // `max` is deprecated, but support it anyways.
+    message: "Too many requests, please try again later.",
+    statusCode: 429,
+    legacyHeaders: passedOptions.headers ?? true,
+    identifier(request, _response) {
+      let duration = "";
+      const property = config.requestPropertyName;
+      const { limit } = request[property];
+      const seconds = config.windowMs / 1e3;
+      const minutes = config.windowMs / (1e3 * 60);
+      const hours = config.windowMs / (1e3 * 60 * 60);
+      const days = config.windowMs / (1e3 * 60 * 60 * 24);
+      if (seconds < 60) duration = `${seconds}sec`;
+      else if (minutes < 60) duration = `${minutes}min`;
+      else if (hours < 24) duration = `${hours}hr${hours > 1 ? "s" : ""}`;
+      else duration = `${days}day${days > 1 ? "s" : ""}`;
+      return `${limit}-in-${duration}`;
+    },
+    requestPropertyName: "rateLimit",
+    skipFailedRequests: false,
+    skipSuccessfulRequests: false,
+    requestWasSuccessful: (_request, response) => response.statusCode < 400,
+    skip: (_request, _response) => false,
+    keyGenerator(request, _response) {
+      validations2.ip(request.ip);
+      validations2.trustProxy(request);
+      validations2.xForwardedForHeader(request);
+      return request.ip;
+    },
+    async handler(request, response, _next, _optionsUsed) {
+      response.status(config.statusCode);
+      const message = typeof config.message === "function" ? await config.message(
+        request,
+        response
+      ) : config.message;
+      if (!response.writableEnded) {
+        response.send(message);
+      }
+    },
+    passOnStoreError: false,
+    // Allow the default options to be overridden by the passed options.
+    ...notUndefinedOptions,
+    // `standardHeaders` is resolved into a draft version above, use that.
+    standardHeaders,
+    // Note that this field is declared after the user's options are spread in,
+    // so that this field doesn't get overridden with an un-promisified store!
+    store: promisifyStore(notUndefinedOptions.store ?? new MemoryStore()),
+    // Print an error to the console if a few known misconfigurations are detected.
+    validations: validations2
+  };
+  if (typeof config.store.increment !== "function" || typeof config.store.decrement !== "function" || typeof config.store.resetKey !== "function" || config.store.resetAll !== void 0 && typeof config.store.resetAll !== "function" || config.store.init !== void 0 && typeof config.store.init !== "function") {
+    throw new TypeError(
+      "An invalid store was passed. Please ensure that the store is a class that implements the `Store` interface."
+    );
+  }
+  return config;
+};
+var handleAsyncErrors = (fn) => async (request, response, next) => {
+  try {
+    await Promise.resolve(fn(request, response, next)).catch(next);
+  } catch (error) {
+    next(error);
+  }
+};
+var rateLimit = (passedOptions) => {
+  const config = parseOptions(passedOptions ?? {});
+  const options = getOptionsFromConfig(config);
+  config.validations.creationStack(config.store);
+  config.validations.unsharedStore(config.store);
+  if (typeof config.store.init === "function") config.store.init(options);
+  const middleware = handleAsyncErrors(
+    async (request, response, next) => {
+      const skip = await config.skip(request, response);
+      if (skip) {
+        next();
+        return;
+      }
+      const augmentedRequest = request;
+      const key = await config.keyGenerator(request, response);
+      let totalHits = 0;
+      let resetTime;
+      try {
+        const incrementResult = await config.store.increment(key);
+        totalHits = incrementResult.totalHits;
+        resetTime = incrementResult.resetTime;
+      } catch (error) {
+        if (config.passOnStoreError) {
+          console.error(
+            "express-rate-limit: error from store, allowing request without rate-limiting.",
+            error
+          );
+          next();
+          return;
+        }
+        throw error;
+      }
+      config.validations.positiveHits(totalHits);
+      config.validations.singleCount(request, config.store, key);
+      const retrieveLimit = typeof config.limit === "function" ? config.limit(request, response) : config.limit;
+      const limit = await retrieveLimit;
+      config.validations.limit(limit);
+      const info = {
+        limit,
+        used: totalHits,
+        remaining: Math.max(limit - totalHits, 0),
+        resetTime
+      };
+      Object.defineProperty(info, "current", {
+        configurable: false,
+        enumerable: false,
+        value: totalHits
+      });
+      augmentedRequest[config.requestPropertyName] = info;
+      if (config.legacyHeaders && !response.headersSent) {
+        setLegacyHeaders(response, info);
+      }
+      if (config.standardHeaders && !response.headersSent) {
+        switch (config.standardHeaders) {
+          case "draft-6": {
+            setDraft6Headers(response, info, config.windowMs);
+            break;
+          }
+          case "draft-7": {
+            config.validations.headersResetTime(info.resetTime);
+            setDraft7Headers(response, info, config.windowMs);
+            break;
+          }
+          case "draft-8": {
+            const retrieveName = typeof config.identifier === "function" ? config.identifier(request, response) : config.identifier;
+            const name = await retrieveName;
+            config.validations.headersResetTime(info.resetTime);
+            setDraft8Headers(response, info, config.windowMs, name, key);
+            break;
+          }
+          default: {
+            config.validations.headersDraftVersion(config.standardHeaders);
+            break;
+          }
+        }
+      }
+      if (config.skipFailedRequests || config.skipSuccessfulRequests) {
+        let decremented = false;
+        const decrementKey = async () => {
+          if (!decremented) {
+            await config.store.decrement(key);
+            decremented = true;
+          }
+        };
+        if (config.skipFailedRequests) {
+          response.on("finish", async () => {
+            if (!await config.requestWasSuccessful(request, response))
+              await decrementKey();
+          });
+          response.on("close", async () => {
+            if (!response.writableEnded) await decrementKey();
+          });
+          response.on("error", async () => {
+            await decrementKey();
+          });
+        }
+        if (config.skipSuccessfulRequests) {
+          response.on("finish", async () => {
+            if (await config.requestWasSuccessful(request, response))
+              await decrementKey();
+          });
+        }
+      }
+      config.validations.disable();
+      if (totalHits > limit) {
+        if (config.legacyHeaders || config.standardHeaders) {
+          setRetryAfterHeader(response, info, config.windowMs);
+        }
+        config.handler(request, response, next, options);
+        return;
+      }
+      next();
+    }
+  );
+  const getThrowFn = () => {
+    throw new Error("The current store does not support the get/getKey method");
+  };
+  middleware.resetKey = config.store.resetKey.bind(config.store);
+  middleware.getKey = typeof config.store.get === "function" ? config.store.get.bind(config.store) : getThrowFn;
+  return middleware;
+};
+var lib_default = rateLimit;
+
+// server/index.ts
 import { join as join13, dirname as dirname4 } from "path";
 import { fileURLToPath as fileURLToPath2 } from "url";
-
-// server/routes/stats.ts
-var import_express = __toESM(require_express2(), 1);
-
-// ../core/dist/utils/path-resolver.js
-import { join } from "path";
-import { homedir } from "os";
-function getClaudeHome() {
-  return join(homedir(), ".claude");
-}
-
-// ../core/dist/utils/file-ops.js
-import { readFile, writeFile, access, mkdir } from "fs/promises";
-import { dirname } from "path";
 
 // ../types/dist/errors.js
 var CcmError = class extends Error {
@@ -28958,12 +29716,20 @@ var FileNotFoundError = class extends CcmError {
     this.name = "FileNotFoundError";
   }
 };
-var ValidationError = class extends CcmError {
+var ValidationError2 = class extends CcmError {
   details;
   constructor(message, details) {
     super(message, "VALIDATION_ERROR");
     this.details = details;
     this.name = "ValidationError";
+  }
+};
+var PluginInstallError = class extends CcmError {
+  pluginName;
+  constructor(pluginName, message) {
+    super(`Failed to install plugin '${pluginName}': ${message}`, "PLUGIN_INSTALL_ERROR");
+    this.pluginName = pluginName;
+    this.name = "PluginInstallError";
   }
 };
 var ConflictError = class extends CcmError {
@@ -33094,7 +33860,48 @@ var ProfileExportSchema = external_exports.object({
   exportedAt: external_exports.string().optional()
 });
 
+// server/middleware/error-handler.ts
+function statusFor(err) {
+  if (err instanceof NotFoundError) return 404;
+  if (err instanceof FileNotFoundError) return 404;
+  if (err instanceof ValidationError2) return 400;
+  if (err instanceof ConflictError) return 409;
+  if (err instanceof PluginInstallError) return 502;
+  return 500;
+}
+function codeFor(err) {
+  if (err instanceof CcmError) return err.code;
+  return void 0;
+}
+var errorHandler = (err, req, res, _next) => {
+  const status = statusFor(err);
+  const payload = {
+    error: err instanceof Error ? err.message : "Internal server error"
+  };
+  const code = codeFor(err);
+  if (code) payload.code = code;
+  const logLine = `[${req.method} ${req.originalUrl}]`;
+  if (status >= 500) {
+    console.error(logLine, err);
+  } else {
+    console.warn(logLine, err instanceof Error ? err.message : err);
+  }
+  res.status(status).json(payload);
+};
+
+// server/routes/stats.ts
+var import_express = __toESM(require_express2(), 1);
+
+// ../core/dist/utils/path-resolver.js
+import { join } from "path";
+import { homedir } from "os";
+function getClaudeHome() {
+  return join(homedir(), ".claude");
+}
+
 // ../core/dist/utils/file-ops.js
+import { readFile, writeFile, access, mkdir } from "fs/promises";
+import { dirname } from "path";
 async function readJsonFile(filePath) {
   try {
     const text = await readFile(filePath, "utf-8");
@@ -33680,7 +34487,7 @@ var SkillScanner = class {
 
 // ../core/dist/managers/profile-manager.js
 import { join as join6 } from "path";
-import { readdir as readdir2, readFile as readFile3, writeFile as writeFile2, mkdir as mkdir2 } from "fs/promises";
+import { readdir as readdir2, readFile as readFile3, writeFile as writeFile2, mkdir as mkdir2, unlink } from "fs/promises";
 var ProfileManager = class {
   profilesDir;
   settingsPath;
@@ -33747,8 +34554,8 @@ var ProfileManager = class {
     for (const asset of assets) {
       if (!asset.name || !asset.content)
         continue;
-      const safeName = asset.name.replace(/[\\\/\.]/g, "_");
-      if (!safeName)
+      const safeName = asset.name.replace(/[^a-zA-Z0-9_-]/g, "_");
+      if (!safeName || safeName.startsWith("."))
         continue;
       const targetDir = join6(dir, safeName);
       await mkdir2(targetDir, { recursive: true });
@@ -33911,13 +34718,11 @@ var ProfileManager = class {
     if (!await fileExists(filePath)) {
       throw new NotFoundError("Profile", name);
     }
-    const { unlink } = await import("fs/promises");
     await unlink(filePath);
     const activeName = await this.getActive();
     if (activeName === name) {
-      const { unlink: ul } = await import("fs/promises");
       try {
-        await ul(this.activeProfilePath);
+        await unlink(this.activeProfilePath);
       } catch {
       }
     }
@@ -33966,11 +34771,11 @@ var ProfileManager = class {
     try {
       parsed = JSON.parse(data);
     } catch {
-      throw new ValidationError("Invalid JSON in profile import data");
+      throw new ValidationError2("Invalid JSON in profile import data");
     }
     const obj = parsed;
     if (!obj["name"] || typeof obj["name"] !== "string") {
-      throw new ValidationError("Profile import data must have a name field");
+      throw new ValidationError2("Profile import data must have a name field");
     }
     const name = obj["name"];
     const now = (/* @__PURE__ */ new Date()).toISOString();
@@ -34309,7 +35114,7 @@ var import_file_exists = __toESM(require_dist(), 1);
 var import_debug = __toESM(require_src2(), 1);
 var import_promise_deferred = __toESM(require_dist2(), 1);
 var import_promise_deferred2 = __toESM(require_dist2(), 1);
-import { Buffer as Buffer2 } from "node:buffer";
+import { Buffer as Buffer22 } from "node:buffer";
 import { spawn } from "child_process";
 import { normalize } from "node:path";
 import { EventEmitter } from "node:events";
@@ -34489,7 +35294,7 @@ function prefixedArray(input, prefix) {
   return output;
 }
 function bufferToString(input) {
-  return (Array.isArray(input) ? Buffer2.concat(input) : input).toString("utf-8");
+  return (Array.isArray(input) ? Buffer22.concat(input) : input).toString("utf-8");
 }
 function pick(source, properties) {
   const out = {};
@@ -39178,10 +39983,10 @@ var RecommendationManager = class {
   async getUserContext() {
     const pluginMgr = new PluginManager(this.claudeHome);
     const mcpMgr = new McpManager(this.claudeHome);
-    const skillScanner = new SkillScanner(this.claudeHome);
+    const skillScanner6 = new SkillScanner(this.claudeHome);
     const plugins = await pluginMgr.list();
     const mcps = await mcpMgr.list();
-    const skills = await skillScanner.scan();
+    const skills = await skillScanner6.scan();
     return `Current user environment:
 - Installed plugins (${plugins.length}): ${plugins.map((p) => p.name.split("@")[0]).join(", ")}
 - MCP servers (${mcps.length}): ${mcps.map((m) => m.name).join(", ")}
@@ -39217,15 +40022,20 @@ Respond with ONLY a JSON array of recommendation objects. No markdown, no explan
 
 // server/routes/stats.ts
 var router = (0, import_express.Router)();
-router.get("/", async (_req, res) => {
+var home = getClaudeHome();
+var pluginManager = new PluginManager(home);
+var mcpManager = new McpManager(home);
+var skillScanner = new SkillScanner(home);
+var profileManager = new ProfileManager(home);
+var sessionManager = new SessionManager(home);
+router.get("/", async (_req, res, next) => {
   try {
-    const home = getClaudeHome();
     const [plugins, mcps, skills, profiles, sessions] = await Promise.all([
-      new PluginManager(home).list(),
-      new McpManager(home).list(),
-      new SkillScanner(home).scan(),
-      new ProfileManager(home).list(),
-      new SessionManager(home).getActiveSessions()
+      pluginManager.list(),
+      mcpManager.list(),
+      skillScanner.scan(),
+      profileManager.list(),
+      sessionManager.getActiveSessions()
     ]);
     res.json({
       plugins: plugins.length,
@@ -39235,8 +40045,7 @@ router.get("/", async (_req, res) => {
       sessions: sessions.length
     });
   } catch (err) {
-    console.error("[GET /api/stats]", err);
-    res.status(500).json({ error: "Internal server error" });
+    next(err);
   }
 });
 
@@ -39245,6 +40054,9 @@ var import_express2 = __toESM(require_express2(), 1);
 import { readFile as readFile6 } from "fs/promises";
 import { join as join11 } from "path";
 var router2 = (0, import_express2.Router)();
+var home2 = getClaudeHome();
+var pluginManager2 = new PluginManager(home2);
+var skillScanner2 = new SkillScanner(home2);
 async function readPluginMcpServers(installPath) {
   const mcpPath = join11(installPath, ".mcp.json");
   if (!await fileExists(mcpPath)) return [];
@@ -39269,52 +40081,47 @@ async function readPluginMcpServers(installPath) {
     return [];
   }
 }
-router2.get("/", async (_req, res) => {
+router2.get("/", async (_req, res, next) => {
   try {
-    const home = getClaudeHome();
-    const plugins = await new PluginManager(home).list();
+    const plugins = await pluginManager2.list();
     res.json(plugins);
   } catch (err) {
-    console.error("[GET /api/plugins]", err);
-    res.status(500).json({ error: "Internal server error" });
+    next(err);
   }
 });
-router2.post("/", async (req, res) => {
+router2.post("/", async (req, res, next) => {
   try {
     const { name } = req.body;
     if (!name || typeof name !== "string") {
-      return res.status(400).json({ error: "Missing required field: name" });
+      res.status(400).json({ error: "Missing required field: name" });
+      return;
     }
     res.status(501).json({
       message: `Plugin installation for "${name}" is not yet supported via the dashboard.`
     });
   } catch (err) {
-    console.error("[POST /api/plugins]", err);
-    res.status(500).json({ error: "Internal server error" });
+    next(err);
   }
 });
-router2.delete("/:name", async (req, res) => {
+router2.delete("/:name", async (req, res, next) => {
   try {
     const { name } = req.params;
-    const home = getClaudeHome();
-    await new PluginManager(home).remove(decodeURIComponent(name));
+    await pluginManager2.remove(decodeURIComponent(name));
     res.json({ success: true });
   } catch (err) {
-    console.error("[DELETE /api/plugins/:name]", err);
-    res.status(500).json({ error: "Internal server error" });
+    next(err);
   }
 });
-router2.get("/:name/contents", async (req, res) => {
+router2.get("/:name/contents", async (req, res, next) => {
   try {
     const name = decodeURIComponent(req.params.name);
-    const home = getClaudeHome();
-    const plugin = await new PluginManager(home).getDetail(name);
+    const plugin = await pluginManager2.getDetail(name);
     if (!plugin) {
-      return res.status(404).json({ error: "Plugin not found" });
+      res.status(404).json({ error: "Plugin not found" });
+      return;
     }
-    const scanner = new SkillScanner(home);
     const [rawSkills, mcpServers] = await Promise.all([
-      scanner.scanPlugin(plugin.installPath).catch((err) => {
+      skillScanner2.scanPlugin(plugin.installPath).catch((err) => {
         console.warn(`[plugin-contents] scanPlugin failed for ${name}:`, err);
         return [];
       }),
@@ -39358,8 +40165,7 @@ router2.get("/:name/contents", async (req, res) => {
       mcpServers
     });
   } catch (err) {
-    console.error("[GET /api/plugins/:name/contents]", err);
-    res.status(500).json({ error: "Internal server error" });
+    next(err);
   }
 });
 function parseFrontmatterNameDesc(content) {
@@ -39379,61 +40185,57 @@ function parseFrontmatterNameDesc(content) {
   }
   return { name: result["name"], description: result["description"] };
 }
-router2.patch("/:name", async (req, res) => {
+router2.patch("/:name", async (req, res, next) => {
   try {
     const { name } = req.params;
     const { enabled } = req.body;
     if (typeof enabled !== "boolean") {
-      return res.status(400).json({ error: "Missing required field: enabled (boolean)" });
+      res.status(400).json({ error: "Missing required field: enabled (boolean)" });
+      return;
     }
-    const home = getClaudeHome();
-    await new PluginManager(home).toggle(decodeURIComponent(name), enabled);
+    await pluginManager2.toggle(decodeURIComponent(name), enabled);
     res.json({ success: true });
   } catch (err) {
-    console.error("[PATCH /api/plugins/:name]", err);
-    res.status(500).json({ error: "Internal server error" });
+    next(err);
   }
 });
 
 // server/routes/mcp-servers.ts
 var import_express3 = __toESM(require_express2(), 1);
 var router3 = (0, import_express3.Router)();
-router3.get("/", async (_req, res) => {
+var mcpManager2 = new McpManager(getClaudeHome());
+router3.get("/", async (_req, res, next) => {
   try {
-    const home = getClaudeHome();
-    const servers = await new McpManager(home).list();
+    const servers = await mcpManager2.list();
     res.json(servers);
   } catch (err) {
-    console.error("[GET /api/mcp-servers]", err);
-    res.status(500).json({ error: "Internal server error" });
+    next(err);
   }
 });
-router3.post("/", async (req, res) => {
+router3.post("/", async (req, res, next) => {
   try {
     const { name, config } = req.body;
     if (!name || typeof name !== "string") {
-      return res.status(400).json({ error: "Missing required field: name" });
+      res.status(400).json({ error: "Missing required field: name" });
+      return;
     }
     if (!config || typeof config !== "object") {
-      return res.status(400).json({ error: "Missing required field: config" });
+      res.status(400).json({ error: "Missing required field: config" });
+      return;
     }
-    const home = getClaudeHome();
-    await new McpManager(home).add(name, config);
+    await mcpManager2.add(name, config);
     res.status(201).json({ success: true });
   } catch (err) {
-    console.error("[POST /api/mcp-servers]", err);
-    res.status(500).json({ error: "Internal server error" });
+    next(err);
   }
 });
-router3.delete("/:name", async (req, res) => {
+router3.delete("/:name", async (req, res, next) => {
   try {
     const { name } = req.params;
-    const home = getClaudeHome();
-    await new McpManager(home).remove(decodeURIComponent(name));
+    await mcpManager2.remove(decodeURIComponent(name));
     res.json({ success: true });
   } catch (err) {
-    console.error("[DELETE /api/mcp-servers/:name]", err);
-    res.status(500).json({ error: "Internal server error" });
+    next(err);
   }
 });
 
@@ -39441,25 +40243,24 @@ router3.delete("/:name", async (req, res) => {
 var import_express4 = __toESM(require_express2(), 1);
 import { writeFile as writeFile4 } from "fs/promises";
 var router4 = (0, import_express4.Router)();
-router4.get("/", async (_req, res) => {
+var skillScanner3 = new SkillScanner(getClaudeHome());
+router4.get("/", async (_req, res, next) => {
   try {
-    const home = getClaudeHome();
-    const skills = await new SkillScanner(home).scan();
+    const skills = await skillScanner3.scan();
     const lightweight = skills.map(({ content: _content, ...rest }) => rest);
     res.json(lightweight);
   } catch (err) {
-    console.error("[GET /api/skills]", err);
-    res.status(500).json({ error: "Internal server error" });
+    next(err);
   }
 });
-router4.get("/content", async (req, res) => {
+router4.get("/content", async (req, res, _next) => {
   const filePath = req.query.path;
   if (!filePath) {
-    return res.status(400).json({ error: "Missing path parameter" });
+    res.status(400).json({ error: "Missing path parameter" });
+    return;
   }
   try {
-    const scanner = new SkillScanner(getClaudeHome());
-    const content = await scanner.getSkillContent(filePath);
+    const content = await skillScanner3.getSkillContent(filePath);
     res.json({ content });
   } catch {
     res.status(404).json({ error: "Not found" });
@@ -39490,14 +40291,16 @@ async function fetchFromSkillsSh(query, signal) {
 }
 var searchCache = /* @__PURE__ */ new Map();
 var CACHE_TTL = 5 * 60 * 1e3;
-router4.get("/search", async (req, res) => {
+router4.get("/search", async (req, res, _next) => {
   const query = req.query.q ?? "";
   if (query.trim().length < 2) {
-    return res.json([]);
+    res.json([]);
+    return;
   }
   const cached = searchCache.get(query);
   if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-    return res.json(cached.data);
+    res.json(cached.data);
+    return;
   }
   try {
     const results = await fetchFromSkillsSh(query);
@@ -39511,9 +40314,10 @@ router4.get("/search", async (req, res) => {
 var topCache = { data: null, timestamp: 0 };
 var TOP_CACHE_TTL = 10 * 60 * 1e3;
 var TOP_QUERIES = ["agent", "code", "react", "python", "typescript", "git", "test"];
-router4.get("/top", async (_req, res) => {
+router4.get("/top", async (_req, res, _next) => {
   if (topCache.data && Date.now() - topCache.timestamp < TOP_CACHE_TTL) {
-    return res.json(topCache.data);
+    res.json(topCache.data);
+    return;
   }
   try {
     const batches = await Promise.all(
@@ -39540,7 +40344,8 @@ router4.get("/top", async (_req, res) => {
     res.json(top);
   } catch (err) {
     console.error("[GET /api/skills/top]", err);
-    if (topCache.data) return res.json(topCache.data);
+    if (topCache.data) res.json(topCache.data);
+    return;
     res.status(502).json({ error: "Failed to fetch top skills", skills: [] });
   }
 });
@@ -39552,263 +40357,247 @@ function parseInstallsForSort(s) {
   if (match[2] === "K") return n * 1e3;
   return n;
 }
-router4.post("/update", async (req, res) => {
+router4.post("/update", async (req, res, next) => {
   try {
     const { filePath, content } = req.body;
     if (!filePath || !content) {
-      return res.status(400).json({ error: "Missing required fields: filePath, content" });
+      res.status(400).json({ error: "Missing required fields: filePath, content" });
+      return;
     }
     const normalizedPath = filePath.replace(/\\/g, "/");
     if (!normalizedPath.includes("/.claude/skills/") && !normalizedPath.includes("/.claude/commands/")) {
-      return res.status(403).json({ error: "Cannot edit system files" });
+      res.status(403).json({ error: "Cannot edit system files" });
+      return;
     }
     await writeFile4(filePath, content, "utf-8");
     res.json({ success: true });
   } catch (err) {
-    console.error("[POST /api/skills/update]", err);
-    res.status(500).json({ error: "Failed to save" });
+    next(err);
   }
 });
 
 // server/routes/commands.ts
 var import_express5 = __toESM(require_express2(), 1);
 var router5 = (0, import_express5.Router)();
-router5.get("/", async (_req, res) => {
+var skillScanner4 = new SkillScanner(getClaudeHome());
+router5.get("/", async (_req, res, next) => {
   try {
-    const home = getClaudeHome();
-    const commands = await new SkillScanner(home).scanCommands();
+    const commands = await skillScanner4.scanCommands();
     const lightweight = commands.map(({ content: _content, ...rest }) => rest);
     res.json(lightweight);
   } catch (err) {
-    console.error("[GET /api/commands]", err);
-    res.status(500).json({ error: "Internal server error" });
+    next(err);
   }
 });
 
 // server/routes/settings.ts
 var import_express6 = __toESM(require_express2(), 1);
 var router6 = (0, import_express6.Router)();
-router6.get("/", async (_req, res) => {
+var configManager = new ConfigManager(getClaudeHome());
+router6.get("/", async (_req, res, next) => {
   try {
-    const home = getClaudeHome();
-    const settings = await new ConfigManager(home).getSettings();
+    const settings = await configManager.getSettings();
     res.json(settings);
   } catch (err) {
-    console.error("[GET /api/settings]", err);
-    res.status(500).json({ error: "Internal server error" });
+    next(err);
   }
 });
-router6.patch("/", async (req, res) => {
+router6.patch("/", async (req, res, next) => {
   try {
     const patch = req.body;
-    const home = getClaudeHome();
-    await new ConfigManager(home).updateSettings(patch);
+    await configManager.updateSettings(patch);
     res.json({ success: true });
   } catch (err) {
-    console.error("[PATCH /api/settings]", err);
-    res.status(500).json({ error: "Internal server error" });
+    next(err);
   }
 });
-router6.get("/env", async (_req, res) => {
+router6.get("/env", async (_req, res, next) => {
   try {
-    const home = getClaudeHome();
-    const env = await new ConfigManager(home).getEnvVars();
+    const env = await configManager.getEnvVars();
     res.json(env);
   } catch (err) {
-    console.error("[GET /api/settings/env]", err);
-    res.status(500).json({ error: "Internal server error" });
+    next(err);
   }
 });
-router6.put("/env", async (req, res) => {
+router6.put("/env", async (req, res, next) => {
   try {
     const { key, value } = req.body;
     if (!key || typeof key !== "string") {
-      return res.status(400).json({ error: "Missing required field: key" });
+      res.status(400).json({ error: "Missing required field: key" });
+      return;
     }
     if (value === void 0 || typeof value !== "string") {
-      return res.status(400).json({ error: "Missing required field: value" });
+      res.status(400).json({ error: "Missing required field: value" });
+      return;
     }
-    const home = getClaudeHome();
-    await new ConfigManager(home).setEnvVar(key, value);
+    await configManager.setEnvVar(key, value);
     res.json({ success: true });
   } catch (err) {
-    console.error("[PUT /api/settings/env]", err);
-    res.status(500).json({ error: "Internal server error" });
+    next(err);
   }
 });
-router6.delete("/env/:key", async (req, res) => {
+router6.delete("/env/:key", async (req, res, next) => {
   try {
     const { key } = req.params;
-    const home = getClaudeHome();
-    await new ConfigManager(home).removeEnvVar(decodeURIComponent(key));
+    await configManager.removeEnvVar(decodeURIComponent(key));
     res.json({ success: true });
   } catch (err) {
-    console.error("[DELETE /api/settings/env/:key]", err);
-    res.status(500).json({ error: "Internal server error" });
+    next(err);
   }
 });
 
 // server/routes/profiles.ts
 var import_express7 = __toESM(require_express2(), 1);
 var router7 = (0, import_express7.Router)();
-router7.get("/", async (_req, res) => {
+var profileManager2 = new ProfileManager(getClaudeHome());
+router7.get("/", async (_req, res, next) => {
   try {
-    const home = getClaudeHome();
-    const profiles = await new ProfileManager(home).list();
+    const profiles = await profileManager2.list();
     res.json(profiles);
   } catch (err) {
-    console.error("[GET /api/profiles]", err);
-    res.status(500).json({ error: "Internal server error" });
+    next(err);
   }
 });
-router7.post("/", async (req, res) => {
+router7.post("/", async (req, res, next) => {
   try {
     const { name } = req.body;
     if (!name || typeof name !== "string") {
-      return res.status(400).json({ error: "Missing required field: name" });
+      res.status(400).json({ error: "Missing required field: name" });
+      return;
     }
-    const home = getClaudeHome();
-    const profile = await new ProfileManager(home).create(name);
+    const profile = await profileManager2.create(name);
     res.status(201).json(profile);
   } catch (err) {
-    console.error("[POST /api/profiles]", err);
-    res.status(500).json({ error: "Internal server error" });
+    next(err);
   }
 });
-router7.post("/:name/activate", async (req, res) => {
+router7.post("/:name/activate", async (req, res, next) => {
   try {
     const { name } = req.params;
-    const home = getClaudeHome();
-    await new ProfileManager(home).activate(decodeURIComponent(name));
+    await profileManager2.activate(decodeURIComponent(name));
     res.json({ success: true });
   } catch (err) {
-    console.error("[POST /api/profiles/:name/activate]", err);
-    res.status(500).json({ error: "Internal server error" });
+    next(err);
   }
 });
-router7.patch("/:name", async (req, res) => {
+router7.patch("/:name", async (req, res, next) => {
   try {
     const { name } = req.params;
     const body = req.body;
-    const home = getClaudeHome();
-    const updated = await new ProfileManager(home).update(decodeURIComponent(name), body);
+    const updated = await profileManager2.update(decodeURIComponent(name), body);
     res.json(updated);
   } catch (err) {
-    console.error("[PATCH /api/profiles/:name]", err);
-    res.status(500).json({ error: "Internal server error" });
+    next(err);
   }
 });
-router7.delete("/:name", async (req, res) => {
+router7.delete("/:name", async (req, res, next) => {
   try {
     const { name } = req.params;
-    const home = getClaudeHome();
-    await new ProfileManager(home).delete(decodeURIComponent(name));
+    await profileManager2.delete(decodeURIComponent(name));
     res.json({ success: true });
   } catch (err) {
-    console.error("[DELETE /api/profiles/:name]", err);
-    res.status(500).json({ error: "Internal server error" });
+    next(err);
   }
 });
-router7.post("/export", async (req, res) => {
+router7.post("/export", async (req, res, next) => {
   try {
     const { name } = req.body;
     if (!name || typeof name !== "string") {
-      return res.status(400).json({ error: "Missing required field: name" });
+      res.status(400).json({ error: "Missing required field: name" });
+      return;
     }
-    const home = getClaudeHome();
-    const exported = await new ProfileManager(home).exportProfile(name);
+    const exported = await profileManager2.exportProfile(name);
     res.json({ data: exported });
   } catch (err) {
-    console.error("[POST /api/profiles/export]", err);
-    res.status(500).json({ error: "Internal server error" });
+    next(err);
   }
 });
-router7.post("/import", async (req, res) => {
+router7.post("/import", async (req, res, next) => {
   try {
     const { data, strategy = "replace" } = req.body;
     if (!data || typeof data !== "string") {
-      return res.status(400).json({ error: "Missing required field: data" });
+      res.status(400).json({ error: "Missing required field: data" });
+      return;
     }
     if (strategy !== "merge" && strategy !== "replace") {
-      return res.status(400).json({ error: 'Invalid value for strategy: must be "merge" or "replace"' });
+      res.status(400).json({ error: 'Invalid value for strategy: must be "merge" or "replace"' });
+      return;
     }
-    const home = getClaudeHome();
-    const profile = await new ProfileManager(home).importProfile(data, strategy);
+    const profile = await profileManager2.importProfile(data, strategy);
     res.status(201).json(profile);
   } catch (err) {
-    console.error("[POST /api/profiles/import]", err);
-    res.status(500).json({ error: "Internal server error" });
+    next(err);
   }
 });
 
 // server/routes/sessions.ts
 var import_express8 = __toESM(require_express2(), 1);
 var router8 = (0, import_express8.Router)();
-router8.get("/", async (_req, res) => {
+var sessionManager2 = new SessionManager(getClaudeHome());
+router8.get("/", async (_req, res, next) => {
   try {
-    const mgr = new SessionManager(getClaudeHome());
-    const sessions = await mgr.listAllSessions();
+    const sessions = await sessionManager2.listAllSessions();
     res.json(sessions);
   } catch (err) {
-    console.error("[GET /api/sessions]", err);
-    res.status(500).json({ error: "Failed to load sessions" });
+    next(err);
   }
 });
-router8.get("/history", async (req, res) => {
+router8.get("/history", async (req, res, next) => {
   try {
     const historyFile = req.query.file;
     const limitStr = req.query.limit;
     const limit = limitStr ? parseInt(limitStr, 10) : 20;
     if (!historyFile) {
-      return res.status(400).json({ error: 'Missing "file" query parameter' });
+      res.status(400).json({ error: 'Missing "file" query parameter' });
+      return;
     }
-    const mgr = new SessionManager(getClaudeHome());
-    const history = await mgr.getSessionHistory(historyFile, limit);
+    const history = await sessionManager2.getSessionHistory(historyFile, limit);
     res.json(history);
   } catch (err) {
-    console.error("[GET /api/sessions/history]", err);
-    res.status(500).json({ error: "Failed to load session history" });
+    next(err);
   }
 });
 
 // server/routes/metrics.ts
 var import_express9 = __toESM(require_express2(), 1);
 var router9 = (0, import_express9.Router)();
-router9.get("/", async (_req, res) => {
+var metricsManager = new MetricsManager(getClaudeHome());
+router9.get("/", async (_req, res, next) => {
   try {
-    const mgr = new MetricsManager(getClaudeHome());
-    const metrics = await mgr.getMetrics();
+    const metrics = await metricsManager.getMetrics();
     res.json(metrics);
   } catch (err) {
-    console.error("[GET /api/metrics]", err);
-    res.status(500).json({ error: "Failed to load metrics" });
+    next(err);
   }
 });
 
 // server/routes/recommendations.ts
 var import_express10 = __toESM(require_express2(), 1);
 var router10 = (0, import_express10.Router)();
-router10.get("/", async (_req, res) => {
+var home3 = getClaudeHome();
+var recommendationManager = new RecommendationManager(home3);
+var pluginManager3 = new PluginManager(home3);
+var mcpManager3 = new McpManager(home3);
+var skillScanner5 = new SkillScanner(home3);
+var marketplaceManager = new MarketplaceManager(home3);
+router10.get("/", async (_req, res, next) => {
   try {
-    const mgr = new RecommendationManager(getClaudeHome());
-    const cached = await mgr.getCached();
+    const cached = await recommendationManager.getCached();
     if (cached) {
-      return res.json(cached);
+      res.json(cached);
+      return;
     }
     res.json({ recommendations: [], generatedAt: null, model: null });
   } catch (err) {
-    console.error("[GET /api/recommendations]", err);
-    res.status(500).json({ error: "Failed to load recommendations" });
+    next(err);
   }
 });
-router10.post("/", async (_req, res) => {
+router10.post("/", async (_req, res, _next) => {
   try {
-    const home = getClaudeHome();
-    const mgr = new RecommendationManager(home);
     const [installedPlugins, installedMcps, installedSkills] = await Promise.all([
-      safeList(() => new PluginManager(home).list()),
-      safeList(() => new McpManager(home).list()),
-      safeList(() => new SkillScanner(home).scan())
+      safeList(() => pluginManager3.list()),
+      safeList(() => mcpManager3.list()),
+      safeList(() => skillScanner5.scan())
     ]);
     const installedPluginNames = new Set(
       installedPlugins.map((p) => String(p.name).split("@")[0])
@@ -39820,7 +40609,7 @@ router10.post("/", async (_req, res) => {
       fetchTrendingSkills(),
       fetchTopMcps(),
       fetchTrendingMcps(),
-      fetchMarketplacePlugins(home)
+      fetchMarketplacePlugins()
     ]);
     const topSkills = topSkillsRes.status === "fulfilled" ? topSkillsRes.value : [];
     const trendingSkills = trendingSkillsRes.status === "fulfilled" ? trendingSkillsRes.value : [];
@@ -39856,7 +40645,7 @@ router10.post("/", async (_req, res) => {
       generatedAt: (/* @__PURE__ */ new Date()).toISOString(),
       model: "generated-v2"
     };
-    await mgr.saveCache(result);
+    await recommendationManager.saveCache(result);
     res.json(result);
   } catch (err) {
     console.error("[POST /api/recommendations]", err);
@@ -40030,11 +40819,10 @@ function buildMcpRecs(results, popularity, installed) {
   }
   return recs;
 }
-async function fetchMarketplacePlugins(home) {
-  const mm = new MarketplaceManager(home);
+async function fetchMarketplacePlugins() {
   let marketplaces = [];
   try {
-    marketplaces = await mm.listMarketplaces();
+    marketplaces = await marketplaceManager.listMarketplaces();
   } catch {
     return [];
   }
@@ -40043,7 +40831,7 @@ async function fetchMarketplacePlugins(home) {
   const perMarketplace = await Promise.allSettled(
     marketplaces.map(async (m) => {
       try {
-        const plugins = await mm.listAvailablePlugins(m.name);
+        const plugins = await marketplaceManager.listAvailablePlugins(m.name);
         return plugins.map((p) => ({
           name: p.name,
           description: p.description || `Plugin from ${m.name}`,
@@ -40108,6 +40896,7 @@ function getStaticRecommendations() {
 // server/routes/mcp-registry.ts
 var import_express11 = __toESM(require_express2(), 1);
 var router11 = (0, import_express11.Router)();
+var mcpManager4 = new McpManager(getClaudeHome());
 async function searchOfficialRegistry(query) {
   const res = await fetch(
     `https://registry.modelcontextprotocol.io/v0.1/servers?search=${encodeURIComponent(query)}&limit=10`,
@@ -40174,14 +40963,16 @@ async function searchSmithery(query) {
 }
 var searchCache2 = /* @__PURE__ */ new Map();
 var CACHE_TTL2 = 5 * 60 * 1e3;
-router11.get("/", async (req, res) => {
+router11.get("/", async (req, res, _next) => {
   const query = req.query.q?.trim();
   if (!query) {
-    return res.json({ results: [], smitheryAvailable: !!process.env.SMITHERY_API_KEY });
+    res.json({ results: [], smitheryAvailable: !!process.env.SMITHERY_API_KEY });
+    return;
   }
   const cached = searchCache2.get(query);
   if (cached && Date.now() - cached.timestamp < CACHE_TTL2) {
-    return res.json(cached.data);
+    res.json(cached.data);
+    return;
   }
   const [officialResult, npmResult, smitheryResult] = await Promise.allSettled([
     searchOfficialRegistry(query),
@@ -40212,9 +41003,10 @@ router11.get("/", async (req, res) => {
 });
 var topMcpCache = { data: null, timestamp: 0 };
 var TOP_MCP_CACHE_TTL = 10 * 60 * 1e3;
-router11.get("/top", async (_req, res) => {
+router11.get("/top", async (_req, res, _next) => {
   if (topMcpCache.data && Date.now() - topMcpCache.timestamp < TOP_MCP_CACHE_TTL) {
-    return res.json(topMcpCache.data);
+    res.json(topMcpCache.data);
+    return;
   }
   try {
     const [npmResult, officialResult] = await Promise.allSettled([
@@ -40277,105 +41069,93 @@ router11.get("/top", async (_req, res) => {
   } catch (err) {
     console.error("[GET /api/mcp-registry/top]", err);
     if (topMcpCache.data) {
-      return res.json(topMcpCache.data);
+      res.json(topMcpCache.data);
+      return;
     }
     res.json({ results: [], smitheryAvailable: !!process.env.SMITHERY_API_KEY });
   }
 });
-router11.post("/install", async (req, res) => {
+router11.post("/install", async (req, res, next) => {
   try {
     const { name, command, args, env } = req.body;
     if (!name || typeof name !== "string") {
-      return res.status(400).json({ error: "Missing required field: name" });
+      res.status(400).json({ error: "Missing required field: name" });
+      return;
     }
     if (!command || typeof command !== "string") {
-      return res.status(400).json({ error: "Missing required field: command" });
+      res.status(400).json({ error: "Missing required field: command" });
+      return;
     }
     if (args !== void 0 && !Array.isArray(args)) {
-      return res.status(400).json({ error: "Field args must be an array" });
+      res.status(400).json({ error: "Field args must be an array" });
+      return;
     }
     const config = { command };
     if (args && args.length > 0) config.args = args;
     if (env && Object.keys(env).length > 0) config.env = env;
-    const home = getClaudeHome();
-    const manager = new McpManager(home);
-    await manager.add(name, config);
+    await mcpManager4.add(name, config);
     res.status(201).json({ success: true });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Internal server error";
-    const status = message.includes("already exists") ? 409 : 500;
-    console.error("[POST /api/mcp-registry/install]", err);
-    res.status(status).json({ error: message });
+    next(err);
   }
 });
 
 // server/routes/marketplaces.ts
 var import_express12 = __toESM(require_express2(), 1);
 var router12 = (0, import_express12.Router)();
-router12.get("/", async (_req, res) => {
+var marketplaceManager2 = new MarketplaceManager(getClaudeHome());
+router12.get("/", async (_req, res, next) => {
   try {
-    const home = getClaudeHome();
-    const marketplaces = await new MarketplaceManager(home).listMarketplaces();
+    const marketplaces = await marketplaceManager2.listMarketplaces();
     res.json(marketplaces);
   } catch (err) {
-    console.error("[GET /api/marketplaces]", err);
-    res.status(500).json({ error: "Internal server error" });
+    next(err);
   }
 });
-router12.post("/", async (req, res) => {
+router12.post("/", async (req, res, next) => {
   try {
     const { name, repo } = req.body;
     if (!name || typeof name !== "string") {
-      return res.status(400).json({ error: "Missing required field: name" });
+      res.status(400).json({ error: "Missing required field: name" });
+      return;
     }
     if (!repo || typeof repo !== "string") {
-      return res.status(400).json({ error: "Missing required field: repo" });
+      res.status(400).json({ error: "Missing required field: repo" });
+      return;
     }
-    const home = getClaudeHome();
-    await new MarketplaceManager(home).addMarketplace(name, repo);
+    await marketplaceManager2.addMarketplace(name, repo);
     res.json({ success: true });
   } catch (err) {
-    console.error("[POST /api/marketplaces]", err);
-    const message = err instanceof Error ? err.message : "Internal server error";
-    res.status(400).json({ error: message });
+    next(err);
   }
 });
-router12.delete("/:name", async (req, res) => {
+router12.delete("/:name", async (req, res, next) => {
   try {
     const { name } = req.params;
-    const home = getClaudeHome();
-    await new MarketplaceManager(home).removeMarketplace(decodeURIComponent(name));
+    await marketplaceManager2.removeMarketplace(decodeURIComponent(name));
     res.json({ success: true });
   } catch (err) {
-    console.error("[DELETE /api/marketplaces/:name]", err);
-    const message = err instanceof Error ? err.message : "Internal server error";
-    res.status(400).json({ error: message });
+    next(err);
   }
 });
-router12.post("/:name/refresh", async (req, res) => {
+router12.post("/:name/refresh", async (req, res, next) => {
   try {
     const { name } = req.params;
-    const home = getClaudeHome();
-    await new MarketplaceManager(home).refreshMarketplace(decodeURIComponent(name));
+    await marketplaceManager2.refreshMarketplace(decodeURIComponent(name));
     res.json({ success: true });
   } catch (err) {
-    console.error("[POST /api/marketplaces/:name/refresh]", err);
-    const message = err instanceof Error ? err.message : "Internal server error";
-    res.status(400).json({ error: message });
+    next(err);
   }
 });
-router12.get("/:name/plugins", async (req, res) => {
+router12.get("/:name/plugins", async (req, res, next) => {
   try {
     const { name } = req.params;
-    const home = getClaudeHome();
-    const plugins = await new MarketplaceManager(home).listAvailablePlugins(
+    const plugins = await marketplaceManager2.listAvailablePlugins(
       decodeURIComponent(name)
     );
     res.json(plugins);
   } catch (err) {
-    console.error("[GET /api/marketplaces/:name/plugins]", err);
-    const message = err instanceof Error ? err.message : "Internal server error";
-    res.status(400).json({ error: message });
+    next(err);
   }
 });
 
@@ -40384,18 +41164,18 @@ var import_express13 = __toESM(require_express2(), 1);
 var import_chokidar = __toESM(require_chokidar(), 1);
 var router13 = (0, import_express13.Router)();
 router13.get("/", (req, res) => {
-  const home = getClaudeHome();
+  const home4 = getClaudeHome();
   res.setHeader("Content-Type", "text/event-stream");
   res.setHeader("Cache-Control", "no-cache");
   res.setHeader("Connection", "keep-alive");
   res.flushHeaders();
   const watcher = (0, import_chokidar.watch)(
     [
-      `${home}/settings.json`,
-      `${home}/plugins/installed_plugins.json`,
-      `${home}/.mcp.json`,
-      `${home}/sessions/*.json`,
-      `${home}/plugins/profiles/*.json`
+      `${home4}/settings.json`,
+      `${home4}/plugins/installed_plugins.json`,
+      `${home4}/.mcp.json`,
+      `${home4}/sessions/*.json`,
+      `${home4}/plugins/profiles/*.json`
     ],
     {
       ignoreInitial: true,
@@ -40449,7 +41229,7 @@ import { readFile as readFile7 } from "fs/promises";
 import { join as join12, dirname as dirname3 } from "path";
 import { fileURLToPath } from "url";
 var router14 = (0, import_express14.Router)();
-router14.get("/", async (_req, res) => {
+router14.get("/", async (_req, res, next) => {
   try {
     const __dirname2 = dirname3(fileURLToPath(import.meta.url));
     const candidates = [
@@ -40472,8 +41252,7 @@ router14.get("/", async (_req, res) => {
     }
     res.json({ name, version });
   } catch (err) {
-    console.error("[GET /api/info]", err);
-    res.status(500).json({ error: "Internal server error" });
+    next(err);
   }
 });
 
@@ -40481,8 +41260,16 @@ router14.get("/", async (_req, res) => {
 var __dirname = dirname4(fileURLToPath2(import.meta.url));
 var app = (0, import_express15.default)();
 var PORT = Number(process.env.PORT || 3399);
+var HOST = process.env.HOST ?? "127.0.0.1";
+var apiLimiter = lib_default({
+  windowMs: 6e4,
+  max: Number(process.env.CCM_RATE_LIMIT_MAX ?? 120),
+  standardHeaders: true,
+  legacyHeaders: false
+});
 app.use((0, import_cors.default)());
 app.use(import_express15.default.json());
+app.use("/api", apiLimiter);
 app.use("/api/info", router14);
 app.use("/api/stats", router);
 app.use("/api/plugins", router2);
@@ -40502,8 +41289,9 @@ app.use(import_express15.default.static(clientDir));
 app.get("*", (_req, res) => {
   res.sendFile(join13(clientDir, "index.html"));
 });
-app.listen(PORT, () => {
-  console.log(`Dashboard running at http://localhost:${PORT}`);
+app.use(errorHandler);
+app.listen(PORT, HOST, () => {
+  console.log(`Dashboard running at http://${HOST}:${PORT}`);
 });
 export {
   app
