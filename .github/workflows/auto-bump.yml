@@ -1,0 +1,104 @@
+name: Auto bump on merged PR
+
+# Triggered on every closed PR. Does nothing unless:
+#   (a) the PR was actually merged (not just closed), AND
+#   (b) the PR carried exactly one of release:patch / release:minor / release:major
+#
+# When those conditions hold, the workflow:
+#   1. Reads the bump level from the label.
+#   2. Runs scripts/bump-version.mjs to patch every version-holding file and
+#      prepend a CHANGELOG entry (extracted from a `## Changelog` section of
+#      the PR body, or synthesized from the PR title when that section is
+#      absent).
+#   3. Commits + tags the version bump on master.
+#   4. If GH_PAT_MARKETPLACE secret exists, opens a companion PR in the
+#      can-claude-plugins marketplace repo to mirror the new version there.
+
+on:
+  pull_request:
+    types: [closed]
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  bump:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resolve bump level from labels
+        id: level
+        env:
+          LABELS_JSON: ${{ toJson(github.event.pull_request.labels.*.name) }}
+        run: |
+          matched=$(echo "$LABELS_JSON" | jq -r '.[]' | grep -E '^release:(patch|minor|major)$' || true)
+          count=$(echo "$matched" | grep -c . || true)
+          if [ -z "$matched" ]; then
+            echo "No release:* label — skipping bump."
+            echo "level=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [ "$count" -gt 1 ]; then
+            echo "Multiple release:* labels found: $matched"
+            echo "Refusing to guess. Fix the PR labels and re-run."
+            exit 1
+          fi
+          echo "level=${matched#release:}" >> "$GITHUB_OUTPUT"
+
+      - name: Exit early if no bump requested
+        if: steps.level.outputs.level == ''
+        run: |
+          echo "Nothing to do."
+          exit 0
+
+      - uses: actions/checkout@v4
+        if: steps.level.outputs.level != ''
+        with:
+          ref: master
+          fetch-depth: 0
+          # Use the default GITHUB_TOKEN to push back to master.
+          # contents:write is granted above.
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-node@v4
+        if: steps.level.outputs.level != ''
+        with:
+          node-version: '20'
+
+      - name: Bump local version files + CHANGELOG
+        id: bump
+        if: steps.level.outputs.level != ''
+        env:
+          BUMP_LEVEL: ${{ steps.level.outputs.level }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+        run: node .github/scripts/bump-version.mjs
+
+      - name: Commit + tag + push
+        if: steps.level.outputs.level != ''
+        env:
+          NEW_VERSION: ${{ steps.bump.outputs.version }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          git config user.name  "ccm-release-bot"
+          git config user.email "actions@github.com"
+          git add -A
+          # `[skip ci]` so this push doesn't kick off other workflows.
+          git commit -m "chore(release): $NEW_VERSION [skip ci]" -m "Auto-bumped by label on #${PR_NUMBER}."
+          git tag "v$NEW_VERSION"
+          git push origin HEAD:master
+          git push origin "v$NEW_VERSION"
+
+      - name: Mirror bump to marketplace repo
+        if: steps.level.outputs.level != '' && env.MARKETPLACE_PAT != ''
+        env:
+          MARKETPLACE_PAT: ${{ secrets.GH_PAT_MARKETPLACE }}
+          MARKETPLACE_REPO: wangcansunking/can-claude-plugins
+          NEW_VERSION: ${{ steps.bump.outputs.version }}
+          PLUGIN_NAME: ${{ steps.bump.outputs.plugin_name }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+        run: node .github/scripts/bump-marketplace.mjs
