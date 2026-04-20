@@ -1,5 +1,5 @@
 import { join } from 'path';
-import { readdir, readFile, writeFile, mkdir } from 'fs/promises';
+import { readdir, readFile, writeFile, mkdir, unlink } from 'fs/promises';
 import { readJsonFile, writeJsonFile, fileExists } from '../utils/file-ops.js';
 import { FileNotFoundError, NotFoundError, ValidationError } from '@ccm/types';
 import type { Profile, ProfileExport } from '@ccm/types';
@@ -270,15 +270,12 @@ export class ProfileManager {
       throw new NotFoundError('Profile', name);
     }
 
-    const { unlink } = await import('fs/promises');
     await unlink(filePath);
 
-    // Clear active.json if this was the active profile
     const activeName = await this.getActive();
     if (activeName === name) {
-      const { unlink: ul } = await import('fs/promises');
       try {
-        await ul(this.activeProfilePath);
+        await unlink(this.activeProfilePath);
       } catch {
         // Ignore if active.json doesn't exist
       }
