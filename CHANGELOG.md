@@ -2,6 +2,14 @@
 
 All notable changes to claude-config-manager are documented here.
 
+
+## [1.1.2] — 2026-04-20
+
+### Added
+- **`theme-color` meta tag on dashboard.** `<meta name="theme-color" content="#D97757">` added to `index.html`, matching the terracotta favicon from 1.1.1. Mobile browsers (iOS Safari, Chrome Android) use this to tint the address bar / status bar area so the dashboard reads as a branded app rather than a raw page.
+
+([#10](https://github.com/wangcansunking/claude-config-manager/pull/10))
+
 ## [1.1.1] — 2026-04-20
 
 ### Added
