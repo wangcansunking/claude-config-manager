@@ -1,5 +1,6 @@
 
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Header } from '@/components/layout/header';
 import { Tag } from '@/components/shared/tag';
 import { SearchBox } from '@/components/shared/search-box';
@@ -302,6 +303,7 @@ function DiscoverySkeleton() {
 // ---------------------------------------------------------------------------
 
 function FindMoreSection() {
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [results, setResults] = useState<DiscoveryResult[]>([]);
   const [loading, setLoading] = useState(false);
@@ -376,17 +378,17 @@ function FindMoreSection() {
   return (
     <div className="mt-10">
       <h2 className="text-lg font-medium mb-1" style={{ color: 'var(--text-primary)' }}>
-        Find More
+        {t('recommended.findMore')}
       </h2>
       <p className="text-sm mb-4" style={{ color: 'var(--text-muted)' }}>
-        Search skills.sh and MCP registries to discover more tools.
+        {t('recommended.findMoreBody')}
       </p>
 
       <div className="mb-4">
         <SearchBox
           value={search}
           onChange={setSearch}
-          placeholder="Search skills and MCP servers..."
+          placeholder={t('recommended.findMorePlaceholder')}
         />
       </div>
 
@@ -420,6 +422,7 @@ function FindMoreSection() {
 // ---------------------------------------------------------------------------
 
 export default function RecommendedPage() {
+  const { t } = useTranslation();
   const { data, isLoading, mutate } = useRecommendations();
   const [generating, setGenerating] = useState(false);
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('All');
@@ -471,8 +474,8 @@ export default function RecommendedPage() {
   return (
     <div>
       <Header
-        title="Recommended"
-        subtitle="AI-powered recommendations based on your setup"
+        title={t('recommended.title')}
+        subtitle={t('recommended.subtitle')}
       >
         <button
           className="px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
@@ -493,7 +496,7 @@ export default function RecommendedPage() {
               }}
             />
           )}
-          {generating ? 'Generating...' : 'Refresh'}
+          {generating ? t('recommended.generating') : t('recommended.refresh')}
         </button>
       </Header>
 
@@ -578,18 +581,17 @@ export default function RecommendedPage() {
           }}
         >
           <p className="text-lg mb-2" style={{ color: 'var(--text-muted)' }}>
-            No recommendations yet
+            {t('recommended.emptyTitle')}
           </p>
           <p className="text-sm mb-4" style={{ color: 'var(--text-faint)' }}>
-            Click Refresh to generate personalized recommendations based on your
-            installed plugins, MCP servers, and skills.
+            {t('recommended.emptyBody')}
           </p>
           <button
             className="px-5 py-2.5 rounded-lg text-sm font-medium"
             style={{ backgroundColor: 'var(--accent)', color: '#fff' }}
             onClick={handleRefresh}
           >
-            Generate Recommendations
+            {t('recommended.generate')}
           </button>
         </div>
       )}

@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { Select } from '../shared/select';
 
 interface ModelSelectorProps {
@@ -15,8 +16,9 @@ const COMMON_MODELS = [
 ];
 
 export function ModelSelector({ value, onChange }: ModelSelectorProps) {
+  const { t } = useTranslation();
   const options = [
-    { value: '', label: '-- Select a model --' },
+    { value: '', label: t('config.settings.modelSelectPlaceholder') },
     ...COMMON_MODELS.map((m) => ({ value: m, label: m })),
     ...(value && !COMMON_MODELS.includes(value) ? [{ value, label: value }] : []),
   ];
@@ -24,20 +26,20 @@ export function ModelSelector({ value, onChange }: ModelSelectorProps) {
   return (
     <div className="space-y-2">
       <label className="text-xs uppercase tracking-wider" style={{ color: 'var(--text-muted)', fontWeight: 510 }}>
-        Default Model
+        {t('config.settings.model')}
       </label>
       <Select
         value={value}
         onChange={onChange}
         options={options}
-        placeholder="-- Select a model --"
+        placeholder={t('config.settings.modelSelectPlaceholder')}
       />
       {/* Custom model input */}
       <input
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder="Or type a custom model ID..."
+        placeholder={t('config.settings.modelCustomPlaceholder')}
         className="w-full px-3 py-2 rounded-md text-sm outline-none"
         style={{
           backgroundColor: 'var(--bg-tertiary)',

@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Header } from '@/components/layout/header';
 import { Button } from '@/components/shared/button';
 import { ModelSelector } from '@/components/settings/model-selector';
@@ -22,6 +23,7 @@ interface Settings {
 }
 
 export default function SettingsPage() {
+  const { t } = useTranslation();
   const { data: settingsRaw, isLoading: settingsLoading, mutate: mutateSettings } = useSettings();
   const settings = (settingsRaw ?? {}) as Settings;
   const [envVars, setEnvVars] = useState<Record<string, string>>({});
@@ -91,10 +93,10 @@ export default function SettingsPage() {
 
   return (
     <div>
-      <Header title="Settings" />
+      <Header title={t('config.settings.title')} />
 
       {loading ? (
-        <p style={{ color: 'var(--text-secondary)' }}>Loading...</p>
+        <p style={{ color: 'var(--text-secondary)' }}>{t('common.loading')}</p>
       ) : (
         <div className="space-y-6 max-w-2xl">
           {/* Model Section */}
@@ -103,12 +105,12 @@ export default function SettingsPage() {
             style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--card-border)' }}
           >
             <h2 className="text-sm mb-4" style={{ color: 'var(--text-primary)', fontWeight: 510 }}>
-              Model Configuration
+              {t('config.settings.model')}
             </h2>
             <ModelSelector value={model} onChange={setModel} />
             <div className="mt-4">
               <Button variant="primary" size="md" onClick={handleSaveModel} disabled={saving}>
-                {saving ? 'Saving...' : 'Save Model'}
+                {saving ? t('common.saving') : t('common.save')}
               </Button>
             </div>
           </section>
@@ -119,7 +121,7 @@ export default function SettingsPage() {
             style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--card-border)' }}
           >
             <h2 className="text-sm mb-4" style={{ color: 'var(--text-primary)', fontWeight: 510 }}>
-              Environment Variables
+              {t('config.settings.envVars')}
             </h2>
             <EnvVarsEditor
               vars={envVars}
@@ -134,7 +136,7 @@ export default function SettingsPage() {
             style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--card-border)' }}
           >
             <h2 className="text-sm mb-4" style={{ color: 'var(--text-primary)', fontWeight: 510 }}>
-              Hooks
+              {t('config.settings.hooks')}
             </h2>
             <HooksEditor hooks={hooks} />
           </section>

@@ -1,5 +1,6 @@
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Header } from '@/components/layout/header';
 import { DetailPanel } from '@/components/layout/detail-panel';
 import { SearchBox } from '@/components/shared/search-box';
@@ -42,6 +43,7 @@ type TabId = 'installed' | 'marketplace' | 'manage';
 // ---------------------------------------------------------------------------
 
 function InstalledTab() {
+  const { t } = useTranslation();
   const { data: pluginsRaw, isLoading: loading, mutate } = usePlugins();
   const plugins = (pluginsRaw ?? []) as Plugin[];
   const [search, setSearch] = useState('');
@@ -79,7 +81,7 @@ function InstalledTab() {
         <SearchBox
           value={search}
           onChange={setSearch}
-          placeholder="Search installed plugins..."
+          placeholder={t('config.plugins.searchInstalledPlaceholder')}
         />
       </div>
 
@@ -269,6 +271,7 @@ function InstalledTab() {
 // ---------------------------------------------------------------------------
 
 function MarketplaceTab() {
+  const { t } = useTranslation();
   const { data: marketplacesRaw, isLoading: marketplacesLoading } = useMarketplaces();
   const marketplaces = (marketplacesRaw ?? []) as MarketplaceData[];
   const [selectedMp, setSelectedMp] = useState<string | null>(null);
@@ -315,7 +318,7 @@ function MarketplaceTab() {
                 ? [{ value: '', label: 'No marketplaces' }]
                 : marketplaces.map((mp) => ({ value: mp.name, label: mp.name }))
             }
-            placeholder="Select marketplace..."
+            placeholder={t('config.plugins.marketplaceSelectPlaceholder')}
             disabled={marketplacesLoading || marketplaces.length === 0}
           />
         </div>
@@ -324,7 +327,7 @@ function MarketplaceTab() {
           <SearchBox
             value={search}
             onChange={setSearch}
-            placeholder="Search available plugins..."
+            placeholder={t('config.plugins.searchAvailablePlaceholder')}
           />
         </div>
 
@@ -742,19 +745,20 @@ function ManageMarketplacesTab() {
 // ---------------------------------------------------------------------------
 
 export default function PluginsPage() {
+  const { t } = useTranslation();
   const [tab, setTab] = useState<TabId>('installed');
 
   return (
     <div>
       <div className="sticky top-0 z-10 bg-bg-primary">
-        <Header title="Plugins" />
+        <Header title={t('config.plugins.title')} />
 
         {/* Tabs */}
         <div className="flex items-center gap-1 mb-4">
           {([
-            { id: 'installed' as TabId, label: 'Installed' },
-            { id: 'marketplace' as TabId, label: 'Marketplace' },
-            { id: 'manage' as TabId, label: 'Manage Marketplaces' },
+            { id: 'installed' as TabId, label: t('config.plugins.installed') },
+            { id: 'marketplace' as TabId, label: t('config.plugins.marketplace') },
+            { id: 'manage' as TabId, label: t('config.plugins.manageMarketplaces') },
           ]).map(({ id, label }) => (
             <button
               key={id}

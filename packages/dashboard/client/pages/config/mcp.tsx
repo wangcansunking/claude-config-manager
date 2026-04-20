@@ -1,5 +1,6 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Header } from '@/components/layout/header';
 import { DetailPanel } from '@/components/layout/detail-panel';
 import { Button } from '@/components/shared/button';
@@ -410,6 +411,7 @@ function InstallDialog({
 // ---------------------------------------------------------------------------
 
 function McpStoreTab({ onInstalled }: { onInstalled: () => void }) {
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [sourceFilter, setSourceFilter] = useState<SourceFilter>('all');
   const [results, setResults] = useState<McpRegistryResult[]>([]);
@@ -526,7 +528,7 @@ function McpStoreTab({ onInstalled }: { onInstalled: () => void }) {
         <SearchBox
           value={search}
           onChange={setSearch}
-          placeholder="Search MCP servers..."
+          placeholder={t('config.mcp.searchStorePlaceholder')}
         />
       </div>
 
@@ -631,6 +633,7 @@ function McpStoreTab({ onInstalled }: { onInstalled: () => void }) {
 // ---------------------------------------------------------------------------
 
 export default function McpServersPage() {
+  const { t } = useTranslation();
   const { data: serversRaw, isLoading: loading, mutate } = useMcpServers();
   const servers = (serversRaw ?? []) as McpServer[];
   const [selected, setSelected] = useState<McpServer | null>(null);
@@ -653,13 +656,13 @@ export default function McpServersPage() {
   return (
     <div>
       <div className="sticky top-0 z-10 bg-bg-primary">
-        <Header title="MCP Servers">
+        <Header title={t('config.mcp.title')}>
           <Button
             variant="primary"
             size="md"
             onClick={() => setTab('store')}
           >
-            Add Server
+            {t('config.mcp.install')}
           </Button>
         </Header>
 
@@ -673,7 +676,7 @@ export default function McpServersPage() {
             }}
             onClick={() => setTab('installed')}
           >
-            Installed
+            {t('config.mcp.installed')}
           </button>
           <button
             className="px-4 py-1.5 rounded-lg text-sm font-medium transition-colors"
@@ -683,7 +686,7 @@ export default function McpServersPage() {
             }}
             onClick={() => setTab('store')}
           >
-            MCP Store
+            {t('config.mcp.store')}
           </button>
         </div>
       </div>
