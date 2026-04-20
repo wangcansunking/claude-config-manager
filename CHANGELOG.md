@@ -122,5 +122,5 @@ Initial release of claude-config-manager — a Claude Code plugin that provides 
 - **157+ unit tests** across all packages
 
 ### Installation
-- **Claude Code plugin** — `claude --plugin-dir <path>` for local or `/plugin install claude-config-manager@canwa-claude-plugins` from marketplace
+- **Claude Code plugin** — `claude --plugin-dir <path>` for local or `/plugin install claude-config-manager@can-claude-plugins` from marketplace
 - **npm package** — `npm install -g claude-config-manager` then `claude-config start`

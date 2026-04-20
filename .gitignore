@@ -7,3 +7,4 @@ coverage/
 .superpowers/
 .playwright-mcp/
 test-screenshots/
+.claude/settings.local.json

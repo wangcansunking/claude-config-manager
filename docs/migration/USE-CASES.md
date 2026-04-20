@@ -287,7 +287,7 @@
   {
     "name": "claude-plugins-official",
     "source": { "source": "github", "repo": "anthropics/claude-plugins-official" },
-    "installLocation": "C:\\Users\\canwa\\.claude\\plugins\\marketplaces\\claude-plugins-official",
+    "installLocation": "C:\\Users\\wangcansunking\\.claude\\plugins\\marketplaces\\claude-plugins-official",
     "lastUpdated": "2026-04-16T12:40:48.660Z"
   }
 ]
@@ -446,7 +446,7 @@
 [
   {
     "name": "ado-auto-work",
-    "filePath": "C:\\Users\\canwa\\.claude\\skills\\ado-auto-work\\Skill.md",
+    "filePath": "C:\\Users\\wangcansunking\\.claude\\skills\\ado-auto-work\\Skill.md",
     "pluginName": "user",
     "source": "user"
   },
@@ -472,7 +472,7 @@
 
 1. **Top bar:**
    - Skill name (monospace): `ado-auto-work`
-   - Tags: "User" (blue), "canwa" (gray)
+   - Tags: "User" (blue), "wangcansunking" (gray)
    - File path (right side, monospace)
    - "Edit" button (right side, only for user skills)
    - Close button (X)
@@ -535,7 +535,7 @@
   {
     "name": "mcp-npx-fix",
     "description": "Migrate MCP plugin configs from npx to globally installed packages",
-    "filePath": "C:\\Users\\canwa\\.claude\\commands\\mcp-npx-fix\\Skill.md",
+    "filePath": "C:\\Users\\wangcansunking\\.claude\\commands\\mcp-npx-fix\\Skill.md",
     "source": "user"
   }
 ]
@@ -979,7 +979,7 @@
   "version": "5.0.7",
   "marketplace": "claude-plugins-official",
   "enabled": true,
-  "installPath": "C:\\Users\\canwa\\.claude\\plugins\\cache\\claude-plugins-official\\superpowers\\5.0.7",
+  "installPath": "C:\\Users\\wangcansunking\\.claude\\plugins\\cache\\claude-plugins-official\\superpowers\\5.0.7",
   "installedAt": "2026-02-05T07:25:01.658Z",
   "lastUpdated": "2026-04-08T05:50:15.469Z"
 }
@@ -1016,7 +1016,7 @@
   "lastMessage": "/claude-config-manager:ccm-dashboard",
   "projectDir": "C:\\repos\\ccm-test",
   "projectConfig": {"hasMcpJson": false, "hasClaudeMd": false, "hasProjectSettings": false},
-  "historyFile": "C:\\Users\\canwa\\.claude\\projects\\C--repos-ccm-test\\dce9993c-4a46-401b-a3b2-49e065ea9319.jsonl"
+  "historyFile": "C:\\Users\\wangcansunking\\.claude\\projects\\C--repos-ccm-test\\dce9993c-4a46-401b-a3b2-49e065ea9319.jsonl"
 }
 ```
 
@@ -1095,7 +1095,7 @@
   {
     "name": "claude-plugins-official",
     "source": {"source": "github", "repo": "anthropics/claude-plugins-official"},
-    "installLocation": "C:\\Users\\canwa\\.claude\\plugins\\marketplaces\\claude-plugins-official",
+    "installLocation": "C:\\Users\\wangcansunking\\.claude\\plugins\\marketplaces\\claude-plugins-official",
     "lastUpdated": "2026-04-16T12:40:48.660Z"
   }
 ]
