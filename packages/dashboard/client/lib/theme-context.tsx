@@ -8,21 +8,47 @@ interface ThemeContextType {
   setTheme: (t: Theme) => void;
 }
 
+/**
+ * Resolve the actual theme based on user preference and system setting.
+ * Runs synchronously to avoid flash of wrong theme on initial render.
+ */
+function getInitialTheme(): { theme: Theme; resolved: 'light' | 'dark' } {
+  // Check localStorage first (only in browser)
+  if (typeof window === 'undefined') {
+    return { theme: 'system', resolved: 'dark' };
+  }
+
+  const saved = localStorage.getItem('ccm-theme') as Theme | null;
+  const theme = saved ?? 'system';
+
+  // Resolve based on saved preference or system
+  if (theme === 'system') {
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    return { theme, resolved: prefersDark ? 'dark' : 'light' };
+  }
+
+  return { theme, resolved: theme };
+}
+
+// Initialize synchronously to avoid theme flash
+const initial = getInitialTheme();
+
+// Apply theme immediately before React hydrates (prevents flash)
+if (typeof document !== 'undefined') {
+  document.documentElement.setAttribute('data-theme', initial.resolved);
+}
+
 const ThemeContext = createContext<ThemeContextType>({
-  theme: 'system',
-  resolvedTheme: 'dark',
+  theme: initial.theme,
+  resolvedTheme: initial.resolved,
   setTheme: () => {},
 });
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>('system');
-  const [resolvedTheme, setResolved] = useState<'light' | 'dark'>('dark');
+  const [theme, setThemeState] = useState<Theme>(initial.theme);
+  const [resolvedTheme, setResolved] = useState<'light' | 'dark'>(initial.resolved);
 
-  useEffect(() => {
-    const saved = localStorage.getItem('ccm-theme') as Theme | null;
-    if (saved) setThemeState(saved);
-  }, []);
-
+  // Listen for system theme changes when in 'system' mode
   useEffect(() => {
     localStorage.setItem('ccm-theme', theme);
 
@@ -37,6 +63,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     return undefined;
   }, [theme]);
 
+  // Apply theme to document
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', resolvedTheme);
   }, [resolvedTheme]);
