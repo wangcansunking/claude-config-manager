@@ -3,6 +3,14 @@
 All notable changes to claude-config-manager are documented here.
 
 
+
+## [1.1.3] — 2026-04-20
+
+### Fixed
+- **Auto-bump companion PR body rendered malformed.** The cross-repo bump script used `JSON.stringify` + shell-interpolated `--body`, which (a) let bash command-substitute any backticks in the text and (b) never translated `\n`. The marketplace PR opened by the first live run (`claude-config-manager` 1.1.1 → 1.1.2) showed literal `\n` and an empty slot where `.claude-plugin/marketplace.json` should have been. Script now writes the body to a tempfile and passes it via `--body-file` with `execFileSync` (no shell, no escaping surprises).
+
+([#11](https://github.com/wangcansunking/claude-config-manager/pull/11))
+
 ## [1.1.2] — 2026-04-20
 
 ### Added
