@@ -1,0 +1,107 @@
+{
+  "nav": {
+    "dashboard": "仪表盘",
+    "recommended": "推荐",
+    "configuration": "配置",
+    "profiles": "配置档案",
+    "activity": "活动"
+  },
+  "theme": {
+    "auto": "自动",
+    "dark": "暗色",
+    "light": "亮色"
+  },
+  "language": {
+    "label": "语言",
+    "en": "English",
+    "zh": "中文"
+  },
+  "overview": {
+    "title": "概览",
+    "plugins": "插件",
+    "mcpServers": "MCP 服务器",
+    "skills": "技能",
+    "profiles": "配置档案",
+    "sessions": "会话",
+    "topSkills": "热门技能",
+    "topTools": "热门工具",
+    "recentSessions": "最近会话",
+    "environmentHealth": "环境状态",
+    "viewAll": "查看全部",
+    "noData": "暂无数据。",
+    "hooksNone": "无",
+    "active": "{{count}} 个已启用",
+    "configured": "{{count}} 个已配置",
+    "envSet": "{{count}} 个已设置"
+  },
+  "recommended": {
+    "title": "推荐",
+    "empty": "暂无推荐。",
+    "refresh": "刷新推荐",
+    "refreshing": "刷新中…"
+  },
+  "config": {
+    "tabs": {
+      "plugins": "插件",
+      "mcp": "MCP 服务器",
+      "skills": "技能",
+      "commands": "命令",
+      "settings": "设置"
+    },
+    "saveToProfile": "保存为配置档案",
+    "plugins": {
+      "title": "插件",
+      "installed": "已安装",
+      "marketplace": "市场",
+      "manageMarketplaces": "管理市场",
+      "searchPlaceholder": "搜索已安装的插件...",
+      "enabled": "已启用",
+      "disabled": "已禁用"
+    },
+    "mcp": {
+      "title": "MCP 服务器",
+      "installed": "已安装",
+      "store": "市场",
+      "searchPlaceholder": "搜索 MCP 服务器..."
+    },
+    "skills": {
+      "title": "技能",
+      "searchPlaceholder": "搜索技能..."
+    },
+    "commands": {
+      "title": "命令",
+      "searchPlaceholder": "搜索命令..."
+    },
+    "settings": {
+      "title": "设置"
+    }
+  },
+  "profiles": {
+    "title": "配置档案",
+    "tabs": {
+      "profiles": "配置档案",
+      "exportImport": "导出 / 导入"
+    },
+    "emptyTitle": "还没有保存的配置档案",
+    "emptyBody": "当前配置就是默认状态。保存为配置档案后即可在不同环境间切换。",
+    "saveCurrent": "保存当前配置"
+  },
+  "activity": {
+    "title": "会话",
+    "subtitle": "{{running}} 个运行中，共 {{total}} 个",
+    "recent": "最近 ({{count}})",
+    "allSessions": "全部会话",
+    "searchPlaceholder": "搜索会话...",
+    "running": "运行中",
+    "resume": "恢复"
+  },
+  "common": {
+    "close": "关闭",
+    "cancel": "取消",
+    "save": "保存",
+    "delete": "删除",
+    "confirm": "确认",
+    "copy": "复制",
+    "copied": "已复制"
+  }
+}

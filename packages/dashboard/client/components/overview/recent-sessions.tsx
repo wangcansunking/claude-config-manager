@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useSessions } from '@/lib/use-data';
 
 interface SessionInfo {
@@ -42,6 +43,7 @@ function truncateMessage(msg: string, maxLen = 80): string {
 }
 
 export function RecentSessions() {
+  const { t } = useTranslation();
   const { data: sessionsRaw, isLoading } = useSessions();
   const navigate = useNavigate();
 
@@ -59,13 +61,13 @@ export function RecentSessions() {
         className="px-5 py-3 flex items-center justify-between"
         style={{ borderBottom: '1px solid var(--border)' }}
       >
-        <h3 className="text-lg" style={{ color: 'var(--text-primary)', fontWeight: 510 }}>Recent Sessions</h3>
+        <h3 className="text-lg" style={{ color: 'var(--text-primary)', fontWeight: 510 }}>{t('overview.recentSessions')}</h3>
         <button
           className="text-xs transition-colors"
           style={{ color: 'var(--text-muted)' }}
           onClick={() => navigate('/activity')}
         >
-          View all
+          {t('overview.viewAll')}
         </button>
       </div>
 

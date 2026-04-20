@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useSettings, useStats } from '@/lib/use-data';
 
 interface Settings {
@@ -107,6 +108,7 @@ function EnvIcon() {
 }
 
 export function EnvironmentHealth() {
+  const { t } = useTranslation();
   const { data: settingsRaw, isLoading: settingsLoading } = useSettings();
   const { data: statsRaw, isLoading: statsLoading } = useStats();
 
@@ -131,7 +133,7 @@ export function EnvironmentHealth() {
         className="px-5 py-3"
         style={{ borderBottom: '1px solid var(--border)' }}
       >
-        <h3 className="text-lg" style={{ color: 'var(--text-primary)', fontWeight: 510 }}>Environment Health</h3>
+        <h3 className="text-lg" style={{ color: 'var(--text-primary)', fontWeight: 510 }}>{t('overview.environmentHealth')}</h3>
       </div>
 
       {isLoading ? (
@@ -155,20 +157,20 @@ export function EnvironmentHealth() {
           </HealthRow>
 
           {/* Plugins */}
-          <HealthRow icon={<PluginIcon />} label="Plugins">
+          <HealthRow icon={<PluginIcon />} label={t('overview.plugins')}>
             {stats && stats.plugins > 0 ? (
-              <Badge label={`${stats.plugins} active`} color="green" />
+              <Badge label={t('overview.active', { count: stats.plugins })} color="green" />
             ) : (
-              <Badge label="None" color="gray" />
+              <Badge label={t('overview.hooksNone')} color="gray" />
             )}
           </HealthRow>
 
           {/* MCP Servers */}
-          <HealthRow icon={<ServerIcon />} label="MCP Servers">
+          <HealthRow icon={<ServerIcon />} label={t('overview.mcpServers')}>
             {stats && stats.mcpServers > 0 ? (
-              <Badge label={`${stats.mcpServers} configured`} color="blue" />
+              <Badge label={t('overview.configured', { count: stats.mcpServers })} color="blue" />
             ) : (
-              <Badge label="None" color="gray" />
+              <Badge label={t('overview.hooksNone')} color="gray" />
             )}
           </HealthRow>
 
@@ -177,16 +179,16 @@ export function EnvironmentHealth() {
             {hookCount > 0 ? (
               <Badge label={`${hookCount} hook${hookCount !== 1 ? 's' : ''}`} color="yellow" />
             ) : (
-              <Badge label="None" color="gray" />
+              <Badge label={t('overview.hooksNone')} color="gray" />
             )}
           </HealthRow>
 
           {/* Env Vars */}
           <HealthRow icon={<EnvIcon />} label="Env Vars">
             {envVarCount > 0 ? (
-              <Badge label={`${envVarCount} set`} color="blue" />
+              <Badge label={t('overview.envSet', { count: envVarCount })} color="blue" />
             ) : (
-              <span className="text-sm" style={{ color: 'var(--text-muted)' }}>None set</span>
+              <Badge label={t('overview.hooksNone')} color="gray" />
             )}
           </HealthRow>
         </div>

@@ -1,24 +1,27 @@
 import { Link, useLocation } from 'react-router-dom';
 import useSWR from 'swr';
 import { useTheme } from '@/lib/theme-context';
+import { useTranslation } from 'react-i18next';
 
 interface NavItem {
-  label: string;
+  labelKey: string;
   icon: string;
   href: string;
 }
 
 const navItems: NavItem[] = [
-  { label: 'Dashboard', icon: '\u{1F4CA}', href: '/' },
-  { label: 'Recommended', icon: '\u2728', href: '/recommended' },
-  { label: 'Configuration', icon: '\u2699\uFE0F', href: '/config' },
-  { label: 'Profiles', icon: '\u{1F464}', href: '/profiles' },
-  { label: 'Activity', icon: '\u{1F5A5}\uFE0F', href: '/activity' },
+  { labelKey: 'nav.dashboard', icon: '\u{1F4CA}', href: '/' },
+  { labelKey: 'nav.recommended', icon: '\u2728', href: '/recommended' },
+  { labelKey: 'nav.configuration', icon: '\u2699\uFE0F', href: '/config' },
+  { labelKey: 'nav.profiles', icon: '\u{1F464}', href: '/profiles' },
+  { labelKey: 'nav.activity', icon: '\u{1F5A5}\uFE0F', href: '/activity' },
 ];
 
 export function Sidebar() {
   const { pathname } = useLocation();
   const { theme, setTheme } = useTheme();
+  const { t, i18n } = useTranslation();
+  const currentLang = (i18n.resolvedLanguage ?? 'en') as 'en' | 'zh';
   const { data: info } = useSWR<{ version: string }>('/api/info', (url: string) => fetch(url).then(r => r.json()), { revalidateOnFocus: false });
   const version = info?.version ?? '…';
 
@@ -81,27 +84,46 @@ export function Sidebar() {
                 }
               >
                 <span className="text-base">{item.icon}</span>
-                <span>{item.label}</span>
+                <span>{t(item.labelKey)}</span>
               </Link>
             </li>
           ))}
         </ul>
       </nav>
 
-      {/* Theme switcher */}
-      <div className="p-3" style={{ borderTop: '1px solid var(--border)' }}>
+      {/* Language + Theme switchers */}
+      <div className="p-3 space-y-2" style={{ borderTop: '1px solid var(--border)' }}>
         <div className="flex items-center gap-1 p-1 rounded-lg" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
-          {(['system', 'dark', 'light'] as const).map((t) => (
+          {(['en', 'zh'] as const).map((lng) => (
             <button
-              key={t}
-              onClick={() => setTheme(t)}
-              className="flex-1 px-2 py-1 rounded text-xs capitalize transition-colors"
+              key={lng}
+              onClick={() => void i18n.changeLanguage(lng)}
+              className="flex-1 px-2 py-1 rounded text-xs transition-colors"
               style={{
-                backgroundColor: theme === t ? 'var(--accent)' : 'transparent',
-                color: theme === t ? '#fff' : 'var(--text-muted)',
+                backgroundColor: currentLang === lng ? 'var(--accent)' : 'transparent',
+                color: currentLang === lng ? '#fff' : 'var(--text-muted)',
               }}
             >
-              {t === 'system' ? '\u{1F5A5}\uFE0F Auto' : t === 'dark' ? '\u{1F319} Dark' : '\u2600\uFE0F Light'}
+              {t(`language.${lng}`)}
+            </button>
+          ))}
+        </div>
+        <div className="flex items-center gap-1 p-1 rounded-lg" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
+          {(['system', 'dark', 'light'] as const).map((mode) => (
+            <button
+              key={mode}
+              onClick={() => setTheme(mode)}
+              className="flex-1 px-2 py-1 rounded text-xs transition-colors"
+              style={{
+                backgroundColor: theme === mode ? 'var(--accent)' : 'transparent',
+                color: theme === mode ? '#fff' : 'var(--text-muted)',
+              }}
+            >
+              {mode === 'system'
+                ? `\u{1F5A5}\uFE0F ${t('theme.auto')}`
+                : mode === 'dark'
+                  ? `\u{1F319} ${t('theme.dark')}`
+                  : `\u2600\uFE0F ${t('theme.light')}`}
             </button>
           ))}
         </div>
