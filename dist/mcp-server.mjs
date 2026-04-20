@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { createRequire } from 'module'; const require = createRequire(import.meta.url);
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -2474,9 +2475,9 @@ var require_validate = __commonJS({
       }
     }
     function returnResults(it) {
-      const { gen, schemaEnv, validateName, ValidationError: ValidationError2, opts } = it;
+      const { gen, schemaEnv, validateName, ValidationError, opts } = it;
       if (schemaEnv.$async) {
-        gen.if((0, codegen_1._)`${names_1.default.errors} === 0`, () => gen.return(names_1.default.data), () => gen.throw((0, codegen_1._)`new ${ValidationError2}(${names_1.default.vErrors})`));
+        gen.if((0, codegen_1._)`${names_1.default.errors} === 0`, () => gen.return(names_1.default.data), () => gen.throw((0, codegen_1._)`new ${ValidationError}(${names_1.default.vErrors})`));
       } else {
         gen.assign((0, codegen_1._)`${validateName}.errors`, names_1.default.vErrors);
         if (opts.unevaluated)
@@ -2828,14 +2829,14 @@ var require_validation_error = __commonJS({
   "../../node_modules/@modelcontextprotocol/sdk/node_modules/ajv/dist/runtime/validation_error.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    var ValidationError2 = class extends Error {
+    var ValidationError = class extends Error {
       constructor(errors) {
         super("validation failed");
         this.errors = errors;
         this.ajv = this.validation = true;
       }
     };
-    exports.default = ValidationError2;
+    exports.default = ValidationError;
   }
 });
 
@@ -9094,9 +9095,9 @@ var require_validate2 = __commonJS({
       }
     }
     function returnResults(it) {
-      const { gen, schemaEnv, validateName, ValidationError: ValidationError2, opts } = it;
+      const { gen, schemaEnv, validateName, ValidationError, opts } = it;
       if (schemaEnv.$async) {
-        gen.if((0, codegen_1._)`${names_1.default.errors} === 0`, () => gen.return(names_1.default.data), () => gen.throw((0, codegen_1._)`new ${ValidationError2}(${names_1.default.vErrors})`));
+        gen.if((0, codegen_1._)`${names_1.default.errors} === 0`, () => gen.return(names_1.default.data), () => gen.throw((0, codegen_1._)`new ${ValidationError}(${names_1.default.vErrors})`));
       } else {
         gen.assign((0, codegen_1._)`${validateName}.errors`, names_1.default.vErrors);
         if (opts.unevaluated)
@@ -9448,14 +9449,14 @@ var require_validation_error2 = __commonJS({
   "../../node_modules/ajv-formats/node_modules/ajv/dist/runtime/validation_error.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    var ValidationError2 = class extends Error {
+    var ValidationError = class extends Error {
       constructor(errors) {
         super("validation failed");
         this.errors = errors;
         this.ajv = this.validation = true;
       }
     };
-    exports.default = ValidationError2;
+    exports.default = ValidationError;
   }
 });
 
@@ -12493,117 +12494,10 @@ var require_dist = __commonJS({
   }
 });
 
-// ../../node_modules/zod/v3/external.js
-var external_exports = {};
-__export(external_exports, {
-  BRAND: () => BRAND,
-  DIRTY: () => DIRTY,
-  EMPTY_PATH: () => EMPTY_PATH,
-  INVALID: () => INVALID,
-  NEVER: () => NEVER,
-  OK: () => OK,
-  ParseStatus: () => ParseStatus,
-  Schema: () => ZodType,
-  ZodAny: () => ZodAny,
-  ZodArray: () => ZodArray,
-  ZodBigInt: () => ZodBigInt,
-  ZodBoolean: () => ZodBoolean,
-  ZodBranded: () => ZodBranded,
-  ZodCatch: () => ZodCatch,
-  ZodDate: () => ZodDate,
-  ZodDefault: () => ZodDefault,
-  ZodDiscriminatedUnion: () => ZodDiscriminatedUnion,
-  ZodEffects: () => ZodEffects,
-  ZodEnum: () => ZodEnum,
-  ZodError: () => ZodError,
-  ZodFirstPartyTypeKind: () => ZodFirstPartyTypeKind,
-  ZodFunction: () => ZodFunction,
-  ZodIntersection: () => ZodIntersection,
-  ZodIssueCode: () => ZodIssueCode,
-  ZodLazy: () => ZodLazy,
-  ZodLiteral: () => ZodLiteral,
-  ZodMap: () => ZodMap,
-  ZodNaN: () => ZodNaN,
-  ZodNativeEnum: () => ZodNativeEnum,
-  ZodNever: () => ZodNever,
-  ZodNull: () => ZodNull,
-  ZodNullable: () => ZodNullable,
-  ZodNumber: () => ZodNumber,
-  ZodObject: () => ZodObject,
-  ZodOptional: () => ZodOptional,
-  ZodParsedType: () => ZodParsedType,
-  ZodPipeline: () => ZodPipeline,
-  ZodPromise: () => ZodPromise,
-  ZodReadonly: () => ZodReadonly,
-  ZodRecord: () => ZodRecord,
-  ZodSchema: () => ZodType,
-  ZodSet: () => ZodSet,
-  ZodString: () => ZodString,
-  ZodSymbol: () => ZodSymbol,
-  ZodTransformer: () => ZodEffects,
-  ZodTuple: () => ZodTuple,
-  ZodType: () => ZodType,
-  ZodUndefined: () => ZodUndefined,
-  ZodUnion: () => ZodUnion,
-  ZodUnknown: () => ZodUnknown,
-  ZodVoid: () => ZodVoid,
-  addIssueToContext: () => addIssueToContext,
-  any: () => anyType,
-  array: () => arrayType,
-  bigint: () => bigIntType,
-  boolean: () => booleanType,
-  coerce: () => coerce,
-  custom: () => custom,
-  date: () => dateType,
-  datetimeRegex: () => datetimeRegex,
-  defaultErrorMap: () => en_default,
-  discriminatedUnion: () => discriminatedUnionType,
-  effect: () => effectsType,
-  enum: () => enumType,
-  function: () => functionType,
-  getErrorMap: () => getErrorMap,
-  getParsedType: () => getParsedType,
-  instanceof: () => instanceOfType,
-  intersection: () => intersectionType,
-  isAborted: () => isAborted,
-  isAsync: () => isAsync,
-  isDirty: () => isDirty,
-  isValid: () => isValid,
-  late: () => late,
-  lazy: () => lazyType,
-  literal: () => literalType,
-  makeIssue: () => makeIssue,
-  map: () => mapType,
-  nan: () => nanType,
-  nativeEnum: () => nativeEnumType,
-  never: () => neverType,
-  null: () => nullType,
-  nullable: () => nullableType,
-  number: () => numberType,
-  object: () => objectType,
-  objectUtil: () => objectUtil,
-  oboolean: () => oboolean,
-  onumber: () => onumber,
-  optional: () => optionalType,
-  ostring: () => ostring,
-  pipeline: () => pipelineType,
-  preprocess: () => preprocessType,
-  promise: () => promiseType,
-  quotelessJson: () => quotelessJson,
-  record: () => recordType,
-  set: () => setType,
-  setErrorMap: () => setErrorMap,
-  strictObject: () => strictObjectType,
-  string: () => stringType,
-  symbol: () => symbolType,
-  transformer: () => effectsType,
-  tuple: () => tupleType,
-  undefined: () => undefinedType,
-  union: () => unionType,
-  unknown: () => unknownType,
-  util: () => util,
-  void: () => voidType
-});
+// src/server.ts
+import { readFileSync } from "fs";
+import { dirname, join as join2 } from "path";
+import { fileURLToPath } from "url";
 
 // ../../node_modules/zod/v3/helpers/util.js
 var util;
@@ -12758,10 +12652,6 @@ var ZodIssueCode = util.arrayToEnum([
   "not_multiple_of",
   "not_finite"
 ]);
-var quotelessJson = (obj) => {
-  const json = JSON.stringify(obj, null, 2);
-  return json.replace(/"([^"]+)":/g, "$1:");
-};
 var ZodError = class _ZodError extends Error {
   get errors() {
     return this.issues;
@@ -12962,9 +12852,6 @@ var en_default = errorMap;
 
 // ../../node_modules/zod/v3/errors.js
 var overrideErrorMap = en_default;
-function setErrorMap(map) {
-  overrideErrorMap = map;
-}
 function getErrorMap() {
   return overrideErrorMap;
 }
@@ -12995,7 +12882,6 @@ var makeIssue = (params) => {
     message: errorMessage
   };
 };
-var EMPTY_PATH = [];
 function addIssueToContext(ctx, issueData) {
   const overrideMap = getErrorMap();
   const issue2 = makeIssue({
@@ -16413,33 +16299,6 @@ ZodReadonly.create = (type, params) => {
     ...processCreateParams(params)
   });
 };
-function cleanParams(params, data) {
-  const p = typeof params === "function" ? params(data) : typeof params === "string" ? { message: params } : params;
-  const p2 = typeof p === "string" ? { message: p } : p;
-  return p2;
-}
-function custom(check2, _params = {}, fatal) {
-  if (check2)
-    return ZodAny.create().superRefine((data, ctx) => {
-      const r = check2(data);
-      if (r instanceof Promise) {
-        return r.then((r2) => {
-          if (!r2) {
-            const params = cleanParams(_params, data);
-            const _fatal = params.fatal ?? fatal ?? true;
-            ctx.addIssue({ code: "custom", ...params, fatal: _fatal });
-          }
-        });
-      }
-      if (!r) {
-        const params = cleanParams(_params, data);
-        const _fatal = params.fatal ?? fatal ?? true;
-        ctx.addIssue({ code: "custom", ...params, fatal: _fatal });
-      }
-      return;
-    });
-  return ZodAny.create();
-}
 var late = {
   object: ZodObject.lazycreate
 };
@@ -16482,9 +16341,6 @@ var ZodFirstPartyTypeKind;
   ZodFirstPartyTypeKind2["ZodPipeline"] = "ZodPipeline";
   ZodFirstPartyTypeKind2["ZodReadonly"] = "ZodReadonly";
 })(ZodFirstPartyTypeKind || (ZodFirstPartyTypeKind = {}));
-var instanceOfType = (cls, params = {
-  message: `Input not instance of ${cls.name}`
-}) => custom((data) => data instanceof cls, params);
 var stringType = ZodString.create;
 var numberType = ZodNumber.create;
 var nanType = ZodNaN.create;
@@ -16519,23 +16375,9 @@ var optionalType = ZodOptional.create;
 var nullableType = ZodNullable.create;
 var preprocessType = ZodEffects.createWithPreprocess;
 var pipelineType = ZodPipeline.create;
-var ostring = () => stringType().optional();
-var onumber = () => numberType().optional();
-var oboolean = () => booleanType().optional();
-var coerce = {
-  string: (arg) => ZodString.create({ ...arg, coerce: true }),
-  number: (arg) => ZodNumber.create({ ...arg, coerce: true }),
-  boolean: (arg) => ZodBoolean.create({
-    ...arg,
-    coerce: true
-  }),
-  bigint: (arg) => ZodBigInt.create({ ...arg, coerce: true }),
-  date: (arg) => ZodDate.create({ ...arg, coerce: true })
-};
-var NEVER = INVALID;
 
 // ../../node_modules/zod/v4/core/core.js
-var NEVER2 = Object.freeze({
+var NEVER = Object.freeze({
   status: "aborted"
 });
 // @__NO_SIDE_EFFECTS__
@@ -21190,7 +21032,7 @@ function check(fn) {
   ch._zod.check = fn;
   return ch;
 }
-function custom2(fn, _params) {
+function custom(fn, _params) {
   return _custom(ZodCustom, fn ?? (() => true), _params);
 }
 function refine(fn, _params = {}) {
@@ -21228,7 +21070,7 @@ var LATEST_PROTOCOL_VERSION = "2025-11-25";
 var SUPPORTED_PROTOCOL_VERSIONS = [LATEST_PROTOCOL_VERSION, "2025-06-18", "2025-03-26", "2024-11-05", "2024-10-07"];
 var RELATED_TASK_META_KEY = "io.modelcontextprotocol/related-task";
 var JSONRPC_VERSION = "2.0";
-var AssertObjectSchema = custom2((v) => v !== null && (typeof v === "object" || typeof v === "function"));
+var AssertObjectSchema = custom((v) => v !== null && (typeof v === "object" || typeof v === "function"));
 var ProgressTokenSchema = union([string2(), number2().int()]);
 var CursorSchema = string2();
 var TaskCreationParamsSchema = looseObject({
@@ -26679,550 +26521,15 @@ var StdioServerTransport = class {
   }
 };
 
-// ../core/dist/utils/path-resolver.js
-import { join } from "path";
-import { homedir } from "os";
-function getClaudeHome() {
-  return join(homedir(), ".claude");
-}
-
-// ../core/dist/utils/file-ops.js
-import { readFile, writeFile, access, mkdir } from "fs/promises";
-import { dirname } from "path";
-
-// ../types/dist/errors.js
-var CcmError = class extends Error {
-  code;
-  constructor(message, code) {
-    super(message);
-    this.code = code;
-    this.name = "CcmError";
-    Object.setPrototypeOf(this, new.target.prototype);
-  }
-};
-var FileNotFoundError = class extends CcmError {
-  filePath;
-  constructor(filePath) {
-    super(`File not found: ${filePath}`, "FILE_NOT_FOUND");
-    this.filePath = filePath;
-    this.name = "FileNotFoundError";
-  }
-};
-var ValidationError = class extends CcmError {
-  details;
-  constructor(message, details) {
-    super(message, "VALIDATION_ERROR");
-    this.details = details;
-    this.name = "ValidationError";
-  }
-};
-var NotFoundError = class extends CcmError {
-  resource;
-  identifier;
-  constructor(resource, identifier) {
-    super(`${resource} not found: ${identifier}`, "NOT_FOUND");
-    this.resource = resource;
-    this.identifier = identifier;
-    this.name = "NotFoundError";
-  }
-};
-
-// ../types/dist/plugin.js
-var InstalledPluginSchema = external_exports.object({
-  name: external_exports.string(),
-  version: external_exports.string(),
-  marketplace: external_exports.string(),
-  enabled: external_exports.boolean(),
-  installPath: external_exports.string(),
-  installedAt: external_exports.string(),
-  lastUpdated: external_exports.string()
-});
-
-// ../types/dist/mcp-server.js
-var McpServerConfigSchema = external_exports.object({
-  command: external_exports.string(),
-  args: external_exports.array(external_exports.string()).optional(),
-  env: external_exports.record(external_exports.string()).optional()
-});
-
-// ../types/dist/config.js
-var HookEntrySchema = external_exports.object({
-  command: external_exports.string(),
-  args: external_exports.array(external_exports.string()).optional(),
-  env: external_exports.record(external_exports.string()).optional(),
-  timeout: external_exports.number().optional()
-});
-var HookConfigSchema = external_exports.record(external_exports.array(HookEntrySchema));
-var ClaudeSettingsSchema = external_exports.object({
-  mcpServers: external_exports.record(McpServerConfigSchema).optional(),
-  hooks: HookConfigSchema.optional(),
-  settings: external_exports.record(external_exports.unknown()).optional(),
-  permissions: external_exports.object({
-    allow: external_exports.array(external_exports.string()).optional(),
-    deny: external_exports.array(external_exports.string()).optional()
-  }).optional()
-});
-
-// ../types/dist/profile.js
-var ProfileSchema = external_exports.object({
-  name: external_exports.string(),
-  createdAt: external_exports.string(),
-  updatedAt: external_exports.string(),
-  plugins: external_exports.array(InstalledPluginSchema),
-  mcpServers: external_exports.record(McpServerConfigSchema),
-  settings: external_exports.record(external_exports.unknown()),
-  commands: external_exports.array(external_exports.unknown()),
-  hooks: external_exports.record(external_exports.unknown()),
-  description: external_exports.string().optional()
-});
-var ProfileExportSchema = external_exports.object({
-  version: external_exports.string(),
-  name: external_exports.string(),
-  createdAt: external_exports.string(),
-  plugins: external_exports.object({
-    installed: external_exports.array(InstalledPluginSchema),
-    enabled: external_exports.record(external_exports.boolean())
-  }),
-  mcpServers: external_exports.record(McpServerConfigSchema),
-  settings: external_exports.record(external_exports.unknown()),
-  hooks: external_exports.record(external_exports.unknown()),
-  commands: external_exports.array(external_exports.unknown()),
-  description: external_exports.string().optional(),
-  exportedAt: external_exports.string().optional()
-});
-
-// ../core/dist/utils/file-ops.js
-async function readJsonFile(filePath) {
-  try {
-    const text = await readFile(filePath, "utf-8");
-    return JSON.parse(text);
-  } catch (err) {
-    if (isNodeError(err) && err.code === "ENOENT") {
-      throw new FileNotFoundError(filePath);
-    }
-    throw err;
-  }
-}
-async function writeJsonFile(filePath, data) {
-  await ensureDir(dirname(filePath));
-  await writeFile(filePath, JSON.stringify(data, null, 2), "utf-8");
-}
-async function fileExists(filePath) {
-  try {
-    await access(filePath);
-    return true;
-  } catch {
-    return false;
-  }
-}
-async function ensureDir(dirPath) {
-  await mkdir(dirPath, { recursive: true });
-}
-function isNodeError(err) {
-  return err instanceof Error && "code" in err;
-}
-
-// ../core/dist/managers/profile-manager.js
-import { join as join2 } from "path";
-import { readdir } from "fs/promises";
-var ProfileManager = class {
-  profilesDir;
-  settingsPath;
-  pluginsJsonPath;
-  activeProfilePath;
-  constructor(claudeHome) {
-    this.profilesDir = join2(claudeHome, "plugins", "profiles");
-    this.settingsPath = join2(claudeHome, "settings.json");
-    this.pluginsJsonPath = join2(claudeHome, "plugins", "installed_plugins.json");
-    this.activeProfilePath = join2(claudeHome, "plugins", "profiles", "active.json");
-  }
-  profilePath(name) {
-    return join2(this.profilesDir, `${name}.json`);
-  }
-  async readSettings() {
-    try {
-      const data = await readJsonFile(this.settingsPath);
-      return data ?? {};
-    } catch (err) {
-      if (err instanceof FileNotFoundError)
-        return {};
-      throw err;
-    }
-  }
-  async readInstalledPlugins() {
-    try {
-      const data = await readJsonFile(this.pluginsJsonPath);
-      return data;
-    } catch (err) {
-      if (err instanceof FileNotFoundError)
-        return { version: 2, plugins: {} };
-      throw err;
-    }
-  }
-  async list() {
-    try {
-      const entries = await readdir(this.profilesDir, { withFileTypes: true });
-      const summaries = [];
-      for (const entry of entries) {
-        if (!entry.isFile())
-          continue;
-        if (!entry.name.endsWith(".json"))
-          continue;
-        if (entry.name === "active.json")
-          continue;
-        const name = entry.name.replace(/\.json$/, "");
-        try {
-          const data = await readJsonFile(join2(this.profilesDir, entry.name));
-          summaries.push({
-            name,
-            createdAt: data.createdAt ?? (/* @__PURE__ */ new Date()).toISOString(),
-            updatedAt: data.updatedAt ?? (/* @__PURE__ */ new Date()).toISOString(),
-            description: data.description
-          });
-        } catch {
-        }
-      }
-      return summaries;
-    } catch {
-      return [];
-    }
-  }
-  async create(name) {
-    const settings = await this.readSettings();
-    const { plugins } = await this.readInstalledPlugins();
-    const installedPluginsList = [];
-    const enabledPlugins = (() => {
-      const ep = settings["enabledPlugins"];
-      if (ep !== null && typeof ep === "object" && !Array.isArray(ep)) {
-        return ep;
-      }
-      return {};
-    })();
-    for (const [fullName, installs] of Object.entries(plugins)) {
-      const install = installs[0];
-      if (!install)
-        continue;
-      const parts = fullName.split("@");
-      installedPluginsList.push({
-        name: fullName,
-        version: install["version"] ?? "",
-        marketplace: parts[1] ?? "",
-        enabled: enabledPlugins[fullName] ?? false,
-        installPath: install["installPath"] ?? "",
-        installedAt: install["installedAt"] ?? "",
-        lastUpdated: install["lastUpdated"] ?? ""
-      });
-    }
-    const mcpServers = (() => {
-      const ms = settings["mcpServers"];
-      if (ms !== null && typeof ms === "object" && !Array.isArray(ms)) {
-        return ms;
-      }
-      return {};
-    })();
-    const hooks = (() => {
-      const h = settings["hooks"];
-      if (h !== null && typeof h === "object" && !Array.isArray(h)) {
-        return h;
-      }
-      return {};
-    })();
-    const now = (/* @__PURE__ */ new Date()).toISOString();
-    const profile = {
-      name,
-      createdAt: now,
-      updatedAt: now,
-      plugins: installedPluginsList,
-      mcpServers,
-      settings,
-      hooks,
-      commands: []
-    };
-    await writeJsonFile(this.profilePath(name), profile);
-    return profile;
-  }
-  async update(name, patch) {
-    const filePath = this.profilePath(name);
-    if (!await fileExists(filePath)) {
-      throw new NotFoundError("Profile", name);
-    }
-    const existing = await readJsonFile(filePath);
-    const updated = {
-      ...existing,
-      ...patch,
-      name: existing.name,
-      createdAt: existing.createdAt,
-      updatedAt: (/* @__PURE__ */ new Date()).toISOString()
-    };
-    await writeJsonFile(filePath, updated);
-    return updated;
-  }
-  async activate(name) {
-    const filePath = this.profilePath(name);
-    if (!await fileExists(filePath)) {
-      throw new NotFoundError("Profile", name);
-    }
-    const data = await readJsonFile(filePath);
-    const profile = data;
-    await writeJsonFile(this.settingsPath, profile.settings);
-    await writeJsonFile(this.activeProfilePath, { name });
-  }
-  async delete(name) {
-    const filePath = this.profilePath(name);
-    if (!await fileExists(filePath)) {
-      throw new NotFoundError("Profile", name);
-    }
-    const { unlink } = await import("fs/promises");
-    await unlink(filePath);
-    const activeName = await this.getActive();
-    if (activeName === name) {
-      const { unlink: ul } = await import("fs/promises");
-      try {
-        await ul(this.activeProfilePath);
-      } catch {
-      }
-    }
-  }
-  async getActive() {
-    try {
-      const data = await readJsonFile(this.activeProfilePath);
-      const obj = data;
-      return typeof obj["name"] === "string" ? obj["name"] : null;
-    } catch (err) {
-      if (err instanceof FileNotFoundError)
-        return null;
-      throw err;
-    }
-  }
-  async exportProfile(name) {
-    const filePath = this.profilePath(name);
-    if (!await fileExists(filePath)) {
-      throw new NotFoundError("Profile", name);
-    }
-    const data = await readJsonFile(filePath);
-    const enabledPlugins = {};
-    for (const plugin of data.plugins) {
-      enabledPlugins[plugin.name] = plugin.enabled;
-    }
-    const exported = {
-      version: "1.0",
-      name: data.name,
-      createdAt: data.createdAt,
-      plugins: {
-        installed: data.plugins,
-        enabled: enabledPlugins
-      },
-      mcpServers: data.mcpServers,
-      settings: data.settings,
-      hooks: data.hooks,
-      commands: data.commands,
-      description: data.description,
-      exportedAt: (/* @__PURE__ */ new Date()).toISOString()
-    };
-    return JSON.stringify(exported, null, 2);
-  }
-  async importProfile(data, strategy = "replace") {
-    let parsed;
-    try {
-      parsed = JSON.parse(data);
-    } catch {
-      throw new ValidationError("Invalid JSON in profile import data");
-    }
-    const obj = parsed;
-    if (!obj["name"] || typeof obj["name"] !== "string") {
-      throw new ValidationError("Profile import data must have a name field");
-    }
-    const name = obj["name"];
-    const now = (/* @__PURE__ */ new Date()).toISOString();
-    let profile;
-    if (obj["version"] && obj["plugins"] && typeof obj["plugins"] === "object" && !Array.isArray(obj["plugins"])) {
-      const pluginsData = obj["plugins"];
-      const installed = pluginsData.installed ?? [];
-      profile = {
-        name,
-        createdAt: obj["createdAt"] ?? now,
-        updatedAt: now,
-        plugins: installed,
-        mcpServers: obj["mcpServers"] ?? {},
-        settings: obj["settings"] ?? {},
-        hooks: obj["hooks"] ?? {},
-        commands: obj["commands"] ?? [],
-        description: obj["description"]
-      };
-    } else {
-      profile = {
-        name,
-        createdAt: obj["createdAt"] ?? now,
-        updatedAt: now,
-        plugins: obj["plugins"] ?? [],
-        mcpServers: obj["mcpServers"] ?? {},
-        settings: obj["settings"] ?? {},
-        hooks: obj["hooks"] ?? {},
-        commands: obj["commands"] ?? [],
-        description: obj["description"]
-      };
-    }
-    if (strategy === "merge") {
-      const existing = await this.getProfileData(name);
-      if (existing) {
-        profile = {
-          ...existing,
-          ...profile,
-          settings: { ...existing.settings, ...profile.settings },
-          mcpServers: { ...existing.mcpServers, ...profile.mcpServers },
-          updatedAt: now
-        };
-      }
-    }
-    await writeJsonFile(this.profilePath(name), profile);
-    return profile;
-  }
-  async getProfileData(name) {
-    const filePath = this.profilePath(name);
-    if (!await fileExists(filePath))
-      return null;
-    try {
-      return await readJsonFile(filePath);
-    } catch {
-      return null;
-    }
-  }
-};
-
-// src/tools/profile-tools.ts
-async function handleListProfiles(managers) {
-  const profiles = await managers.profileManager.list();
-  return {
-    content: [{ type: "text", text: JSON.stringify(profiles, null, 2) }]
-  };
-}
-async function handleCreateProfile(managers, args) {
-  const profile = await managers.profileManager.create(args.name);
-  return {
-    content: [
-      {
-        type: "text",
-        text: `Profile "${args.name}" created successfully.
-${JSON.stringify(profile, null, 2)}`
-      }
-    ]
-  };
-}
-async function handleActivateProfile(managers, args) {
-  await managers.profileManager.activate(args.name);
-  return {
-    content: [
-      { type: "text", text: `Profile "${args.name}" activated successfully.` }
-    ]
-  };
-}
-async function handleExportProfile(managers, args) {
-  const exported = await managers.profileManager.exportProfile(args.name);
-  return {
-    content: [{ type: "text", text: exported }]
-  };
-}
-async function handleImportProfile(managers, args) {
-  const profile = await managers.profileManager.importProfile(
-    args.data,
-    args.strategy ?? "replace"
-  );
-  return {
-    content: [
-      {
-        type: "text",
-        text: `Profile "${profile.name}" imported successfully.
-${JSON.stringify(profile, null, 2)}`
-      }
-    ]
-  };
-}
-async function handleUpdateProfile(managers, args) {
-  const patch = {};
-  if (args.description !== void 0) patch.description = args.description;
-  if (args.plugins) patch.plugins = JSON.parse(args.plugins);
-  if (args.mcpServers) patch.mcpServers = JSON.parse(args.mcpServers);
-  if (args.settings) patch.settings = JSON.parse(args.settings);
-  await managers.profileManager.update(args.name, patch);
-  return {
-    content: [
-      { type: "text", text: `Profile "${args.name}" updated successfully.` }
-    ]
-  };
-}
-async function handleDeleteProfile(managers, args) {
-  await managers.profileManager.delete(args.name);
-  return {
-    content: [
-      { type: "text", text: `Profile "${args.name}" deleted successfully.` }
-    ]
-  };
-}
-function registerProfileTools(server, managers) {
-  server.tool(
-    "ccm_list_profiles",
-    "List all saved configuration profiles",
-    async () => handleListProfiles(managers)
-  );
-  server.tool(
-    "ccm_create_profile",
-    "Create a new configuration profile from current settings",
-    { name: external_exports.string().describe("Name for the new profile") },
-    async (args) => handleCreateProfile(managers, args)
-  );
-  server.tool(
-    "ccm_activate_profile",
-    "Activate a saved configuration profile",
-    { name: external_exports.string().describe("Name of the profile to activate") },
-    async (args) => handleActivateProfile(managers, args)
-  );
-  server.tool(
-    "ccm_export_profile",
-    "Export a configuration profile to JSON",
-    {
-      name: external_exports.string().describe("Name of the profile to export"),
-      format: external_exports.string().optional().describe("Export format (currently only json is supported)")
-    },
-    async (args) => handleExportProfile(managers, args)
-  );
-  server.tool(
-    "ccm_import_profile",
-    "Import a configuration profile from JSON data",
-    {
-      data: external_exports.string().describe("JSON string containing the profile data to import"),
-      strategy: external_exports.enum(["merge", "replace"]).optional().describe("Import strategy: merge with existing or replace (default: replace)")
-    },
-    async (args) => handleImportProfile(managers, args)
-  );
-  server.tool(
-    "ccm_update_profile",
-    "Update an existing configuration profile \u2014 modify description, plugins, MCP servers, or settings",
-    {
-      name: external_exports.string().describe("Name of the profile to update"),
-      description: external_exports.string().optional().describe("New description"),
-      plugins: external_exports.string().optional().describe("JSON string of plugins array to set"),
-      mcpServers: external_exports.string().optional().describe("JSON string of mcpServers object to set"),
-      settings: external_exports.string().optional().describe("JSON string of settings object to set")
-    },
-    async (args) => handleUpdateProfile(managers, args)
-  );
-  server.tool(
-    "ccm_delete_profile",
-    "Delete a saved configuration profile",
-    { name: external_exports.string().describe("Name of the profile to delete") },
-    async (args) => handleDeleteProfile(managers, args)
-  );
-}
-
 // src/tools/dashboard-tools.ts
-import { join as join3 } from "path";
-import { readFile as readFile2 } from "fs/promises";
-import { homedir as homedir2 } from "os";
+import { join } from "path";
+import { readFile } from "fs/promises";
+import { homedir } from "os";
 var DASHBOARD_PORT = 3399;
-var LOCK_FILE = join3(homedir2(), ".claude", "ccm-dashboard.pid");
+var LOCK_FILE = join(homedir(), ".claude", "ccm-dashboard.pid");
 async function getDashboardStatus() {
   try {
-    const content = await readFile2(LOCK_FILE, "utf-8");
+    const content = await readFile(LOCK_FILE, "utf-8");
     const data = JSON.parse(content);
     try {
       process.kill(data.pid, 0);
@@ -27269,14 +26576,21 @@ function registerDashboardTools(server) {
 }
 
 // src/server.ts
+function readPackageVersion() {
+  try {
+    const here = dirname(fileURLToPath(import.meta.url));
+    const pkgPath = join2(here, "..", "package.json");
+    const pkg = JSON.parse(readFileSync(pkgPath, "utf-8"));
+    return pkg.version ?? "0.0.0";
+  } catch {
+    return "0.0.0";
+  }
+}
 function createServer() {
-  const claudeHome = getClaudeHome();
-  const profileManager = new ProfileManager(claudeHome);
   const server = new McpServer({
     name: "ccm",
-    version: "1.0.0-draft"
+    version: readPackageVersion()
   });
-  registerProfileTools(server, { profileManager });
   registerDashboardTools(server);
   return server;
 }

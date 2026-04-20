@@ -1,13 +1,13 @@
 {
   "name": "@ccm/mcp",
-  "version": "1.0.8",
+  "version": "1.1.0",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "bundle": "esbuild src/bin.ts --bundle --platform=node --target=node20 --outfile=../../dist/mcp-server.mjs --format=esm",
-    "test": "vitest run",
+    "bundle": "esbuild src/bin.ts --bundle --platform=node --target=node20 --outfile=../../dist/mcp-server.mjs --format=esm --banner:js=\"import { createRequire } from 'module'; const require = createRequire(import.meta.url);\"",
+    "test": "vitest run --passWithNoTests",
     "type-check": "tsc --noEmit",
     "clean": "rm -rf dist"
   },

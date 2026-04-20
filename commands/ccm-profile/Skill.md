@@ -1,22 +1,31 @@
 ---
 name: ccm-profile
-description: Manage Claude Code configuration profiles — list, create, activate, export, import
+description: Manage Claude Code configuration profiles — list, create, activate, export, import, delete
 ---
 
-Manage Claude Code configuration profiles. Use the MCP tools to perform the requested action.
+Manage Claude Code configuration profiles via the `claude-config` CLI. The CLI is the single source of truth — the MCP server deliberately does not expose profile tools to keep the agent's tool surface minimal.
 
-## Available Actions
+Throughout, use this path to the CLI bin:
 
-Based on what the user asks, use the appropriate MCP tool:
+```bash
+CCM="node ${CLAUDE_PLUGIN_ROOT}/packages/cli/dist/index.js"
+```
 
-- **List profiles**: Call `ccm_list_profiles` tool
-- **Create a profile**: Call `ccm_create_profile` with the name the user provides
-- **Activate a profile**: Call `ccm_activate_profile` with the profile name
-- **Export a profile**: Call `ccm_export_profile` with the profile name. Save the output to a file if the user wants.
-- **Import a profile**: Read the file the user provides, then call `ccm_import_profile` with the data and strategy (merge or replace)
-- **Delete a profile**: Call `ccm_delete_profile` with the profile name. Confirm with the user first.
-- **Update a profile**: Call `ccm_update_profile` with the name and changes
+## Actions
 
-## If the user doesn't specify an action
+Based on what the user asks:
 
-Call `ccm_list_profiles` and show them what profiles exist, then ask what they'd like to do.
+- **List profiles** — `$CCM profile list --json` (parse JSON); or `$CCM profile list` for a human table.
+- **Create a profile** — `$CCM profile create "<name>"`. Snapshots the current configuration.
+- **Activate a profile** — `$CCM profile activate "<name>"`. Ask for confirmation if the current config has unsaved drift (use `$CCM profile list --json` to check `activeName`).
+- **Delete a profile** — `$CCM profile delete "<name>"`. Always confirm with the user first.
+- **Export a profile** — see `/ccm-export`.
+- **Import a profile** — see `/ccm-import`.
+
+## If the user didn't specify an action
+
+Run `$CCM profile list` and show the output. Then ask what they'd like to do next.
+
+## Why the CLI and not an MCP tool?
+
+The dashboard UI (`/ccm-dashboard`) is the interactive way to manage profiles. The CLI is the scriptable way. The MCP server stays lean so the model's system prompt isn't bloated with tool descriptions for every possible operation.

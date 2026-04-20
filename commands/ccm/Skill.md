@@ -1,36 +1,48 @@
 ---
 name: ccm
-description: Claude Config Manager — manage profiles, check dashboard status, and quick configuration tasks
+description: Claude Config Manager — quick status, dashboard, and profile dispatcher
 ---
 
-Claude Config Manager quick access. Based on what the user asks, take the appropriate action:
+Claude Config Manager quick access. Dispatch to the right sub-skill or run a `claude-config` CLI command based on what the user asks.
+
+```bash
+CCM="node ${CLAUDE_PLUGIN_ROOT}/packages/cli/dist/index.js"
+```
 
 ## Actions
 
 ### "status" or no arguments
-Call `ccm_dashboard_status` to check if dashboard is running, then call `ccm_list_profiles` to show profiles. Summarize the current state.
+
+Show a compact state summary:
+
+1. Check dashboard via the `ccm_dashboard_status` MCP tool.
+2. List profiles: `$CCM profile list --json`.
+3. Summarize both (running? how many profiles? which is active?).
 
 ### "dashboard" or "open"
-Check if dashboard is running (`ccm_dashboard_status`). If not, start it:
-```bash
-cd "${CLAUDE_PLUGIN_ROOT}" && npx next dev -p 3399 --dir packages/dashboard &
-sleep 10 && start "" "http://localhost:3399"
-```
+
+Delegate to `/ccm-dashboard`.
 
 ### "profile" or "profiles"
-Call `ccm_list_profiles` and show results. Ask what the user wants to do.
+
+Delegate to `/ccm-profile`. Forward any sub-action (`list`, `create <name>`, `activate <name>`, `delete <name>`).
 
 ### "export"
-Call `ccm_list_profiles`, ask which to export, then call `ccm_export_profile` and save to file.
+
+Delegate to `/ccm-export`.
 
 ### "import <file>"
-Read the file, call `ccm_import_profile`.
 
-### "create <name>"
-Call `ccm_create_profile` with the name.
-
-### "activate <name>"
-Call `ccm_activate_profile` with the name.
+Delegate to `/ccm-import`.
 
 ### "recommend" or "recommendations"
-Tell the user to open http://localhost:3399/recommended or use the /generate-recommendations command.
+
+Tell the user the dashboard's Recommended page is the richer view: `http://localhost:3399/recommended`. If the dashboard isn't up, invoke `/ccm-dashboard` first.
+
+### Unknown input
+
+Show the available sub-commands above and ask which one the user wants.
+
+## Design note
+
+Everything except dashboard-lifecycle flows through `claude-config` (the CLI in `packages/cli/dist/index.js`). The MCP server only exposes `ccm_dashboard_status` and `ccm_open_dashboard`. This keeps the model's tool-selection surface tiny while leaving the full operational surface reachable via CLI + slash commands.
