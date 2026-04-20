@@ -1,6 +1,7 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Header } from '@/components/layout/header';
 import { Button } from '@/components/shared/button';
 import { ConfirmationDialog } from '@/components/shared/confirmation-dialog';
@@ -15,6 +16,7 @@ type ProfileTabId = 'profiles' | 'export-import';
 
 export default function ProfilesPage() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { data: profilesRaw, isLoading: loading, mutate } = useProfiles();
   const profiles = (profilesRaw ?? []) as Profile[];
   const [profileTab, setProfileTab] = useState<ProfileTabId>('profiles');
@@ -56,10 +58,10 @@ export default function ProfilesPage() {
 
   return (
     <div>
-      <Header title="Profiles">
+      <Header title={t('profiles.title')}>
         {profileTab === 'profiles' && profiles.length > 0 && (
           <Button variant="primary" size="md" onClick={() => navigate('/config')}>
-            Save Current Configuration
+            {t('profiles.saveCurrent')}
           </Button>
         )}
       </Header>
@@ -67,8 +69,8 @@ export default function ProfilesPage() {
       {/* Tabs: Profiles | Export / Import */}
       <div className="flex items-center gap-1 mb-6 p-1 rounded-lg" style={{ backgroundColor: 'var(--bg-tertiary)' }}>
         {([
-          { id: 'profiles' as ProfileTabId, label: 'Profiles' },
-          { id: 'export-import' as ProfileTabId, label: 'Export / Import' },
+          { id: 'profiles' as ProfileTabId, label: t('profiles.tabs.profiles') },
+          { id: 'export-import' as ProfileTabId, label: t('profiles.tabs.exportImport') },
         ]).map(({ id, label }) => (
           <button
             key={id}
@@ -102,13 +104,13 @@ export default function ProfilesPage() {
           style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--border, var(--card-border))' }}
         >
           <h3 className="text-base mb-2" style={{ color: 'var(--text-primary)', fontWeight: 510 }}>
-            No saved profiles yet
+            {t('profiles.emptyTitle')}
           </h3>
           <p className="text-sm mb-6" style={{ color: 'var(--text-muted)' }}>
-            Your current configuration is the default. Save it as a profile to switch between setups later.
+            {t('profiles.emptyBody')}
           </p>
           <Button variant="primary" size="md" onClick={() => navigate('/config')}>
-            Save Current Configuration
+            {t('profiles.saveCurrent')}
           </Button>
         </div>
       ) : (

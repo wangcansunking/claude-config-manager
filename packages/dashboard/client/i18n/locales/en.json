@@ -1,0 +1,107 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "recommended": "Recommended",
+    "configuration": "Configuration",
+    "profiles": "Profiles",
+    "activity": "Activity"
+  },
+  "theme": {
+    "auto": "Auto",
+    "dark": "Dark",
+    "light": "Light"
+  },
+  "language": {
+    "label": "Language",
+    "en": "English",
+    "zh": "中文"
+  },
+  "overview": {
+    "title": "Overview",
+    "plugins": "Plugins",
+    "mcpServers": "MCP Servers",
+    "skills": "Skills",
+    "profiles": "Profiles",
+    "sessions": "Sessions",
+    "topSkills": "Top Skills",
+    "topTools": "Top Tools",
+    "recentSessions": "Recent Sessions",
+    "environmentHealth": "Environment Health",
+    "viewAll": "View all",
+    "noData": "No data yet.",
+    "hooksNone": "None",
+    "active": "{{count}} active",
+    "configured": "{{count}} configured",
+    "envSet": "{{count}} set"
+  },
+  "recommended": {
+    "title": "Recommended",
+    "empty": "No recommendations yet.",
+    "refresh": "Refresh recommendations",
+    "refreshing": "Refreshing…"
+  },
+  "config": {
+    "tabs": {
+      "plugins": "Plugins",
+      "mcp": "MCP Servers",
+      "skills": "Skills",
+      "commands": "Commands",
+      "settings": "Settings"
+    },
+    "saveToProfile": "Save to Profile",
+    "plugins": {
+      "title": "Plugins",
+      "installed": "Installed",
+      "marketplace": "Marketplace",
+      "manageMarketplaces": "Manage Marketplaces",
+      "searchPlaceholder": "Search installed plugins...",
+      "enabled": "Enabled",
+      "disabled": "Disabled"
+    },
+    "mcp": {
+      "title": "MCP Servers",
+      "installed": "Installed",
+      "store": "Store",
+      "searchPlaceholder": "Search MCP servers..."
+    },
+    "skills": {
+      "title": "Skills",
+      "searchPlaceholder": "Search skills..."
+    },
+    "commands": {
+      "title": "Commands",
+      "searchPlaceholder": "Search commands..."
+    },
+    "settings": {
+      "title": "Settings"
+    }
+  },
+  "profiles": {
+    "title": "Profiles",
+    "tabs": {
+      "profiles": "Profiles",
+      "exportImport": "Export / Import"
+    },
+    "emptyTitle": "No saved profiles yet",
+    "emptyBody": "Your current configuration is the default. Save it as a profile to switch between setups later.",
+    "saveCurrent": "Save Current Configuration"
+  },
+  "activity": {
+    "title": "Sessions",
+    "subtitle": "{{running}} running, {{total}} total",
+    "recent": "Recent ({{count}})",
+    "allSessions": "All Sessions",
+    "searchPlaceholder": "Search sessions...",
+    "running": "Running",
+    "resume": "Resume"
+  },
+  "common": {
+    "close": "Close",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "confirm": "Confirm",
+    "copy": "Copy",
+    "copied": "Copied"
+  }
+}

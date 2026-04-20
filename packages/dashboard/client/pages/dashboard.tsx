@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Header } from '@/components/layout/header';
 import { StatCard } from '@/components/shared/stat-card';
 import { UsageChart } from '@/components/overview/usage-chart';
@@ -235,6 +236,7 @@ function McpUsageSection({
 // ---------------------------------------------------------------------------
 
 export default function OverviewPage() {
+  const { t } = useTranslation();
   const { data: stats, isLoading: statsLoading } = useStats();
   const { data: metricsRaw, isLoading: metricsLoading } = useMetrics();
 
@@ -253,7 +255,7 @@ export default function OverviewPage() {
 
   return (
     <div>
-      <Header title="Overview" />
+      <Header title={t('overview.title')} />
 
       {loading ? (
         <p style={{ color: 'var(--text-secondary)' }}>Loading...</p>
@@ -261,24 +263,24 @@ export default function OverviewPage() {
         <div className="space-y-6">
           {/* Row 1: Quick Stats -- 5 cards */}
           <div className="grid grid-cols-5 gap-4">
-            <StatCard title="Plugins"     value={typedStats?.plugins    ?? 0} color="purple" />
-            <StatCard title="MCP Servers" value={typedStats?.mcpServers ?? 0} color="blue"   />
-            <StatCard title="Skills"      value={typedStats?.skills     ?? 0} color="green"  />
-            <StatCard title="Profiles"    value={typedStats?.profiles   ?? 0} color="orange" />
-            <StatCard title="Sessions"    value={typedStats?.sessions   ?? 0} color="blue"   />
+            <StatCard title={t('overview.plugins')}    value={typedStats?.plugins    ?? 0} color="purple" />
+            <StatCard title={t('overview.mcpServers')} value={typedStats?.mcpServers ?? 0} color="blue"   />
+            <StatCard title={t('overview.skills')}     value={typedStats?.skills     ?? 0} color="green"  />
+            <StatCard title={t('overview.profiles')}   value={typedStats?.profiles   ?? 0} color="orange" />
+            <StatCard title={t('overview.sessions')}   value={typedStats?.sessions   ?? 0} color="blue"   />
           </div>
 
           {/* Row 2: Usage Charts -- Top Skills + Top Tools */}
           {metrics && (
             <div className="grid grid-cols-2 gap-6">
               <UsageChart
-                title="Top Skills"
+                title={t('overview.topSkills')}
                 entries={metrics.topSkills}
                 barColor="var(--accent)"
                 maxItems={8}
               />
               <UsageChart
-                title="Top Tools"
+                title={t('overview.topTools')}
                 entries={metrics.topTools}
                 barColor="var(--accent-light)"
                 maxItems={8}

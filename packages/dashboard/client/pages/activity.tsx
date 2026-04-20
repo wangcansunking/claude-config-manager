@@ -1,5 +1,6 @@
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Header } from '@/components/layout/header';
 import { SearchBox } from '@/components/shared/search-box';
 import { Tag } from '@/components/shared/tag';
@@ -631,6 +632,7 @@ function MetaRow({
 // ---------------------------------------------------------------------------
 
 export default function SessionsPage() {
+  const { t } = useTranslation();
   const { data: sessionsRaw, isLoading } = useSessions();
   const sessions = (sessionsRaw ?? []) as SessionInfo[];
   const [selected, setSelected] = useState<SessionInfo | null>(null);
@@ -694,10 +696,10 @@ export default function SessionsPage() {
     <div>
       <div className="sticky top-0 z-10 bg-bg-primary">
         <Header
-          title="Sessions"
+          title={t('activity.title')}
           subtitle={
             !isLoading
-              ? `${running.length} running, ${totalCount} total`
+              ? t('activity.subtitle', { running: running.length, total: totalCount })
               : 'Loading sessions...'
           }
         />
@@ -712,7 +714,7 @@ export default function SessionsPage() {
             }}
             onClick={() => setTab('recent')}
           >
-            Recent (10)
+            {t('activity.recent', { count: 10 })}
           </button>
           <button
             className="px-4 py-1.5 rounded-lg text-sm font-medium transition-colors"
@@ -722,14 +724,14 @@ export default function SessionsPage() {
             }}
             onClick={() => setTab('all')}
           >
-            All Sessions
+            {t('activity.allSessions')}
           </button>
           <div className="flex-1" />
           <div className="w-72">
             <SearchBox
               value={search}
               onChange={setSearch}
-              placeholder="Search sessions..."
+              placeholder={t('activity.searchPlaceholder')}
             />
           </div>
         </div>
