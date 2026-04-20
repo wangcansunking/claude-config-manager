@@ -1,5 +1,5 @@
 import { join } from 'path';
-import { readdir, readFile, writeFile, mkdir } from 'fs/promises';
+import { readdir, readFile, writeFile, mkdir, unlink } from 'fs/promises';
 import { readJsonFile, writeJsonFile, fileExists } from '../utils/file-ops.js';
 import { FileNotFoundError, NotFoundError, ValidationError } from '@ccm/types';
 export class ProfileManager {
@@ -71,9 +71,10 @@ export class ProfileManager {
         for (const asset of assets) {
             if (!asset.name || !asset.content)
                 continue;
-            // Sanitize name to prevent path traversal
-            const safeName = asset.name.replace(/[\\\/\.]/g, '_');
-            if (!safeName)
+            // Whitelist-only: reject anything that isn't a safe filename character,
+            // and refuse leading dots so we never land on '.', '..', or hidden paths.
+            const safeName = asset.name.replace(/[^a-zA-Z0-9_-]/g, '_');
+            if (!safeName || safeName.startsWith('.'))
                 continue;
             const targetDir = join(dir, safeName);
             await mkdir(targetDir, { recursive: true });
@@ -248,14 +249,11 @@ export class ProfileManager {
         if (!(await fileExists(filePath))) {
             throw new NotFoundError('Profile', name);
         }
-        const { unlink } = await import('fs/promises');
         await unlink(filePath);
-        // Clear active.json if this was the active profile
         const activeName = await this.getActive();
         if (activeName === name) {
-            const { unlink: ul } = await import('fs/promises');
             try {
-                await ul(this.activeProfilePath);
+                await unlink(this.activeProfilePath);
             }
             catch {
                 // Ignore if active.json doesn't exist
