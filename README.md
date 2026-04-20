@@ -2,6 +2,21 @@
 
 A Claude Code plugin that gives you a web dashboard + CLI to manage your whole Claude Code setup: plugins, MCP servers, skills, commands, settings, profiles, sessions, and usage metrics.
 
+## Install
+
+```bash
+# 1. Add the marketplace
+claude plugin marketplace add https://github.com/wangcansunking/can-claude-plugins
+
+# 2. Install the plugin
+claude plugin install claude-config-manager@can-claude-plugins
+
+# 3. In any Claude Code session, open the dashboard
+/ccm-dashboard
+```
+
+The dashboard launches on <http://localhost:3399> and opens in your browser.
+
 ![Dashboard overview](docs/migration/screenshots/01-dashboard-overview.png)
 
 ## Why
@@ -13,27 +28,6 @@ Claude Code ships a lot of surface area — `settings.json`, MCP configs, plugin
 - A marketplace browser for plugins, MCP servers, and skills
 - Live session activity with resume-on-one-click
 - Usage metrics pulled from your local Claude Code history
-
-## Installation
-
-### Via marketplace (recommended)
-
-```bash
-claude plugins marketplace add https://github.com/wangcansunking/can-claude-plugins
-claude plugins install claude-config-manager@can-claude-plugins
-```
-
-Then in any Claude Code session, run `/ccm-dashboard` — it starts the server on `http://localhost:3399` and opens it in your browser.
-
-### From source (for development)
-
-```bash
-git clone https://github.com/wangcansunking/claude-config-manager
-cd claude-config-manager
-npm install
-npm run build
-npm start                    # dashboard on :3399
-```
 
 ## Features
 
@@ -145,13 +139,24 @@ claude-config-manager/
 
 ## Development
 
+Clone and run from source:
+
 ```bash
+git clone https://github.com/wangcansunking/claude-config-manager
+cd claude-config-manager
 npm install
 npm run dev                 # turbo dev across all packages
+```
+
+Other scripts:
+
+```bash
+npm run build
 npm run test                # vitest unit tests
 npm run test:e2e            # Playwright E2E
 npm run type-check
 npm run lint
+npm start                   # serve built dashboard on :3399
 ```
 
 Dashboard dev server runs on `:3399` via `turbo dev`.
