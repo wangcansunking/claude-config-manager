@@ -1,3 +1,7 @@
+**English** · [简体中文](README.zh.md)
+
+---
+
 # claude-config-manager
 
 A Claude Code plugin that gives you a web dashboard + CLI to manage your whole Claude Code setup: plugins, MCP servers, skills, commands, settings, profiles, sessions, and usage metrics.
