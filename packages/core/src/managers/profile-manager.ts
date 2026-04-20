@@ -83,9 +83,10 @@ export class ProfileManager {
     await mkdir(dir, { recursive: true });
     for (const asset of assets) {
       if (!asset.name || !asset.content) continue;
-      // Sanitize name to prevent path traversal
-      const safeName = asset.name.replace(/[\\\/\.]/g, '_');
-      if (!safeName) continue;
+      // Whitelist-only: reject anything that isn't a safe filename character,
+      // and refuse leading dots so we never land on '.', '..', or hidden paths.
+      const safeName = asset.name.replace(/[^a-zA-Z0-9_-]/g, '_');
+      if (!safeName || safeName.startsWith('.')) continue;
       const targetDir = join(dir, safeName);
       await mkdir(targetDir, { recursive: true });
       await writeFile(join(targetDir, 'Skill.md'), asset.content, 'utf-8');
