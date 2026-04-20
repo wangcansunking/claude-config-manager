@@ -1,20 +1,22 @@
 import { useState } from 'react';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/shared/button';
 import { createProfile } from '@/lib/api-client';
 import { useProfiles } from '@/lib/use-data';
 
 const tabs = [
-  { label: 'Plugins', href: '/config/plugins' },
-  { label: 'MCP Servers', href: '/config/mcp' },
-  { label: 'Skills', href: '/config/skills' },
-  { label: 'Commands', href: '/config/commands' },
-  { label: 'Settings', href: '/config/settings' },
-];
+  { key: 'plugins', href: '/config/plugins' },
+  { key: 'mcp', href: '/config/mcp' },
+  { key: 'skills', href: '/config/skills' },
+  { key: 'commands', href: '/config/commands' },
+  { key: 'settings', href: '/config/settings' },
+] as const;
 
 export default function ConfigLayout({ children }: { children: React.ReactNode }) {
   const { pathname } = useLocation();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { mutate: mutateProfiles } = useProfiles();
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [profileName, setProfileName] = useState('');
@@ -33,7 +35,7 @@ export default function ConfigLayout({ children }: { children: React.ReactNode }
   async function handleSave() {
     const name = profileName.trim();
     if (!name) {
-      setError('Profile name is required');
+      setError(t('config.saveDialog.nameRequired'));
       return;
     }
     setSaving(true);
@@ -41,12 +43,12 @@ export default function ConfigLayout({ children }: { children: React.ReactNode }
     try {
       await createProfile(name);
       mutateProfiles();
-      setToast(`Profile "${name}" saved`);
+      setToast(t('config.saveDialog.profileSaved', { name }));
       closeDialog();
       setTimeout(() => setToast(null), 3000);
     } catch (err) {
       console.error('Failed to create profile', err);
-      setError(err instanceof Error ? err.message : 'Failed to save profile');
+      setError(err instanceof Error ? err.message : t('config.saveDialog.saveFailed'));
     } finally {
       setSaving(false);
     }
@@ -69,7 +71,7 @@ export default function ConfigLayout({ children }: { children: React.ReactNode }
                   color: active ? '#fff' : 'var(--text-muted)',
                   fontWeight: active ? 510 : 400,
                 }}
-              >{tab.label}</Link>
+              >{t(`config.tabs.${tab.key}`)}</Link>
             );
           })}
         </div>
@@ -78,7 +80,7 @@ export default function ConfigLayout({ children }: { children: React.ReactNode }
           size="md"
           onClick={() => setShowSaveDialog(true)}
         >
-          Save to Profile
+          {t('config.saveToProfile')}
         </Button>
       </div>
 
@@ -101,21 +103,21 @@ export default function ConfigLayout({ children }: { children: React.ReactNode }
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className="text-lg mb-2" style={{ color: 'var(--text-primary)', fontWeight: 510 }}>
-              Save current configuration as profile
+              {t('config.saveDialog.title')}
             </h3>
             <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
-              Captures a snapshot of your current plugins, MCP servers, skills, commands, and settings.
+              {t('config.saveDialog.body')}
             </p>
 
             <div className="mb-4">
               <label className="block text-xs font-medium uppercase tracking-wider mb-2" style={{ color: 'var(--text-muted)' }}>
-                Profile Name
+                {t('config.saveDialog.profileName')}
               </label>
               <input
                 type="text"
                 value={profileName}
                 onChange={(e) => setProfileName(e.target.value)}
-                placeholder="e.g. frontend-dev"
+                placeholder={t('config.saveDialog.namePlaceholder')}
                 className="w-full px-3 py-2 rounded-lg text-sm outline-none profile-input"
                 style={{
                   backgroundColor: 'var(--input-bg)',
@@ -132,13 +134,13 @@ export default function ConfigLayout({ children }: { children: React.ReactNode }
 
             <div className="mb-4">
               <label className="block text-xs font-medium uppercase tracking-wider mb-2" style={{ color: 'var(--text-muted)' }}>
-                Description (optional)
+                {t('config.saveDialog.descriptionLabel')}
               </label>
               <input
                 type="text"
                 value={profileDescription}
                 onChange={(e) => setProfileDescription(e.target.value)}
-                placeholder="Short description..."
+                placeholder={t('config.saveDialog.descriptionPlaceholder')}
                 className="w-full px-3 py-2 rounded-lg text-sm outline-none profile-input"
                 style={{
                   backgroundColor: 'var(--input-bg)',
@@ -156,7 +158,7 @@ export default function ConfigLayout({ children }: { children: React.ReactNode }
 
             <div className="flex items-center justify-end gap-3">
               <Button variant="ghost" size="md" onClick={closeDialog} disabled={saving}>
-                Cancel
+                {t('common.cancel')}
               </Button>
               <Button
                 variant="primary"
@@ -164,7 +166,7 @@ export default function ConfigLayout({ children }: { children: React.ReactNode }
                 onClick={handleSave}
                 disabled={saving || !profileName.trim()}
               >
-                {saving ? 'Saving...' : 'Save'}
+                {saving ? t('common.saving') : t('common.save')}
               </Button>
             </div>
           </div>
@@ -186,7 +188,7 @@ export default function ConfigLayout({ children }: { children: React.ReactNode }
             navigate('/profiles');
           }}
         >
-          {toast} <span style={{ color: 'var(--text-muted)' }}>— click to view</span>
+          {toast} <span style={{ color: 'var(--text-muted)' }}>{t('config.saveDialog.clickToView')}</span>
         </div>
       )}
     </div>

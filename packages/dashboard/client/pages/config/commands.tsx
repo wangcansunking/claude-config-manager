@@ -1,5 +1,6 @@
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Header } from '@/components/layout/header';
 import { Tag } from '@/components/shared/tag';
 import { MarkdownViewer } from '@/components/shared/markdown-viewer';
@@ -79,6 +80,7 @@ function CommandRow({ cmd, isLast, onClick }: { cmd: Command; isLast: boolean; o
 }
 
 export default function CommandsPage() {
+  const { t } = useTranslation();
   const { data: commandsRaw, isLoading: loading, mutate } = useCommands();
   const commands = (commandsRaw ?? []) as Command[];
   const [selected, setSelected] = useState<Command | null>(null);
@@ -119,7 +121,7 @@ export default function CommandsPage() {
 
   return (
     <div>
-      <Header title="Commands" />
+      <Header title={t('config.commands.title')} />
 
       {loading ? (
         <p style={{ color: 'var(--text-secondary)' }}>Loading...</p>

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '../shared/button';
 
 interface EnvVarsEditorProps {
@@ -8,6 +9,7 @@ interface EnvVarsEditorProps {
 }
 
 export function EnvVarsEditor({ vars, onAdd, onRemove }: EnvVarsEditorProps) {
+  const { t } = useTranslation();
   const [newKey, setNewKey] = useState('');
   const [newValue, setNewValue] = useState('');
   const [showValues, setShowValues] = useState<Record<string, boolean>>({});
@@ -34,7 +36,7 @@ export function EnvVarsEditor({ vars, onAdd, onRemove }: EnvVarsEditorProps) {
   return (
     <div className="space-y-2">
       {Object.entries(vars).length === 0 ? (
-        <p className="text-sm" style={{ color: 'var(--text-muted)' }}>No environment variables set.</p>
+        <p className="text-sm" style={{ color: 'var(--text-muted)' }}>{t('config.settings.noEnv')}</p>
       ) : (
         <div
           className="rounded-lg overflow-hidden"
@@ -54,15 +56,15 @@ export function EnvVarsEditor({ vars, onAdd, onRemove }: EnvVarsEditorProps) {
                 onClick={() => toggleShow(key)}
                 className="text-xs px-2 py-1 rounded transition-colors"
                 style={{ color: 'var(--text-muted)', backgroundColor: 'var(--border)' }}
-                title={showValues[key] ? 'Hide value' : 'Show value'}
+                title={showValues[key] ? t('config.settings.envHide') : t('config.settings.envShow')}
               >
-                {showValues[key] ? 'Hide' : 'Show'}
+                {showValues[key] ? t('config.settings.envHide') : t('config.settings.envShow')}
               </button>
               <button
                 onClick={() => onRemove(key)}
                 className="p-1 rounded transition-colors"
                 style={{ color: 'var(--status-red)' }}
-                title="Remove"
+                title={t('config.settings.envRemove')}
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -79,7 +81,7 @@ export function EnvVarsEditor({ vars, onAdd, onRemove }: EnvVarsEditorProps) {
           type="text"
           value={newKey}
           onChange={(e) => setNewKey(e.target.value)}
-          placeholder="KEY"
+          placeholder={t('config.settings.envKeyPlaceholder')}
           className="flex-1 px-3 py-2 rounded-md text-sm font-mono outline-none"
           style={inputStyle}
           onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--accent)'; }}
@@ -90,14 +92,14 @@ export function EnvVarsEditor({ vars, onAdd, onRemove }: EnvVarsEditorProps) {
           type="text"
           value={newValue}
           onChange={(e) => setNewValue(e.target.value)}
-          placeholder="value"
+          placeholder={t('config.settings.envValuePlaceholder')}
           className="flex-1 px-3 py-2 rounded-md text-sm outline-none"
           style={inputStyle}
           onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--accent)'; }}
           onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--card-border)'; }}
           onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
         />
-        <Button variant="primary" size="md" onClick={handleAdd}>Add</Button>
+        <Button variant="primary" size="md" onClick={handleAdd}>{t('config.settings.envAdd')}</Button>
       </div>
     </div>
   );

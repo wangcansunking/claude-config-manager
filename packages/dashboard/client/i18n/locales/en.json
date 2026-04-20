@@ -36,9 +36,24 @@
   },
   "recommended": {
     "title": "Recommended",
-    "empty": "No recommendations yet.",
-    "refresh": "Refresh recommendations",
-    "refreshing": "Refreshing…"
+    "subtitle": "AI-powered recommendations based on your setup",
+    "emptyTitle": "No recommendations yet",
+    "emptyBody": "Click Generate to analyze your installed plugins, MCP servers, and skills and produce personalized suggestions.",
+    "generate": "Generate Recommendations",
+    "generating": "Generating…",
+    "refresh": "Refresh",
+    "lastUpdated": "Last updated {{when}}",
+    "install": "Install",
+    "dismiss": "Dismiss",
+    "why": "Why we recommend this",
+    "filterAll": "All",
+    "filterPlugins": "Plugins",
+    "filterMcps": "MCP Servers",
+    "filterSkills": "Skills",
+    "findMore": "Find More",
+    "findMoreBody": "Search skills.sh and MCP registries to discover more tools.",
+    "findMorePlaceholder": "Search skills and MCP servers…",
+    "findMoreEmpty": "No results. Try a different keyword."
   },
   "config": {
     "tabs": {
@@ -49,31 +64,72 @@
       "settings": "Settings"
     },
     "saveToProfile": "Save to Profile",
+    "saveDialog": {
+      "title": "Save current configuration as profile",
+      "body": "Captures a snapshot of your current plugins, MCP servers, skills, commands, and settings.",
+      "profileName": "Profile name",
+      "descriptionLabel": "Description (optional)",
+      "namePlaceholder": "e.g. frontend-dev",
+      "descriptionPlaceholder": "Short description…",
+      "nameRequired": "Profile name is required",
+      "saveFailed": "Failed to save profile",
+      "profileSaved": "Profile \"{{name}}\" saved",
+      "clickToView": "— click to view"
+    },
     "plugins": {
       "title": "Plugins",
       "installed": "Installed",
       "marketplace": "Marketplace",
       "manageMarketplaces": "Manage Marketplaces",
-      "searchPlaceholder": "Search installed plugins...",
+      "searchInstalledPlaceholder": "Search installed plugins…",
+      "searchAvailablePlaceholder": "Search available plugins…",
+      "marketplaceSelectPlaceholder": "Select marketplace…",
       "enabled": "Enabled",
-      "disabled": "Disabled"
+      "disabled": "Disabled",
+      "copyCommand": "Click to copy",
+      "installNotice": "Plugin install must be run inside Claude Code. The command is copied to your clipboard.",
+      "marketplaceStaleNotice": "Dashboard cannot fetch marketplace updates. Run `/plugin marketplace update` in Claude Code — command copied to clipboard."
     },
     "mcp": {
       "title": "MCP Servers",
       "installed": "Installed",
       "store": "Store",
-      "searchPlaceholder": "Search MCP servers..."
+      "searchInstalledPlaceholder": "Search MCP servers…",
+      "searchStorePlaceholder": "Search the MCP store…",
+      "install": "Install",
+      "installCopyNotice": "Install command copied — paste it into your terminal.",
+      "noResults": "No MCP servers match your search."
     },
     "skills": {
       "title": "Skills",
-      "searchPlaceholder": "Search skills..."
+      "searchPlaceholder": "Search skills…",
+      "installed": "Installed",
+      "store": "Store",
+      "top": "Top",
+      "edit": "Edit",
+      "preview": "Preview",
+      "noResults": "No skills match your search."
     },
     "commands": {
       "title": "Commands",
-      "searchPlaceholder": "Search commands..."
+      "searchPlaceholder": "Search commands…",
+      "noResults": "No commands match your search."
     },
     "settings": {
-      "title": "Settings"
+      "title": "Settings",
+      "model": "Model",
+      "modelHelp": "Default model used by Claude Code in this project.",
+      "modelSelectPlaceholder": "-- Select a model --",
+      "modelCustomPlaceholder": "Or type a custom model ID…",
+      "hooks": "Hooks",
+      "envVars": "Environment Variables",
+      "envKeyPlaceholder": "KEY",
+      "envValuePlaceholder": "value",
+      "envAdd": "Add",
+      "envShow": "Show",
+      "envHide": "Hide",
+      "envRemove": "Remove",
+      "noEnv": "No environment variables set."
     }
   },
   "profiles": {
@@ -91,7 +147,7 @@
     "subtitle": "{{running}} running, {{total}} total",
     "recent": "Recent ({{count}})",
     "allSessions": "All Sessions",
-    "searchPlaceholder": "Search sessions...",
+    "searchPlaceholder": "Search sessions…",
     "running": "Running",
     "resume": "Resume"
   },
@@ -99,9 +155,12 @@
     "close": "Close",
     "cancel": "Cancel",
     "save": "Save",
+    "saving": "Saving…",
     "delete": "Delete",
     "confirm": "Confirm",
     "copy": "Copy",
-    "copied": "Copied"
+    "copied": "Copied",
+    "loading": "Loading…",
+    "search": "Search"
   }
 }

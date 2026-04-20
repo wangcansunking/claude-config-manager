@@ -1,5 +1,6 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Header } from '@/components/layout/header';
 import { SearchBox } from '@/components/shared/search-box';
 import { Tag } from '@/components/shared/tag';
@@ -159,6 +160,7 @@ function SkillStoreCard({ result }: { result: SkillStoreResult }) {
 // ---------------------------------------------------------------------------
 
 function SkillStoreTab() {
+  const { t } = useTranslation();
   const [search, setSearch] = useState('');
   const [results, setResults] = useState<SkillStoreResult[]>([]);
   const [topResults, setTopResults] = useState<SkillStoreResult[]>([]);
@@ -223,7 +225,7 @@ function SkillStoreTab() {
         <SearchBox
           value={search}
           onChange={setSearch}
-          placeholder="Search skills on skills.sh..."
+          placeholder={t('config.skills.searchPlaceholder')}
         />
       </div>
 
@@ -272,6 +274,7 @@ function SkillStoreTab() {
 // ---------------------------------------------------------------------------
 
 export default function SkillsPage() {
+  const { t } = useTranslation();
   const { data: skillsRaw, isLoading: loading, mutate } = useSkills();
   const skills = (skillsRaw ?? []) as Skill[];
   const [search, setSearch] = useState('');
@@ -368,7 +371,7 @@ export default function SkillsPage() {
   return (
     <div>
       <div className="sticky top-0 z-10 bg-bg-primary">
-        <Header title="Skills" />
+        <Header title={t('config.skills.title')} />
 
         {/* Tabs */}
         <div className="flex items-center gap-1 mb-4">
@@ -380,7 +383,7 @@ export default function SkillsPage() {
             }}
             onClick={() => setTab('installed')}
           >
-            Installed
+            {t('config.skills.installed')}
           </button>
           <button
             className="px-4 py-1.5 rounded-lg text-sm font-medium transition-colors"
@@ -390,7 +393,7 @@ export default function SkillsPage() {
             }}
             onClick={() => setTab('store')}
           >
-            Skill Store
+            {t('config.skills.store')}
           </button>
         </div>
       </div>
@@ -399,7 +402,7 @@ export default function SkillsPage() {
         /* ---- Installed tab ---- */
         <>
           <div className="mb-4">
-            <SearchBox value={search} onChange={setSearch} placeholder="Search skills..." />
+            <SearchBox value={search} onChange={setSearch} placeholder={t('config.skills.searchPlaceholder')} />
           </div>
 
           {loading ? (
