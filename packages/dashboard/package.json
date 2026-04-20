@@ -12,6 +12,7 @@
     "@ccm/core": "*",
     "@ccm/types": "*",
     "express": "^4.21.0",
+    "express-rate-limit": "^7.4.0",
     "cors": "^2.8.5",
     "chokidar": "^3.6.0"
   },
