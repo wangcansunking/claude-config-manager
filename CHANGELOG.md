@@ -4,6 +4,11 @@ All notable changes to claude-config-manager are documented here.
 
 
 
+## [1.1.4] — 2026-04-28
+
+### Fixed
+- **Dashboard startup paths still launched the old Next.js server.** The dashboard was migrated to Vite + Express (bundled into `packages/dashboard/dist/server.mjs`), but three startup entry points still spawned `npx next start -p 3399` and broke at runtime: the root `package.json` `start` script, the `auto-start-dashboard.mjs` SessionStart hook, and the `claude-config start` CLI command (in both `src/commands/start.ts` and the committed `dist/commands/start.js`). All three now spawn `node packages/dashboard/dist/server.mjs` directly with `PORT` passed via env. The `--dev` flag on the CLI now delegates to `npm run dev` (Vite + tsx watch) inside the dashboard workspace. Skill files (`skills/ccm-dashboard/Skill.md`, `commands/ccm-dashboard/Skill.md`) were already pointing at the new server and stay unchanged.
+
 ## [1.1.3] — 2026-04-20
 
 ### Fixed

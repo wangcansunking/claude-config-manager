@@ -9,7 +9,7 @@ export function makeStartCommand(): Command {
     .description('Start the Claude Config Manager dashboard')
     .option('-p, --port <port>', 'Port to listen on', '3399')
     .option('--no-open', 'Do not open browser automatically')
-    .option('--dev', 'Start in development mode')
+    .option('--dev', 'Start in development mode (Vite + tsx watch)')
     .action(async (options: { port: string; open: boolean; dev: boolean }) => {
       const port = options.port;
       const __dirname = resolve(fileURLToPath(import.meta.url), '..');
@@ -17,12 +17,18 @@ export function makeStartCommand(): Command {
 
       console.log(`Starting dashboard on http://localhost:${port}...`);
 
-      const nextCmd = options.dev ? 'dev' : 'start';
-      const child = spawn('npx', ['next', nextCmd, '-p', port], {
-        cwd: dashboardDir,
-        stdio: 'inherit',
-        shell: true,
-      });
+      const child = options.dev
+        ? spawn('npm', ['run', 'dev'], {
+            cwd: dashboardDir,
+            stdio: 'inherit',
+            shell: true,
+            env: { ...process.env, PORT: port },
+          })
+        : spawn(process.execPath, [resolve(dashboardDir, 'dist', 'server.mjs')], {
+            cwd: dashboardDir,
+            stdio: 'inherit',
+            env: { ...process.env, PORT: port },
+          });
 
       // Auto-open browser after a delay
       if (options.open) {

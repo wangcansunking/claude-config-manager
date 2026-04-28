@@ -36,13 +36,14 @@ async function main() {
 
   // Find dashboard directory relative to this hook script
   const dashboardDir = join(new URL('.', import.meta.url).pathname.replace(/^\/([A-Z]:)/, '$1'), '..', 'packages', 'dashboard');
+  const serverEntry = join(dashboardDir, 'dist', 'server.mjs');
 
-  // Start dashboard in detached mode
-  const child = spawn('npx', ['next', 'start', '-p', String(PORT)], {
+  // Start the pre-built Vite + Express server in detached mode
+  const child = spawn(process.execPath, [serverEntry], {
     cwd: dashboardDir,
     stdio: 'ignore',
     detached: true,
-    shell: true,
+    env: { ...process.env, PORT: String(PORT) },
   });
 
   child.unref();
