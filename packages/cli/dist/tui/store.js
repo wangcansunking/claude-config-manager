@@ -24,6 +24,7 @@ export function createStore() {
         settings: {}, profiles: [], activeProfile: null,
         sessions: [], recommendations: [],
         dashboardStatus: { running: false },
+        sessionHistories: new Map(),
         activePage: 'overview',
         configInnerTab: 'plugins',
         focused: 'sidebar',
@@ -125,6 +126,31 @@ export function createStore() {
             }
             catch {
                 set({ recommendations: [] });
+            }
+        },
+        async loadSessionHistory(historyFile) {
+            // Cache hit — skip
+            if (_get().sessionHistories.has(historyFile))
+                return;
+            try {
+                const history = await sessionMgr.getSessionHistory(historyFile, 20);
+                const truncated = history.map((h) => ({
+                    ...h,
+                    text: h.text.length > 200 ? h.text.slice(0, 200) + '…' : h.text,
+                }));
+                set((s) => {
+                    const next = new Map(s.sessionHistories);
+                    next.set(historyFile, truncated);
+                    return { sessionHistories: next };
+                });
+            }
+            catch (e) {
+                // On error store empty array so we don't retry on every cursor move
+                set((s) => {
+                    const next = new Map(s.sessionHistories);
+                    next.set(historyFile, []);
+                    return { sessionHistories: next, lastError: { section: 'sessions', err: e } };
+                });
             }
         },
         setPage(p) { set({ activePage: p }); },

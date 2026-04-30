@@ -3,6 +3,11 @@ import { SessionManager, type ProfileSummary } from '@ccm/core';
 import type { PluginListEntry, McpServerEntry, SkillDefinition, CommandDefinition } from '@ccm/types';
 type SettingsRecord = Record<string, unknown>;
 type SessionInfo = Awaited<ReturnType<SessionManager['listAllSessions']>>[number];
+export interface SessionHistoryEntry {
+    role: string;
+    text: string;
+    timestamp: string;
+}
 export type Section = 'plugins' | 'mcpServers' | 'skills' | 'commands' | 'settings' | 'profiles' | 'sessions' | 'recommendations' | 'dashboardStatus';
 export type PageId = 'overview' | 'profiles' | 'sessions' | 'recommended' | 'settingsPrefs' | 'config';
 export type ConfigInnerTab = 'plugins' | 'mcps' | 'skills' | 'commands' | 'settings';
@@ -45,9 +50,11 @@ export interface StoreState {
         section: Section;
         err: Error;
     } | null;
+    sessionHistories: Map<string, SessionHistoryEntry[]>;
     init(): Promise<void>;
     refresh(section?: Section): Promise<void>;
     loadRecommendations(): Promise<void>;
+    loadSessionHistory(historyFile: string): Promise<void>;
     setPage(p: PageId): void;
     setInnerTab(t: ConfigInnerTab): void;
     setFocus(f: 'sidebar' | 'main'): void;
