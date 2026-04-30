@@ -235,7 +235,7 @@ export function createStore(): CcmStore {
       }
     },
 
-    setPage(p)        { set({ activePage: p, focused: 'main' }); },
+    setPage(p)        { set({ activePage: p }); },
     setInnerTab(t)    { set({ configInnerTab: t }); },
     setFocus(f)       { set({ focused: f }); },
     pushToast(t) {

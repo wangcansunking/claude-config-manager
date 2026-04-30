@@ -14,8 +14,8 @@ const ITEMS: Item[] = [
 ];
 
 export function Sidebar({
-  active, focused, onSelect,
-}: { active: PageId; focused: boolean; onSelect: (id: PageId) => void }) {
+  active, focused, onSelect, onEnter,
+}: { active: PageId; focused: boolean; onSelect: (id: PageId) => void; onEnter?: () => void }) {
   const { stdin } = useStdin();
 
   useLayoutEffect(() => {
@@ -36,13 +36,15 @@ export function Sidebar({
           onSelect(ITEMS[idx + 1].id);
         } else if ((str === 'k' || str === '\x1b[A') && idx > 0) {
           onSelect(ITEMS[idx - 1].id);
+        } else if (str === '\r' && onEnter) {
+          onEnter();
         }
       }
     };
 
     stdin?.on('data', handler);
     return () => { stdin?.off('data', handler); };
-  }, [stdin, active, focused, onSelect]);
+  }, [stdin, active, focused, onSelect, onEnter]);
 
   return (
     <Box

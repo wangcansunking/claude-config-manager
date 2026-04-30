@@ -80,7 +80,8 @@ export function App() {
       <Box flexGrow={1}>
         <Sidebar active={state.activePage}
                  focused={state.focused === 'sidebar'}
-                 onSelect={(id) => state.setPage(id)} />
+                 onSelect={(id) => state.setPage(id)}
+                 onEnter={() => state.setFocus('main')} />
         <Box flexGrow={1} flexDirection="column"
              borderStyle="single"
              borderColor={state.focused === 'main' ? 'cyan' : 'gray'}>
