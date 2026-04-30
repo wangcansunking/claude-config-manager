@@ -1,8 +1,7 @@
 import i18n from 'i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 import { initReactI18next } from 'react-i18next';
-import en from './locales/en.json';
-import zh from './locales/zh.json';
+import { locales } from '@ccm/core/i18n';
 
 /**
  * Two-locale i18n for the dashboard UI. Detection order:
@@ -18,8 +17,8 @@ void i18n
   .use(initReactI18next)
   .init({
     resources: {
-      en: { translation: en },
-      zh: { translation: zh },
+      en: { translation: locales.en },
+      zh: { translation: locales.zh },
     },
     fallbackLng: 'en',
     supportedLngs: ['en', 'zh'],
