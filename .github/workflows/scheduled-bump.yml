@@ -1,0 +1,104 @@
+name: Scheduled patch bump
+
+# Twice-daily safety net for the label-driven auto-bump action.
+#
+# The label flow only fires when a PR carries `release:patch` / `release:minor`
+# / `release:major`. PR authors regularly forget — those changes then sit on
+# master with marketplace.json drifting behind. This workflow scans for any
+# commits since the last `vX.Y.Z` tag that aren't themselves release commits;
+# if there are any, it does a patch bump using the aggregated commit subjects
+# as the changelog body, and runs the same marketplace mirror.
+#
+# Idempotent: when there's nothing new since the last tag, it exits cleanly.
+# Patch is the safe default — pick a label on the PR if you want minor/major.
+
+on:
+  schedule:
+    # 10:17 + 22:17 Beijing (UTC+8). Off-the-hour to dodge cron contention.
+    - cron: '17 2,14 * * *'
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: master
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Detect commits since last release tag
+        id: detect
+        run: |
+          last_tag=$(git tag --list 'v*' --sort=-v:refname | head -1)
+          if [ -z "$last_tag" ]; then
+            echo "No vX.Y.Z tag yet — nothing to compare against."
+            echo "commits=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # Non-merge commits since the tag, excluding:
+          #   - release commits we made (chore(release): X.Y.Z [skip ci])
+          #   - pure-CI commits (ci: ...) — they don't affect the published plugin
+          new_commits=$(git log "$last_tag..HEAD" --no-merges --pretty=format:'- %s' \
+            | grep -vE '^- (chore\(release\):|ci:)' || true)
+          if [ -z "$new_commits" ]; then
+            echo "No new commits since $last_tag — nothing to bump."
+            echo "commits=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "Found new commits since $last_tag:"
+          echo "$new_commits"
+          {
+            echo "commits<<COMMITS_EOF"
+            echo "$new_commits"
+            echo "COMMITS_EOF"
+          } >> "$GITHUB_OUTPUT"
+          echo "last_tag=$last_tag" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-node@v4
+        if: steps.detect.outputs.commits != ''
+        with:
+          node-version: '20'
+
+      - name: Bump version (patch) + synthesize changelog
+        id: bump
+        if: steps.detect.outputs.commits != ''
+        env:
+          BUMP_LEVEL: patch
+          PR_NUMBER: scheduled
+          PR_TITLE: "Scheduled patch bump (commits since ${{ steps.detect.outputs.last_tag }})"
+          PR_BODY: |
+            ## Changelog
+            ### Changed
+            Aggregated from commits since ${{ steps.detect.outputs.last_tag }} (no `release:*` label was applied):
+
+            ${{ steps.detect.outputs.commits }}
+          PR_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: node .github/scripts/bump-version.mjs
+
+      - name: Commit + tag + push
+        if: steps.detect.outputs.commits != ''
+        env:
+          NEW_VERSION: ${{ steps.bump.outputs.version }}
+        run: |
+          git config user.name  "ccm-release-bot"
+          git config user.email "actions@github.com"
+          git add -A
+          git commit -m "chore(release): $NEW_VERSION [skip ci]" -m "Scheduled patch bump — accumulated commits without a release:* label."
+          git tag "v$NEW_VERSION"
+          git push origin HEAD:master
+          git push origin "v$NEW_VERSION"
+
+      - name: Mirror bump to marketplace repo
+        if: steps.detect.outputs.commits != '' && env.MARKETPLACE_PAT != ''
+        env:
+          MARKETPLACE_PAT: ${{ secrets.GH_PAT_MARKETPLACE }}
+          MARKETPLACE_REPO: wangcansunking/can-claude-plugins
+          NEW_VERSION: ${{ steps.bump.outputs.version }}
+          PLUGIN_NAME: ${{ steps.bump.outputs.plugin_name }}
+          PR_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: node .github/scripts/bump-marketplace.mjs
