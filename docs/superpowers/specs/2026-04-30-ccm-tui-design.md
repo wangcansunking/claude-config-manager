@@ -269,8 +269,8 @@ async init() {
          profiles, sessions, dashboardStatus] = await Promise.all([
     PluginManager.list(),
     McpManager.list(),
-    SkillScanner.scan(),
-    CommandScanner.scan(),
+    SkillScanner.scanSkills(),
+    SkillScanner.scanCommands(),
     ConfigManager.read(),
     ProfileManager.list(),
     SessionManager.listRecent(50),
@@ -580,12 +580,6 @@ Each phase ships as a single PR. The v1 PR includes the i18n move from
 
 ## 9. Open Items (deferred, not blocking)
 
-- **`CommandScanner` may need to be added to `@ccm/core`.** Today the dashboard
-  server's `routes/commands.ts` produces the slash-command list, but `@ccm/core`
-  exports no equivalent scanner (only `skill-scanner`). The implementation plan
-  should either (a) add `CommandScanner` parallel to `SkillScanner` and have the
-  dashboard route delegate to it, or (b) inline the same logic in the TUI store.
-  Option (a) preserves single-source-of-truth and is the default expectation.
 - Windows testing (conpty) — defer to v2.
 - Color / theme palette per-terminal (true-color vs 256-color detection) — Ink
   handles automatically via `chalk`; revisit if any user reports it.
