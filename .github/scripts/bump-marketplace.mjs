@@ -76,21 +76,24 @@ writeFileSync(marketplaceJsonPath, JSON.stringify(manifest, null, 2) + '\n');
 // 3. Patch README.md — find the table row for this plugin, bump trailing version
 // ---------------------------------------------------------------------------
 
-try {
-  const readme = readFileSync('README.md', 'utf-8');
-  // Match a row like: | [plugin-name](url) | description | X.Y.Z |
-  const rowRe = new RegExp(
-    `(^\\|\\s*\\[${PLUGIN_NAME}\\][^|]*\\|[^|]*\\|\\s*)${oldVersion.replace(/\./g, '\\.')}(\\s*\\|\\s*$)`,
-    'm',
-  );
-  if (rowRe.test(readme)) {
-    writeFileSync('README.md', readme.replace(rowRe, `$1${NEW_VERSION}$2`));
-    console.log('Patched README.md table row.');
-  } else {
-    console.warn('Could not find README.md table row for this plugin — skipping README update.');
+// Match a row like: | [plugin-name](url) | description | X.Y.Z |
+// (Description column may be Chinese or English — the regex doesn't care.)
+const rowRe = new RegExp(
+  `(^\\|\\s*\\[${PLUGIN_NAME}\\][^|]*\\|[^|]*\\|\\s*)${oldVersion.replace(/\./g, '\\.')}(\\s*\\|\\s*$)`,
+  'm',
+);
+for (const readmePath of ['README.md', 'README.zh.md']) {
+  try {
+    const readme = readFileSync(readmePath, 'utf-8');
+    if (rowRe.test(readme)) {
+      writeFileSync(readmePath, readme.replace(rowRe, `$1${NEW_VERSION}$2`));
+      console.log(`Patched ${readmePath} table row.`);
+    } else {
+      console.warn(`Could not find ${readmePath} table row for this plugin — skipping.`);
+    }
+  } catch {
+    console.warn(`${readmePath} not found — skipping.`);
   }
-} catch {
-  console.warn('README.md not found — skipping.');
 }
 
 // ---------------------------------------------------------------------------
