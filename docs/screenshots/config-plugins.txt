@@ -1,0 +1,9 @@
+Plugins (6 installed)
+▶ [✓] vercel@claude-plugins-official           0.40.0
+  [✓] remember@claude-plugins-official         0.6.0
+  [✓] superpowers@claude-plugins-official      5.0.7
+  [✓] feature-dev@claude-plugins-official      1.0.0
+  [✓] serena@claude-plugins-official           0.9.1
+  [ ] experiment-plugin                        0.1.0
+
+space:toggle  enter:toggle  /:filter  ?:help

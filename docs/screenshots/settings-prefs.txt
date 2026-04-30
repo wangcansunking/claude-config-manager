@@ -1,0 +1,6 @@
+
+ TUI preferences
+
+ ▶ language       en   (Enter to toggle en ↔ zh)
+   theme         auto (terminal palette)
+   quit-confirm  off

@@ -1,0 +1,9 @@
+
+ Recommended (4)
+
+ ▶ [MCP/Top] @modelcontextprotocol/server-postgres Postgres MCP server
+   [MCP/Trending] kubernetes-mcp-server        Kubernetes MCP server
+   [PLUGIN/Top] devtools-cli                 Suite of devtools
+   [SKILL/Top] database-design              Schema design helper
+
+ c/y:copy install cmd  /:filter
