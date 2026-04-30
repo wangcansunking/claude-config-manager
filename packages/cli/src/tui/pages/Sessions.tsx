@@ -1,6 +1,7 @@
 import { useLayoutEffect, useEffect, useState, useMemo } from 'react';
 import { Box, Text, useStdin } from 'ink';
 import { copyToClipboard } from '../util/clipboard.js';
+import { tildify } from '../util/path.js';
 import type { CcmStore, StoreState } from '../store.js';
 
 function relativeTime(startedAt: number): string {
@@ -126,7 +127,7 @@ export function Sessions({ state, store }: { state: StoreState; store: CcmStore 
                     </Text>
                     <Text bold={sel}>{displayName}</Text>
                   </Box>
-                  <Text dimColor>     {project}  {when}</Text>
+                  <Text dimColor>     {tildify(project)}  {when}</Text>
                 </Box>
               );
             })
@@ -142,7 +143,7 @@ export function Sessions({ state, store }: { state: StoreState; store: CcmStore 
               {/* Session header */}
               <Box flexDirection="column" marginBottom={1}>
                 <Text bold>{selectedSession.name || selectedSession.sessionId.slice(0, 8)}</Text>
-                <Text dimColor>{selectedSession.projectDir || selectedSession.cwd || '(unknown)'}</Text>
+                <Text dimColor>{tildify(selectedSession.projectDir || selectedSession.cwd || '(unknown)')}</Text>
                 <Box>
                   <Text dimColor>id: </Text>
                   <Text>{selectedSession.sessionId.slice(0, 8)}</Text>

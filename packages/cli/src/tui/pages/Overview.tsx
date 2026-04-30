@@ -1,4 +1,5 @@
 import { Box, Text } from 'ink';
+import { tildify } from '../util/path.js';
 import type { StoreState } from '../store.js';
 
 export function Overview({ state }: { state: StoreState }) {
@@ -17,7 +18,7 @@ export function Overview({ state }: { state: StoreState }) {
       <Box marginTop={1} flexDirection="column">
         <Text bold>Recent sessions</Text>
         {state.sessions.slice(0, 3).map((s, i) => (
-          <Text key={i} dimColor>· {s.projectDir ?? s.name ?? '—'}</Text>
+          <Text key={i} dimColor>· {tildify(s.projectDir ?? s.name ?? '—')}</Text>
         ))}
         {state.sessions.length === 0 && <Text dimColor>(none)</Text>}
       </Box>
