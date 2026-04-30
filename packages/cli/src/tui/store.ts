@@ -275,9 +275,7 @@ export function createStore(): CcmStore {
         pendingActions: new Set(s.pendingActions).add(`mcp:${name}`),
       }));
       try {
-        // FIXME(task-6): @ccm/core lacks McpManager.toggle — surface in v2 plan
-        await (mcpMgr as unknown as { toggle(name: string, enabled: boolean): Promise<void> })
-          .toggle(name, next);
+        await mcpMgr.toggle(name, next);
         _get().pushToast({ kind: 'success', text: `${next ? 'Enabled' : 'Disabled'} ${name}` });
       } catch (e) {
         set((s) => ({
@@ -297,27 +295,20 @@ export function createStore(): CcmStore {
       // NOTE: SkillDefinition uses `name` as identifier; `id` param maps to `name`
       const cur = _get().skills.find((s) => s.name === id);
       if (!cur) return;
-      // SkillDefinition has no `enabled` field — cast via unknown to allow optimistic update
-      const curEnabled = (cur as unknown as { enabled?: boolean }).enabled ?? false;
+      const curEnabled = cur.enabled ?? true;
       const next = !curEnabled;
       set((s) => ({
         skills: s.skills.map((sk) =>
-          sk.name === id
-            ? ({ ...sk, enabled: next } as unknown as typeof sk)
-            : sk),
+          sk.name === id ? { ...sk, enabled: next } : sk),
         pendingActions: new Set(s.pendingActions).add(`skill:${id}`),
       }));
       try {
-        // FIXME(task-6): @ccm/core lacks SkillScanner.toggle — surface in v2 plan
-        await (skillScan as unknown as { toggle(id: string, enabled: boolean): Promise<void> })
-          .toggle(id, next);
+        await skillScan.toggle(cur.name, next);
         _get().pushToast({ kind: 'success', text: `${next ? 'Enabled' : 'Disabled'} ${cur.name}` });
       } catch (e) {
         set((s) => ({
           skills: s.skills.map((sk) =>
-            sk.name === id
-              ? ({ ...sk, enabled: curEnabled } as unknown as typeof sk)
-              : sk),
+            sk.name === id ? { ...sk, enabled: curEnabled } : sk),
           lastError: { section: 'skills', err: e as Error },
         }));
         _get().pushToast({ kind: 'error', text: `Failed: ${(e as Error).message}` });

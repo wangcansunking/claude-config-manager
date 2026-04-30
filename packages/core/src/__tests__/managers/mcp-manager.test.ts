@@ -4,6 +4,7 @@ import { tmpdir } from 'os';
 import { join } from 'path';
 import { McpManager } from '../../managers/mcp-manager';
 import { ConflictError, NotFoundError } from '@ccm/types';
+import { readJsonFile } from '../../utils/file-ops';
 
 const SAMPLE_MCP_JSON = {
   mcpServers: {
@@ -153,6 +154,53 @@ describe('McpManager', () => {
     it('returns null when no .mcp.json exists', async () => {
       const detail = await manager.getDetail('azure-devops');
       expect(detail).toBeNull();
+    });
+  });
+
+  describe('toggle', () => {
+    it('writes enabledMcpServers[name] = false in settings.json', async () => {
+      await writeMcpJson();
+      await manager.toggle('azure-devops', false);
+      const settings = await readJsonFile(join(tempDir, 'settings.json'));
+      expect(settings).toMatchObject({ enabledMcpServers: { 'azure-devops': false } });
+    });
+
+    it('writes enabledMcpServers[name] = true in settings.json', async () => {
+      await writeMcpJson();
+      await manager.toggle('github', true);
+      const settings = await readJsonFile(join(tempDir, 'settings.json'));
+      expect(settings).toMatchObject({ enabledMcpServers: { github: true } });
+    });
+
+    it('list() reflects the disabled state', async () => {
+      await writeMcpJson();
+      await manager.toggle('azure-devops', false);
+      const list = await manager.list();
+      const entry = list.find((e) => e.name === 'azure-devops');
+      expect(entry?.enabled).toBe(false);
+    });
+
+    it('re-enabling a server writes enabled=true to settings.json', async () => {
+      await writeMcpJson();
+      // Disable then re-enable — settings should reflect the latest state
+      await manager.toggle('github', false);
+      await manager.toggle('github', true);
+      const settings = await readJsonFile(join(tempDir, 'settings.json'));
+      expect(settings).toMatchObject({ enabledMcpServers: { github: true } });
+    });
+
+    it('preserves existing settings when toggling', async () => {
+      await writeMcpJson();
+      await writeFile(
+        join(tempDir, 'settings.json'),
+        JSON.stringify({ model: 'claude-3-5-sonnet' }),
+      );
+      await manager.toggle('github', false);
+      const settings = await readJsonFile(join(tempDir, 'settings.json'));
+      expect(settings).toMatchObject({
+        model: 'claude-3-5-sonnet',
+        enabledMcpServers: { github: false },
+      });
     });
   });
 });
