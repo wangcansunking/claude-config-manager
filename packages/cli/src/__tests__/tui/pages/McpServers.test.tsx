@@ -8,6 +8,7 @@ const state: any = {
     { name: 'context7', enabled: false, config: { command: 'npx context7' } },
   ],
   pendingActions: new Set(),
+  focused: 'main',
 };
 
 describe('<McpServers/>', () => {

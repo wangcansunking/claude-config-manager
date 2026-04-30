@@ -9,6 +9,7 @@ export function Plugins({ state, store }: { state: StoreState; store: CcmStore }
 
   useLayoutEffect(() => {
     const handler = (data: Buffer | string) => {
+      if (state.focused !== 'main') return;
       const str = typeof data === 'string' ? data : data.toString();
       if (str === ' ') {
         const p = state.plugins[cursor];
@@ -17,7 +18,7 @@ export function Plugins({ state, store }: { state: StoreState; store: CcmStore }
     };
     stdin?.on('data', handler);
     return () => { stdin?.off('data', handler); };
-  }, [stdin, cursor, state.plugins, store]);
+  }, [stdin, cursor, state.plugins, state.focused, store]);
 
   return (
     <Box flexDirection="column">
@@ -25,8 +26,9 @@ export function Plugins({ state, store }: { state: StoreState; store: CcmStore }
       <List
         items={state.plugins}
         filterKey={(p) => p.name}
-        renderItem={(p, sel, idx) => {
-          if (sel) setTimeout(() => setCursor(idx), 0);  // sync cursor
+        cursor={cursor}
+        onCursorChange={(idx) => setCursor(idx)}
+        renderItem={(p, sel) => {
           const mark = p.enabled ? '[✓]' : '[ ]';
           const pending = state.pendingActions.has(`plugin:${p.name}`) ? ' …' : '';
           return `${sel ? '▶' : ' '} ${mark} ${p.name.padEnd(40)} ${p.version ?? ''}${pending}`;

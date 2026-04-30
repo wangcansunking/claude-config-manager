@@ -8,14 +8,35 @@ export interface ListProps<T> {
   filterKey?:   (item: T) => string;
   /** when true, this list owns input focus */
   active?:      boolean;
+  /** controlled cursor (optional — falls back to internal state when undefined) */
+  cursor?:      number;
+  /** notify parent when cursor moves (used in controlled mode) */
+  onCursorChange?: (idx: number, item: T) => void;
 }
 
-export function List<T>({ items, renderItem, onSelect, filterKey, active = true }: ListProps<T>) {
-  const [cursor, setCursor]     = useState(0);
+export function List<T>({
+  items, renderItem, onSelect, filterKey, active = true,
+  cursor: controlledCursor, onCursorChange,
+}: ListProps<T>) {
+  const [internalCursor, setInternalCursor] = useState(0);
   const [filterMode, setFilter] = useState(false);
   const [query, setQuery]       = useState('');
 
   const { stdin } = useStdin();
+
+  // Whether we're in controlled mode
+  const isControlled = controlledCursor !== undefined;
+  const cursor = isControlled ? controlledCursor : internalCursor;
+
+  const setCursor = (newIdx: number | ((c: number) => number)) => {
+    const next = typeof newIdx === 'function' ? newIdx(cursor) : newIdx;
+    if (isControlled) {
+      const item = visible[next];
+      if (item) onCursorChange?.(next, item);
+    } else {
+      setInternalCursor(next);
+    }
+  };
 
   const visible = useMemo(() => {
     if (!filterKey || !query) return items;
@@ -54,9 +75,13 @@ export function List<T>({ items, renderItem, onSelect, filterKey, active = true 
         setCursor((c) => Math.min(c + 1, visible.length - 1));
       } else if (str === 'k' || str === '\x1b[A') {
         setCursor((c) => Math.max(c - 1, 0));
-      } else if (str === 'g') {
+      } else if (str === 'l' || str === '\x1b[C') {
+        // right arrow → intentionally do nothing; parent ConfigFrame handles inner-tab nav
+      } else if (str === 'h' || str === '\x1b[D') {
+        // left arrow → intentionally do nothing; parent ConfigFrame handles inner-tab nav
+      } else if (str === '\x1b[H' || str === 'g') {
         setCursor(0);
-      } else if (str === 'G') {
+      } else if (str === '\x1b[F' || str === 'G') {
         setCursor(visible.length - 1);
       } else if (str === '\r' || str === '\n') {
         const item = visible[cursor];
@@ -66,7 +91,7 @@ export function List<T>({ items, renderItem, onSelect, filterKey, active = true 
 
     stdin?.on('data', handler);
     return () => { stdin?.off('data', handler); };
-  }, [stdin, active, filterMode, filterKey, visible, cursor, onSelect]);
+  }, [stdin, active, filterMode, filterKey, visible, cursor, onSelect, isControlled, onCursorChange]);
 
   if (visible.length === 0) {
     return <Text dimColor>(no matches)</Text>;

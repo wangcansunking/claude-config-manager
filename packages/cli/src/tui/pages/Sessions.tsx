@@ -10,6 +10,7 @@ export function Sessions({ state, store }: { state: StoreState; store: CcmStore 
 
   useLayoutEffect(() => {
     const handler = (data: Buffer | string) => {
+      if (state.focused !== 'main') return;
       const str = typeof data === 'string' ? data : data.toString();
 
       if (str === 'y') {
@@ -27,7 +28,7 @@ export function Sessions({ state, store }: { state: StoreState; store: CcmStore 
 
     stdin?.on('data', handler);
     return () => { stdin?.off('data', handler); };
-  }, [stdin, state.sessions, cursor, store]);
+  }, [stdin, state.sessions, state.focused, cursor, store]);
 
   return (
     <Box flexDirection="column" padding={1}>
@@ -36,8 +37,9 @@ export function Sessions({ state, store }: { state: StoreState; store: CcmStore 
         <List
           items={state.sessions}
           filterKey={(s) => `${s.projectDir || s.cwd} ${s.name ?? ''}`}
-          renderItem={(s, sel, idx) => {
-            if (sel) setCursor(idx);
+          cursor={cursor}
+          onCursorChange={(idx) => setCursor(idx)}
+          renderItem={(s, sel) => {
             const project = s.projectDir || s.cwd || '(unknown)';
             const name = s.name ? ` (${s.name})` : '';
             const status = s.alive ? '●' : '○';

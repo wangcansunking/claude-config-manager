@@ -20,6 +20,7 @@ export function ConfigFrame({ state, store }: { state: StoreState; store: CcmSto
 
   useLayoutEffect(() => {
     const handler = (data: Buffer | string) => {
+      if (state.focused !== 'main') return;
       const str = typeof data === 'string' ? data : data.toString();
 
       // Letter keys p/m/s/c/g: jump to tab
@@ -29,15 +30,15 @@ export function ConfigFrame({ state, store }: { state: StoreState; store: CcmSto
         return;
       }
 
-      // h: previous tab
-      if (str === 'h') {
+      // h / left arrow: previous tab
+      if (str === 'h' || str === '\x1b[D') {
         const idx = TABS.findIndex((x) => x.id === state.configInnerTab);
         store.getState().setInnerTab(TABS[Math.max(idx - 1, 0)].id);
         return;
       }
 
-      // l: next tab
-      if (str === 'l') {
+      // l / right arrow: next tab
+      if (str === 'l' || str === '\x1b[C') {
         const idx = TABS.findIndex((x) => x.id === state.configInnerTab);
         store.getState().setInnerTab(TABS[Math.min(idx + 1, TABS.length - 1)].id);
         return;
@@ -46,7 +47,7 @@ export function ConfigFrame({ state, store }: { state: StoreState; store: CcmSto
 
     stdin?.on('data', handler);
     return () => { stdin?.off('data', handler); };
-  }, [stdin, state.configInnerTab, store]);
+  }, [stdin, state.configInnerTab, state.focused, store]);
 
   let content: React.ReactNode = null;
   switch (state.configInnerTab) {

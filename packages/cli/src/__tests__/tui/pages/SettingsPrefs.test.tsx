@@ -4,6 +4,7 @@ import { SettingsPrefs } from '../../../tui/pages/SettingsPrefs.js';
 
 const state: any = {
   settings: { env: { CLAUDE_CONFIG_LANG: 'en' } },
+  focused: 'main',
 };
 
 describe('<SettingsPrefs/>', () => {

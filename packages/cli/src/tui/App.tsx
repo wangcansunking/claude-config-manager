@@ -46,6 +46,13 @@ export function App() {
       if (state.modal) return;          // modal owns input
 
       const str = typeof data === 'string' ? data : data.toString();
+
+      // Esc: move focus back to sidebar (when main is focused and no overlay is open)
+      if (str === '\x1b' && state.focused === 'main' && !state.modal && !showHelp) {
+        state.setFocus('sidebar');
+        return;
+      }
+
       if (str === 'q' || str === '\x03') {
         process.exit(0);
       }
@@ -63,7 +70,7 @@ export function App() {
   return (
     <Box flexDirection="column" height={process.stdout.rows ?? 30}>
       <Header
-        version="1.2.0"
+        version="1.1.4"
         language={((state.settings.env ?? {}) as Record<string, string>).CLAUDE_CONFIG_LANG ?? 'en'}
         dashboard={state.dashboardStatus}
       />

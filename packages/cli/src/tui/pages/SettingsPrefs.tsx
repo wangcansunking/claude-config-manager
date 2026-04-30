@@ -13,6 +13,7 @@ export function SettingsPrefs({ state, store }: { state: StoreState; store: CcmS
 
   useLayoutEffect(() => {
     const handler = (data: Buffer | string) => {
+      if (state.focused !== 'main') return;
       const str = typeof data === 'string' ? data : data.toString();
 
       if (str === 'j' || str === '\x1b[B') {
@@ -35,25 +36,27 @@ export function SettingsPrefs({ state, store }: { state: StoreState; store: CcmS
 
     stdin?.on('data', handler);
     return () => { stdin?.off('data', handler); };
-  }, [stdin, cursor, lang, store]);
+  }, [stdin, cursor, lang, state.focused, store]);
+
+  const ROW_LABEL_W = 14;  // 'quit-confirm'.length (12) + 2 = 14
 
   return (
     <Box flexDirection="column" padding={1}>
       <Text bold>TUI preferences</Text>
 
       <Box marginTop={1}>
-        <Text>{cursor === 0 ? '▶ ' : '  '}language    </Text>
+        <Text>{cursor === 0 ? '▶ ' : '  '}{'language'.padEnd(ROW_LABEL_W)}</Text>
         <Text>{lang}</Text>
         <Text dimColor>   (Enter to toggle en ↔ zh)</Text>
       </Box>
 
       <Box>
-        <Text>{cursor === 1 ? '▶ ' : '  '}theme       </Text>
+        <Text>{cursor === 1 ? '▶ ' : '  '}{'theme'.padEnd(ROW_LABEL_W)}</Text>
         <Text dimColor>auto (terminal palette)</Text>
       </Box>
 
       <Box>
-        <Text>{cursor === 2 ? '▶ ' : '  '}quit-confirm</Text>
+        <Text>{cursor === 2 ? '▶ ' : '  '}{'quit-confirm'.padEnd(ROW_LABEL_W)}</Text>
         <Text dimColor>off</Text>
       </Box>
     </Box>

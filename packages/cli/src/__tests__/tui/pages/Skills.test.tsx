@@ -8,6 +8,7 @@ const state: any = {
     { name: 'my-skill', source: 'user', enabled: false },
   ],
   pendingActions: new Set(),
+  focused: 'main',
 };
 
 describe('<Skills/>', () => {

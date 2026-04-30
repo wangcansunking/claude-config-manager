@@ -14,6 +14,7 @@ const state: any = {
     { name: 'remember', version: '0.6.0', enabled: false, source: 'official' },
   ],
   pendingActions: new Set(),
+  focused: 'main',
 };
 
 describe('<Plugins/>', () => {

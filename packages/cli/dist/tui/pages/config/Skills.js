@@ -7,6 +7,8 @@ export function Skills({ state, store }) {
     const { stdin } = useStdin();
     useLayoutEffect(() => {
         const handler = (data) => {
+            if (state.focused !== 'main')
+                return;
             const str = typeof data === 'string' ? data : data.toString();
             if (str === ' ') {
                 const s = state.skills[cursor];
@@ -16,10 +18,8 @@ export function Skills({ state, store }) {
         };
         stdin?.on('data', handler);
         return () => { stdin?.off('data', handler); };
-    }, [stdin, cursor, state.skills, store]);
-    return (_jsxs(Box, { flexDirection: "column", children: [_jsxs(Text, { children: ["Skills (", state.skills.length, ")"] }), _jsx(List, { items: state.skills, filterKey: (s) => s.name, renderItem: (s, sel, idx) => {
-                    if (sel)
-                        setTimeout(() => setCursor(idx), 0);
+    }, [stdin, cursor, state.skills, state.focused, store]);
+    return (_jsxs(Box, { flexDirection: "column", children: [_jsxs(Text, { children: ["Skills (", state.skills.length, ")"] }), _jsx(List, { items: state.skills, filterKey: (s) => s.name, cursor: cursor, onCursorChange: (idx) => setCursor(idx), renderItem: (s, sel) => {
                     const mark = s.enabled ? '[✓]' : '[ ]';
                     const pending = state.pendingActions.has(`skill:${s.name}`) ? ' …' : '';
                     return `${sel ? '▶' : ' '} ${mark} ${s.name.padEnd(30)} ${s.source}${pending}`;

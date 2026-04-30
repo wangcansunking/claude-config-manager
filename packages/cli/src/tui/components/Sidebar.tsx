@@ -29,12 +29,12 @@ export function Sidebar({
         return;
       }
 
-      // j/k navigation when sidebar is focused
+      // j/k/arrows navigation when sidebar is focused
       if (focused) {
         const idx = ITEMS.findIndex((i) => i.id === active);
-        if (str === 'j' && idx < ITEMS.length - 1) {
+        if ((str === 'j' || str === '\x1b[B') && idx < ITEMS.length - 1) {
           onSelect(ITEMS[idx + 1].id);
-        } else if (str === 'k' && idx > 0) {
+        } else if ((str === 'k' || str === '\x1b[A') && idx > 0) {
           onSelect(ITEMS[idx - 1].id);
         }
       }

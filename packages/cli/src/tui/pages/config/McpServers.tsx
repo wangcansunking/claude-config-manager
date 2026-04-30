@@ -9,6 +9,7 @@ export function McpServers({ state, store }: { state: StoreState; store: CcmStor
 
   useLayoutEffect(() => {
     const handler = (data: Buffer | string) => {
+      if (state.focused !== 'main') return;
       const str = typeof data === 'string' ? data : data.toString();
       if (str === ' ') {
         const m = state.mcpServers[cursor];
@@ -17,7 +18,7 @@ export function McpServers({ state, store }: { state: StoreState; store: CcmStor
     };
     stdin?.on('data', handler);
     return () => { stdin?.off('data', handler); };
-  }, [stdin, cursor, state.mcpServers, store]);
+  }, [stdin, cursor, state.mcpServers, state.focused, store]);
 
   return (
     <Box flexDirection="column">
@@ -25,8 +26,9 @@ export function McpServers({ state, store }: { state: StoreState; store: CcmStor
       <List
         items={state.mcpServers}
         filterKey={(m) => m.name}
-        renderItem={(m, sel, idx) => {
-          if (sel) setTimeout(() => setCursor(idx), 0);
+        cursor={cursor}
+        onCursorChange={(idx) => setCursor(idx)}
+        renderItem={(m, sel) => {
           const mark = m.enabled ? '[✓]' : '[ ]';
           const pending = state.pendingActions.has(`mcp:${m.name}`) ? ' …' : '';
           return `${sel ? '▶' : ' '} ${mark} ${m.name.padEnd(30)} ${m.config.command ?? ''}${pending}`;

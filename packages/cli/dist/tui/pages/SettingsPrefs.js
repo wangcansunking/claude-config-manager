@@ -9,6 +9,8 @@ export function SettingsPrefs({ state, store }) {
     const lang = env.CLAUDE_CONFIG_LANG ?? 'en';
     useLayoutEffect(() => {
         const handler = (data) => {
+            if (state.focused !== 'main')
+                return;
             const str = typeof data === 'string' ? data : data.toString();
             if (str === 'j' || str === '\x1b[B') {
                 setCursor((c) => Math.min(c + 1, ROWS.length - 1));
@@ -31,7 +33,8 @@ export function SettingsPrefs({ state, store }) {
         };
         stdin?.on('data', handler);
         return () => { stdin?.off('data', handler); };
-    }, [stdin, cursor, lang, store]);
-    return (_jsxs(Box, { flexDirection: "column", padding: 1, children: [_jsx(Text, { bold: true, children: "TUI preferences" }), _jsxs(Box, { marginTop: 1, children: [_jsxs(Text, { children: [cursor === 0 ? '▶ ' : '  ', "language    "] }), _jsx(Text, { children: lang }), _jsx(Text, { dimColor: true, children: "   (Enter to toggle en \u2194 zh)" })] }), _jsxs(Box, { children: [_jsxs(Text, { children: [cursor === 1 ? '▶ ' : '  ', "theme       "] }), _jsx(Text, { dimColor: true, children: "auto (terminal palette)" })] }), _jsxs(Box, { children: [_jsxs(Text, { children: [cursor === 2 ? '▶ ' : '  ', "quit-confirm"] }), _jsx(Text, { dimColor: true, children: "off" })] })] }));
+    }, [stdin, cursor, lang, state.focused, store]);
+    const ROW_LABEL_W = 14; // 'quit-confirm'.length (12) + 2 = 14
+    return (_jsxs(Box, { flexDirection: "column", padding: 1, children: [_jsx(Text, { bold: true, children: "TUI preferences" }), _jsxs(Box, { marginTop: 1, children: [_jsxs(Text, { children: [cursor === 0 ? '▶ ' : '  ', 'language'.padEnd(ROW_LABEL_W)] }), _jsx(Text, { children: lang }), _jsx(Text, { dimColor: true, children: "   (Enter to toggle en \u2194 zh)" })] }), _jsxs(Box, { children: [_jsxs(Text, { children: [cursor === 1 ? '▶ ' : '  ', 'theme'.padEnd(ROW_LABEL_W)] }), _jsx(Text, { dimColor: true, children: "auto (terminal palette)" })] }), _jsxs(Box, { children: [_jsxs(Text, { children: [cursor === 2 ? '▶ ' : '  ', 'quit-confirm'.padEnd(ROW_LABEL_W)] }), _jsx(Text, { dimColor: true, children: "off" })] })] }));
 }
 //# sourceMappingURL=SettingsPrefs.js.map

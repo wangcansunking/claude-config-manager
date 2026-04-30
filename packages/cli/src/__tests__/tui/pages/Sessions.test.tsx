@@ -27,6 +27,7 @@ const state: any = {
       pid: 0,
     },
   ],
+  focused: 'main',
 };
 
 describe('<Sessions/>', () => {

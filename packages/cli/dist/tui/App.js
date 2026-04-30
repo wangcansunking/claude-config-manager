@@ -41,6 +41,11 @@ export function App() {
             if (state.modal)
                 return; // modal owns input
             const str = typeof data === 'string' ? data : data.toString();
+            // Esc: move focus back to sidebar (when main is focused and no overlay is open)
+            if (str === '\x1b' && state.focused === 'main' && !state.modal && !showHelp) {
+                state.setFocus('sidebar');
+                return;
+            }
             if (str === 'q' || str === '\x03') {
                 process.exit(0);
             }
@@ -57,6 +62,6 @@ export function App() {
         return () => { stdin?.off('data', handler); };
     }, [stdin, state]);
     const pageNode = useMemo(() => renderPage(state, store), [state]);
-    return (_jsxs(Box, { flexDirection: "column", height: process.stdout.rows ?? 30, children: [_jsx(Header, { version: "1.2.0", language: (state.settings.env ?? {}).CLAUDE_CONFIG_LANG ?? 'en', dashboard: state.dashboardStatus }), state.lastError?.section === 'settings' && (_jsx(SettingsErrorBar, { store: store, message: state.lastError.err.message })), _jsxs(Box, { flexGrow: 1, children: [_jsx(Sidebar, { active: state.activePage, focused: state.focused === 'sidebar', onSelect: (id) => state.setPage(id) }), _jsx(Box, { flexGrow: 1, flexDirection: "column", borderStyle: "single", borderColor: state.focused === 'main' ? 'cyan' : 'gray', children: pageNode })] }), state.toasts.map((t) => _jsx(Toast, { ...t }, t.id)), state.modal ? (_jsx(ConfirmModal, { title: state.modal.title, body: state.modal.body, confirmLabel: state.modal.confirmLabel, cancelLabel: state.modal.cancelLabel, onConfirm: async () => { await state.modal.onConfirm(); state.closeModal(); }, onCancel: () => state.closeModal() })) : null, showHelp ? _jsx(HelpOverlay, { onClose: () => setShowHelp(false) }) : null, _jsx(Footer, {})] }));
+    return (_jsxs(Box, { flexDirection: "column", height: process.stdout.rows ?? 30, children: [_jsx(Header, { version: "1.1.4", language: (state.settings.env ?? {}).CLAUDE_CONFIG_LANG ?? 'en', dashboard: state.dashboardStatus }), state.lastError?.section === 'settings' && (_jsx(SettingsErrorBar, { store: store, message: state.lastError.err.message })), _jsxs(Box, { flexGrow: 1, children: [_jsx(Sidebar, { active: state.activePage, focused: state.focused === 'sidebar', onSelect: (id) => state.setPage(id) }), _jsx(Box, { flexGrow: 1, flexDirection: "column", borderStyle: "single", borderColor: state.focused === 'main' ? 'cyan' : 'gray', children: pageNode })] }), state.toasts.map((t) => _jsx(Toast, { ...t }, t.id)), state.modal ? (_jsx(ConfirmModal, { title: state.modal.title, body: state.modal.body, confirmLabel: state.modal.confirmLabel, cancelLabel: state.modal.cancelLabel, onConfirm: async () => { await state.modal.onConfirm(); state.closeModal(); }, onCancel: () => state.closeModal() })) : null, showHelp ? _jsx(HelpOverlay, { onClose: () => setShowHelp(false) }) : null, _jsx(Footer, {})] }));
 }
 //# sourceMappingURL=App.js.map

@@ -24,6 +24,7 @@ export function Recommended({ state, store }: { state: StoreState; store: CcmSto
 
   useLayoutEffect(() => {
     const handler = (data: Buffer | string) => {
+      if (state.focused !== 'main') return;
       const str = typeof data === 'string' ? data : data.toString();
 
       if (str === 'c' || str === 'y') {
@@ -42,7 +43,7 @@ export function Recommended({ state, store }: { state: StoreState; store: CcmSto
 
     stdin?.on('data', handler);
     return () => { stdin?.off('data', handler); };
-  }, [stdin, recs, cursor, store]);
+  }, [stdin, recs, state.focused, cursor, store]);
 
   if (recs.length === 0) {
     return (
@@ -62,8 +63,9 @@ export function Recommended({ state, store }: { state: StoreState; store: CcmSto
         <List
           items={sorted}
           filterKey={(r) => `${r.name} ${r.type}`}
-          renderItem={(r, sel, idx) => {
-            if (sel) setCursor(idx);
+          cursor={cursor}
+          onCursorChange={(idx) => setCursor(idx)}
+          renderItem={(r, sel) => {
             return `${sel ? '▶' : ' '} [${r.type.toUpperCase()}/${r.popularity}] ${r.name.padEnd(28)} ${r.description.slice(0, 50)}`;
           }}
           onSelect={() => {}}

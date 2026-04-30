@@ -7,6 +7,8 @@ export function Plugins({ state, store }) {
     const { stdin } = useStdin();
     useLayoutEffect(() => {
         const handler = (data) => {
+            if (state.focused !== 'main')
+                return;
             const str = typeof data === 'string' ? data : data.toString();
             if (str === ' ') {
                 const p = state.plugins[cursor];
@@ -16,10 +18,8 @@ export function Plugins({ state, store }) {
         };
         stdin?.on('data', handler);
         return () => { stdin?.off('data', handler); };
-    }, [stdin, cursor, state.plugins, store]);
-    return (_jsxs(Box, { flexDirection: "column", children: [_jsxs(Text, { children: ["Plugins (", state.plugins.length, " installed)"] }), _jsx(List, { items: state.plugins, filterKey: (p) => p.name, renderItem: (p, sel, idx) => {
-                    if (sel)
-                        setTimeout(() => setCursor(idx), 0); // sync cursor
+    }, [stdin, cursor, state.plugins, state.focused, store]);
+    return (_jsxs(Box, { flexDirection: "column", children: [_jsxs(Text, { children: ["Plugins (", state.plugins.length, " installed)"] }), _jsx(List, { items: state.plugins, filterKey: (p) => p.name, cursor: cursor, onCursorChange: (idx) => setCursor(idx), renderItem: (p, sel) => {
                     const mark = p.enabled ? '[✓]' : '[ ]';
                     const pending = state.pendingActions.has(`plugin:${p.name}`) ? ' …' : '';
                     return `${sel ? '▶' : ' '} ${mark} ${p.name.padEnd(40)} ${p.version ?? ''}${pending}`;

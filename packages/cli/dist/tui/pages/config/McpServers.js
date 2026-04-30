@@ -7,6 +7,8 @@ export function McpServers({ state, store }) {
     const { stdin } = useStdin();
     useLayoutEffect(() => {
         const handler = (data) => {
+            if (state.focused !== 'main')
+                return;
             const str = typeof data === 'string' ? data : data.toString();
             if (str === ' ') {
                 const m = state.mcpServers[cursor];
@@ -16,10 +18,8 @@ export function McpServers({ state, store }) {
         };
         stdin?.on('data', handler);
         return () => { stdin?.off('data', handler); };
-    }, [stdin, cursor, state.mcpServers, store]);
-    return (_jsxs(Box, { flexDirection: "column", children: [_jsxs(Text, { children: ["MCP servers (", state.mcpServers.length, ")"] }), _jsx(List, { items: state.mcpServers, filterKey: (m) => m.name, renderItem: (m, sel, idx) => {
-                    if (sel)
-                        setTimeout(() => setCursor(idx), 0);
+    }, [stdin, cursor, state.mcpServers, state.focused, store]);
+    return (_jsxs(Box, { flexDirection: "column", children: [_jsxs(Text, { children: ["MCP servers (", state.mcpServers.length, ")"] }), _jsx(List, { items: state.mcpServers, filterKey: (m) => m.name, cursor: cursor, onCursorChange: (idx) => setCursor(idx), renderItem: (m, sel) => {
                     const mark = m.enabled ? '[✓]' : '[ ]';
                     const pending = state.pendingActions.has(`mcp:${m.name}`) ? ' …' : '';
                     return `${sel ? '▶' : ' '} ${mark} ${m.name.padEnd(30)} ${m.config.command ?? ''}${pending}`;

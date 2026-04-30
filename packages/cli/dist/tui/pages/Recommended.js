@@ -13,6 +13,8 @@ export function Recommended({ state, store }) {
     }, [store]);
     useLayoutEffect(() => {
         const handler = (data) => {
+            if (state.focused !== 'main')
+                return;
             const str = typeof data === 'string' ? data : data.toString();
             if (str === 'c' || str === 'y') {
                 const sorted = getSortedRecs(recs);
@@ -30,14 +32,12 @@ export function Recommended({ state, store }) {
         };
         stdin?.on('data', handler);
         return () => { stdin?.off('data', handler); };
-    }, [stdin, recs, cursor, store]);
+    }, [stdin, recs, state.focused, cursor, store]);
     if (recs.length === 0) {
         return (_jsx(EmptyState, { title: "No recommendations yet", hint: "Run `/ccm-recommendations` in Claude Code to generate." }));
     }
     const sorted = getSortedRecs(recs);
-    return (_jsxs(Box, { flexDirection: "column", padding: 1, children: [_jsxs(Text, { bold: true, children: ["Recommended (", sorted.length, ")"] }), _jsx(Box, { marginTop: 1, children: _jsx(List, { items: sorted, filterKey: (r) => `${r.name} ${r.type}`, renderItem: (r, sel, idx) => {
-                        if (sel)
-                            setCursor(idx);
+    return (_jsxs(Box, { flexDirection: "column", padding: 1, children: [_jsxs(Text, { bold: true, children: ["Recommended (", sorted.length, ")"] }), _jsx(Box, { marginTop: 1, children: _jsx(List, { items: sorted, filterKey: (r) => `${r.name} ${r.type}`, cursor: cursor, onCursorChange: (idx) => setCursor(idx), renderItem: (r, sel) => {
                         return `${sel ? '▶' : ' '} [${r.type.toUpperCase()}/${r.popularity}] ${r.name.padEnd(28)} ${r.description.slice(0, 50)}`;
                     }, onSelect: () => { } }) }), _jsx(Box, { marginTop: 1, children: _jsx(Text, { dimColor: true, children: "c/y:copy install cmd  /:filter" }) })] }));
 }
