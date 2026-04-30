@@ -2,7 +2,16 @@
 
 All notable changes to claude-config-manager are documented here.
 
+## [1.2.0] — 2026-04-30
 
+### Added
+- **In-CLI Ink TUI.** `claude-config` (no args) now launches a full-terminal UI mirroring the dashboard's browse + high-frequency actions: toggle plugin/MCP/skill enable, switch profile, copy session resume id, copy recommended install command. No browser or HTTP server required. Dashboard remains supported via `claude-config start` for demos and rich detail views. v2 will add heavy mutations (create/import/export profile, settings field edit, install/uninstall) and a `:` command palette.
+- **i18n shared between TUI and dashboard.** Locales relocated from `@ccm/dashboard/client/i18n` into `@ccm/core/i18n`; the dashboard re-exports.
+- **`McpManager.toggle()` and `SkillScanner.toggle()` in `@ccm/core`.** New methods mirror `PluginManager.toggle`'s pattern (write `enabledMcpServers` / `enabledSkills` map to `~/.claude/settings.json`). Adds `enabled?: boolean` field to `SkillDefinition`.
+- **`stdin.setRawMode(true) + resume()` on TUI mount.** Required for input to flow in PTY contexts (caught by Task 24 E2E).
+
+### Changed
+- Dashboard build pulls locales from `@ccm/core/i18n` subpath export instead of local files.
 
 ## [1.1.4] — 2026-04-28
 
