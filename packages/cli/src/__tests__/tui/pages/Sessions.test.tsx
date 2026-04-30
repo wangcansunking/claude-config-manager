@@ -111,4 +111,28 @@ describe('<Sessions/>', () => {
     expect(frame).toContain('how do I refactor this?');
     expect(frame).toContain('what about the tests?');
   });
+
+  it('falls back to truncated sessionId when name is missing', () => {
+    const stateWithoutName: any = {
+      sessions: [
+        {
+          sessionId: 'abcd1234-5678-90ab',
+          projectDir: '/foo',
+          name: '',
+          cwd: '/foo',
+          startedAt: 1746000000000,
+          alive: true,
+          pid: 999,
+          historyFile: '/home/.claude/projects/foo/abcd1234.jsonl',
+        },
+      ],
+      focused: 'main',
+      sessionHistories: new Map(),
+    };
+    const store = { getState: () => ({ pushToast: vi.fn(), loadSessionHistory: vi.fn() }) };
+    const { lastFrame } = render(<Sessions state={stateWithoutName} store={store as any} />);
+    const frame = lastFrame() ?? '';
+    expect(frame).toContain('abcd1234');
+    expect(frame).not.toContain('untitled');
+  });
 });

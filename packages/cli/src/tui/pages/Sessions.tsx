@@ -113,7 +113,7 @@ export function Sessions({ state, store }: { state: StoreState; store: CcmStore 
           ) : (
             visible.map((s, idx) => {
               const sel = idx === clampedCursor;
-              const displayName = s.name ?? 'untitled';
+              const displayName = s.name || s.sessionId.slice(0, 8);
               const status = s.alive ? '●' : '○';
               const prefix = sel ? '▶' : ' ';
               const project = s.projectDir || s.cwd || '(unknown)';
@@ -141,7 +141,7 @@ export function Sessions({ state, store }: { state: StoreState; store: CcmStore 
             <Box flexDirection="column">
               {/* Session header */}
               <Box flexDirection="column" marginBottom={1}>
-                <Text bold>{selectedSession.name ?? 'untitled'}</Text>
+                <Text bold>{selectedSession.name || selectedSession.sessionId.slice(0, 8)}</Text>
                 <Text dimColor>{selectedSession.projectDir || selectedSession.cwd || '(unknown)'}</Text>
                 <Box>
                   <Text dimColor>id: </Text>
