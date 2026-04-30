@@ -21,17 +21,17 @@ export function App() {
   const { stdin } = useStdin();
   const [showHelp, setShowHelp] = useState(false);
 
+  const lang = ((state.settings.env ?? {}) as Record<string, string>).CLAUDE_CONFIG_LANG ?? 'en';
+
+  useEffect(() => {
+    initI18n(lang as 'en' | 'zh');
+  }, [lang]);
+  useWatcher(store);
+  useAutoDismissToasts(store);
+
   useEffect(() => {
     void state.init();
   }, []);
-
-  useEffect(() => {
-    const env = (state.settings.env ?? {}) as Record<string, unknown>;
-    const lang = (env.CLAUDE_CONFIG_LANG === 'zh' ? 'zh' : 'en');
-    initI18n(lang);
-  }, [state.settings.env]);
-  useWatcher(store);
-  useAutoDismissToasts(store);
 
   useLayoutEffect(() => {
     // Ensure stdin is in flowing mode so 'data' events fire in a PTY context.
@@ -71,18 +71,19 @@ export function App() {
     <Box flexDirection="column" height={process.stdout.rows ?? 30}>
       <Header
         version="1.1.4"
-        language={((state.settings.env ?? {}) as Record<string, string>).CLAUDE_CONFIG_LANG ?? 'en'}
+        language={lang}
         dashboard={state.dashboardStatus}
       />
       {state.lastError?.section === 'settings' && (
         <SettingsErrorBar store={store} message={state.lastError.err.message} />
       )}
       <Box flexGrow={1}>
-        <Sidebar active={state.activePage}
+        <Sidebar key={lang}
+                 active={state.activePage}
                  focused={state.focused === 'sidebar'}
                  onSelect={(id) => state.setPage(id)}
                  onEnter={() => state.setFocus('main')} />
-        <Box flexGrow={1} flexDirection="column"
+        <Box key={lang} flexGrow={1} flexDirection="column"
              borderStyle="single"
              borderColor={state.focused === 'main' ? 'cyan' : 'gray'}>
           {pageNode}

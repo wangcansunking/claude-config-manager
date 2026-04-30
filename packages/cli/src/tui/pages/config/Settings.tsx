@@ -2,6 +2,7 @@ import { useState, useLayoutEffect, useMemo } from 'react';
 import { Box, Text, useStdin } from 'ink';
 import { copyToClipboard } from '../../util/clipboard.js';
 import type { CcmStore, StoreState } from '../../store.js';
+import { t } from '../../i18n.js';
 
 const MODEL_CHOICES = [
   'opus', 'opus[1m]', 'sonnet', 'sonnet[1m]', 'haiku',
@@ -20,7 +21,7 @@ export function Settings({ state, store }: { state: StoreState; store: CcmStore 
   const hooks = (settings.hooks as Record<string, unknown> | undefined) ?? {};
 
   const rows: SettingsRow[] = useMemo(() => [
-    { kind: 'model', label: 'model', value: String((settings.model as string | undefined) ?? '(unset)') },
+    { kind: 'model', label: 'model', value: String((settings.model as string | undefined) ?? t('common.unset')) },
     ...Object.entries(env).map(([k, v]) => ({ kind: 'env' as const, label: k, value: String(v) })),
     ...Object.keys(hooks).map((k) => ({ kind: 'hook' as const, label: k })),
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -64,7 +65,9 @@ export function Settings({ state, store }: { state: StoreState; store: CcmStore 
             const result = await copyToClipboard(text);
             store.getState().pushToast({
               kind: result.ok ? 'success' : 'error',
-              text: result.ok ? `Copied: ${text}` : 'Copy failed; install pbcopy/xclip',
+              text: result.ok
+                ? t('toasts.copied', { text })
+                : t('toasts.copy_failed'),
             });
           })();
         } else if (row.kind === 'hook') {
@@ -72,7 +75,9 @@ export function Settings({ state, store }: { state: StoreState; store: CcmStore 
             const result = await copyToClipboard(row.label);
             store.getState().pushToast({
               kind: result.ok ? 'success' : 'error',
-              text: result.ok ? `Copied: ${row.label}` : 'Copy failed; install pbcopy/xclip',
+              text: result.ok
+                ? t('toasts.copied', { text: row.label })
+                : t('toasts.copy_failed'),
             });
           })();
         }
@@ -104,8 +109,8 @@ export function Settings({ state, store }: { state: StoreState; store: CcmStore 
               <Text>{isSelected ? '▶ ' : '  '}</Text>
               <Text>{row.label.padEnd(LABEL_W)}</Text>
               {row.kind !== 'hook' && <Text>{(row as { value: string }).value}</Text>}
-              {row.kind === 'model' && <Text dimColor>   (Enter to cycle)</Text>}
-              {row.kind === 'env'   && <Text dimColor>   (Enter to copy KEY=value)</Text>}
+              {row.kind === 'model' && <Text dimColor>   {t('config.settings.model_cycle_hint')}</Text>}
+              {row.kind === 'env'   && <Text dimColor>   {t('config.settings.env_copy_hint')}</Text>}
             </Box>
           </Box>
         );
@@ -113,13 +118,13 @@ export function Settings({ state, store }: { state: StoreState; store: CcmStore 
       {envEmpty && (
         <Box marginTop={1} flexDirection="column">
           <Text bold>env</Text>
-          <Text dimColor>  (none)</Text>
+          <Text dimColor>  {t('common.none')}</Text>
         </Box>
       )}
       {hookEmpty && (
         <Box marginTop={1} flexDirection="column">
           <Text bold>hooks</Text>
-          <Text dimColor>  (none)</Text>
+          <Text dimColor>  {t('common.none')}</Text>
         </Box>
       )}
     </Box>

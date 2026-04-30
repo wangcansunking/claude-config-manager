@@ -2,6 +2,7 @@ import { useState, useLayoutEffect } from 'react';
 import { Box, Text, useStdin } from 'ink';
 import { List } from '../../components/List.js';
 import type { CcmStore, StoreState } from '../../store.js';
+import { t } from '../../i18n.js';
 
 export function McpServers({ state, store }: { state: StoreState; store: CcmStore }) {
   const [cursor, setCursor] = useState(0);
@@ -22,7 +23,7 @@ export function McpServers({ state, store }: { state: StoreState; store: CcmStor
 
   return (
     <Box flexDirection="column">
-      <Text>MCP servers ({state.mcpServers.length})</Text>
+      <Text>{t('config.mcp.title', { n: state.mcpServers.length })}</Text>
       <List
         items={state.mcpServers}
         filterKey={(m) => m.name}
@@ -36,7 +37,7 @@ export function McpServers({ state, store }: { state: StoreState; store: CcmStor
         onSelect={(m) => store.getState().toggleMcp(m.name)}
       />
       <Box marginTop={1}>
-        <Text dimColor>space:toggle  enter:toggle  /:filter</Text>
+        <Text dimColor>{t('config.mcp.hint')}</Text>
       </Box>
     </Box>
   );

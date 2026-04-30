@@ -3,6 +3,7 @@ import { Box, Text, useStdin } from 'ink';
 import { copyToClipboard } from '../util/clipboard.js';
 import { tildify } from '../util/path.js';
 import type { CcmStore, StoreState } from '../store.js';
+import { t } from '../i18n.js';
 
 function relativeTime(startedAt: number): string {
   if (!startedAt) return '';
@@ -10,11 +11,31 @@ function relativeTime(startedAt: number): string {
   const diffSec = Math.floor(diffMs / 1000);
   if (diffSec < 60) return 'just now';
   const diffMin = Math.floor(diffSec / 60);
-  if (diffMin < 60) return `${diffMin}m ago`;
+  if (diffMin < 60) return `${diffMin}m`;
   const diffHr = Math.floor(diffMin / 60);
-  if (diffHr < 24) return `${diffHr}h ago`;
+  if (diffHr < 24) return `${diffHr}h`;
   const diffDay = Math.floor(diffHr / 24);
-  return `${diffDay}d ago`;
+  return `${diffDay}d`;
+}
+
+function absoluteTime(startedAt: number): string {
+  if (!startedAt) return '';
+  const d = new Date(startedAt);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function truncatePath(p: string, maxLen: number): string {
+  if (p.length <= maxLen) return p;
+  // try to keep the last segment
+  const parts = p.split('/');
+  if (parts.length > 3) {
+    const last = parts[parts.length - 1];
+    const truncated = `~/.../` + last;
+    if (truncated.length <= maxLen) return truncated;
+    return truncated.slice(0, maxLen - 1) + '…';
+  }
+  return p.slice(0, maxLen - 1) + '…';
 }
 
 export function Sessions({ state, store }: { state: StoreState; store: CcmStore }) {
@@ -79,7 +100,9 @@ export function Sessions({ state, store }: { state: StoreState; store: CcmStore 
           const result = await copyToClipboard(s.sessionId);
           store.getState().pushToast({
             kind: result.ok ? 'success' : 'error',
-            text: result.ok ? `Resume id copied (${result.via})` : 'Copy failed; install pbcopy/xclip',
+            text: result.ok
+              ? t('sessions.copy_ok', { via: result.via })
+              : t('sessions.copy_fail'),
           });
         })();
       }
@@ -99,26 +122,29 @@ export function Sessions({ state, store }: { state: StoreState; store: CcmStore 
 
   return (
     <Box flexDirection="column" padding={1}>
-      <Text bold>Sessions ({state.sessions.length})</Text>
+      <Text bold>{t('sessions.title', { n: state.sessions.length })}</Text>
       {filterMode && (
         <Box>
           <Text color="cyan">/{query}</Text>
-          <Text dimColor> (Enter to confirm, Esc to clear)</Text>
+          <Text dimColor> {t('sessions.filter_hint')}</Text>
         </Box>
       )}
-      <Box marginTop={1} flexDirection="row">
-        {/* Left pane: list */}
-        <Box flexDirection="column" minWidth={36} marginRight={2}>
+      <Box marginTop={1} flexDirection="row" flexGrow={1}>
+        {/* Left pane: list — locked at 36 cols, shrinks last */}
+        <Box flexDirection="column" width={36} flexShrink={0} marginRight={2}>
           {visible.length === 0 ? (
-            <Text dimColor>(no matches)</Text>
+            <Text dimColor>{t('sessions.no_matches')}</Text>
           ) : (
             visible.map((s, idx) => {
               const sel = idx === clampedCursor;
               const displayName = s.name || s.sessionId.slice(0, 8);
               const status = s.alive ? '●' : '○';
               const prefix = sel ? '▶' : ' ';
-              const project = s.projectDir || s.cwd || '(unknown)';
+              const project = tildify(s.projectDir || s.cwd || t('common.unknown'));
               const when = relativeTime(s.startedAt);
+              // path budget: 36 - 4 (prefix+status+spaces) - 4 (" · Xh") = ~28
+              const truncPath = truncatePath(project, 28);
+              const timeStr = when ? ` · ${when}` : '';
               return (
                 <Box key={s.sessionId} flexDirection="column" marginBottom={0}>
                   <Box>
@@ -127,57 +153,77 @@ export function Sessions({ state, store }: { state: StoreState; store: CcmStore 
                     </Text>
                     <Text bold={sel}>{displayName}</Text>
                   </Box>
-                  <Text dimColor>     {tildify(project)}  {when}</Text>
+                  <Text dimColor>     {truncPath}{timeStr}</Text>
                 </Box>
               );
             })
           )}
         </Box>
 
-        {/* Right pane: detail */}
+        {/* Right pane: detail — absorbs remaining space */}
         <Box flexDirection="column" flexGrow={1} borderStyle="single" paddingX={1}>
           {!selectedSession ? (
-            <Text dimColor>(no session selected)</Text>
+            <Text dimColor>{t('sessions.no_selected')}</Text>
           ) : (
             <Box flexDirection="column">
               {/* Session header */}
               <Box flexDirection="column" marginBottom={1}>
-                <Text bold>{selectedSession.name || selectedSession.sessionId.slice(0, 8)}</Text>
-                <Text dimColor>{tildify(selectedSession.projectDir || selectedSession.cwd || '(unknown)')}</Text>
                 <Box>
-                  <Text dimColor>id: </Text>
-                  <Text>{selectedSession.sessionId.slice(0, 8)}</Text>
-                  <Text>  </Text>
+                  <Text dimColor>Name:       </Text>
+                  <Text bold>{selectedSession.name || selectedSession.sessionId.slice(0, 8)}</Text>
+                </Box>
+                <Box>
+                  <Text dimColor>Project:    </Text>
+                  <Text>{tildify(selectedSession.projectDir || selectedSession.cwd || t('common.unknown'))}</Text>
+                </Box>
+                <Box>
+                  <Text dimColor>Session ID: </Text>
+                  <Text>{selectedSession.sessionId}</Text>
+                </Box>
+                <Box>
+                  <Text dimColor>Started:    </Text>
+                  <Text>{relativeTime(selectedSession.startedAt)} ago ({absoluteTime(selectedSession.startedAt)})</Text>
+                </Box>
+                <Box>
+                  <Text dimColor>Status:     </Text>
                   {selectedSession.alive
-                    ? <Text color="green">● live</Text>
-                    : <Text dimColor>○ ended</Text>}
+                    ? <Text color="green">{t('sessions.status_live')}</Text>
+                    : <Text dimColor>{t('sessions.status_ended')}</Text>}
+                  {selectedSession.alive && (selectedSession as any).pid
+                    ? <Text dimColor> (pid {(selectedSession as any).pid})</Text>
+                    : null}
                 </Box>
               </Box>
 
               {/* Recent user inputs */}
-              <Text bold underline>Recent inputs</Text>
+              <Text bold underline>{t('sessions.recent_inputs')}</Text>
+              <Text dimColor>─────────────</Text>
               {!historyFile ? (
-                <Text dimColor>(no history file)</Text>
+                <Text dimColor>{t('sessions.no_history_file')}</Text>
               ) : !historyLoaded ? (
-                <Text dimColor>loading…</Text>
+                <Text dimColor>{t('common.loading_lower')}</Text>
               ) : !userInputs || userInputs.length === 0 ? (
-                <Text dimColor>(no input history found)</Text>
+                <Text dimColor>{t('sessions.no_input_history')}</Text>
               ) : (
                 <Box flexDirection="column" marginTop={1}>
                   {userInputs.map((entry, i) => (
-                    <Box key={i} marginBottom={1}>
-                      <Text dimColor>· </Text>
+                    <Box key={i}>
+                      <Text dimColor>{i + 1}. </Text>
                       <Text wrap="wrap">{entry.text}</Text>
                     </Box>
                   ))}
                 </Box>
               )}
+
+              <Box marginTop={1}>
+                <Text dimColor>{t('sessions.hint')}</Text>
+              </Box>
             </Box>
           )}
         </Box>
       </Box>
       <Box marginTop={1}>
-        <Text dimColor>y:copy resume id  /:filter  ?:help</Text>
+        <Text dimColor>{t('sessions.hint')}</Text>
       </Box>
     </Box>
   );

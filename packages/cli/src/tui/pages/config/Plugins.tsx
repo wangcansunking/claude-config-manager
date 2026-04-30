@@ -2,6 +2,7 @@ import { useState, useLayoutEffect } from 'react';
 import { Box, Text, useStdin } from 'ink';
 import { List } from '../../components/List.js';
 import type { CcmStore, StoreState } from '../../store.js';
+import { t } from '../../i18n.js';
 
 export function Plugins({ state, store }: { state: StoreState; store: CcmStore }) {
   const [cursor, setCursor] = useState(0);
@@ -22,7 +23,7 @@ export function Plugins({ state, store }: { state: StoreState; store: CcmStore }
 
   return (
     <Box flexDirection="column">
-      <Text>Plugins ({state.plugins.length} installed)</Text>
+      <Text>{t('config.plugins.title', { n: state.plugins.length })}</Text>
       <List
         items={state.plugins}
         filterKey={(p) => p.name}
@@ -36,7 +37,7 @@ export function Plugins({ state, store }: { state: StoreState; store: CcmStore }
         onSelect={(p) => store.getState().togglePlugin(p.name)}
       />
       <Box marginTop={1}>
-        <Text dimColor>space:toggle  enter:toggle  /:filter  ?:help</Text>
+        <Text dimColor>{t('config.plugins.hint')}</Text>
       </Box>
     </Box>
   );

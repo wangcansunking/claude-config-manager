@@ -4,6 +4,7 @@ import { Box, Text, useStdin } from 'ink';
 import { List } from '../components/List.js';
 import { EmptyState } from '../components/EmptyState.js';
 import { copyToClipboard } from '../util/clipboard.js';
+import { t } from '../i18n.js';
 export function Recommended({ state, store }) {
     const recs = state.recommendations;
     const [cursor, setCursor] = useState(0);
@@ -25,7 +26,9 @@ export function Recommended({ state, store }) {
                     const result = await copyToClipboard(r.installCommand);
                     store.getState().pushToast({
                         kind: result.ok ? 'success' : 'error',
-                        text: result.ok ? `Install command copied: ${r.installCommand}` : 'Copy failed',
+                        text: result.ok
+                            ? t('toasts.install_cmd_copied', { cmd: r.installCommand })
+                            : t('toasts.copy_failed'),
                     });
                 })();
             }
@@ -34,12 +37,12 @@ export function Recommended({ state, store }) {
         return () => { stdin?.off('data', handler); };
     }, [stdin, recs, state.focused, cursor, store]);
     if (recs.length === 0) {
-        return (_jsx(EmptyState, { title: "No recommendations yet", hint: "Run `/ccm-recommendations` in Claude Code to generate." }));
+        return (_jsx(EmptyState, { title: t('recommended.empty_title'), hint: t('recommended.empty_hint') }));
     }
     const sorted = getSortedRecs(recs);
-    return (_jsxs(Box, { flexDirection: "column", padding: 1, children: [_jsxs(Text, { bold: true, children: ["Recommended (", sorted.length, ")"] }), _jsx(Box, { marginTop: 1, children: _jsx(List, { items: sorted, filterKey: (r) => `${r.name} ${r.type}`, cursor: cursor, onCursorChange: (idx) => setCursor(idx), renderItem: (r, sel) => {
+    return (_jsxs(Box, { flexDirection: "column", padding: 1, children: [_jsx(Text, { bold: true, children: t('recommended.count_title', { n: sorted.length }) }), _jsx(Box, { marginTop: 1, children: _jsx(List, { items: sorted, filterKey: (r) => `${r.name} ${r.type}`, cursor: cursor, onCursorChange: (idx) => setCursor(idx), renderItem: (r, sel) => {
                         return `${sel ? '▶' : ' '} [${r.type.toUpperCase()}/${r.popularity}] ${r.name.padEnd(28)} ${r.description.slice(0, 50)}`;
-                    }, onSelect: () => { } }) }), _jsx(Box, { marginTop: 1, children: _jsx(Text, { dimColor: true, children: "c/y:copy install cmd  /:filter" }) })] }));
+                    }, onSelect: () => { } }) }), _jsx(Box, { marginTop: 1, children: _jsx(Text, { dimColor: true, children: t('recommended.copy_hint') }) })] }));
 }
 function getSortedRecs(recs) {
     const orderType = { mcp: 0, plugin: 1, skill: 2 };

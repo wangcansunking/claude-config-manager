@@ -2,6 +2,7 @@ import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 import { useState, useLayoutEffect, useMemo } from 'react';
 import { Box, Text, useStdin } from 'ink';
 import { copyToClipboard } from '../../util/clipboard.js';
+import { t } from '../../i18n.js';
 const MODEL_CHOICES = [
     'opus', 'opus[1m]', 'sonnet', 'sonnet[1m]', 'haiku',
 ];
@@ -12,7 +13,7 @@ export function Settings({ state, store }) {
     const env = settings.env ?? {};
     const hooks = settings.hooks ?? {};
     const rows = useMemo(() => [
-        { kind: 'model', label: 'model', value: String(settings.model ?? '(unset)') },
+        { kind: 'model', label: 'model', value: String(settings.model ?? t('common.unset')) },
         ...Object.entries(env).map(([k, v]) => ({ kind: 'env', label: k, value: String(v) })),
         ...Object.keys(hooks).map((k) => ({ kind: 'hook', label: k })),
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -57,7 +58,9 @@ export function Settings({ state, store }) {
                         const result = await copyToClipboard(text);
                         store.getState().pushToast({
                             kind: result.ok ? 'success' : 'error',
-                            text: result.ok ? `Copied: ${text}` : 'Copy failed; install pbcopy/xclip',
+                            text: result.ok
+                                ? t('toasts.copied', { text })
+                                : t('toasts.copy_failed'),
                         });
                     })();
                 }
@@ -66,7 +69,9 @@ export function Settings({ state, store }) {
                         const result = await copyToClipboard(row.label);
                         store.getState().pushToast({
                             kind: result.ok ? 'success' : 'error',
-                            text: result.ok ? `Copied: ${row.label}` : 'Copy failed; install pbcopy/xclip',
+                            text: result.ok
+                                ? t('toasts.copied', { text: row.label })
+                                : t('toasts.copy_failed'),
                         });
                     })();
                 }
@@ -81,7 +86,7 @@ export function Settings({ state, store }) {
                 const isSelected = cursor === idx;
                 const needsHeader = showHeader[idx];
                 const needsTopMargin = needsHeader && idx > 0;
-                return (_jsxs(Box, { flexDirection: "column", children: [needsHeader && (_jsx(Box, { marginTop: needsTopMargin ? 1 : 0, children: _jsx(Text, { bold: true, children: row.kind }) })), _jsxs(Box, { children: [_jsx(Text, { children: isSelected ? '▶ ' : '  ' }), _jsx(Text, { children: row.label.padEnd(LABEL_W) }), row.kind !== 'hook' && _jsx(Text, { children: row.value }), row.kind === 'model' && _jsx(Text, { dimColor: true, children: "   (Enter to cycle)" }), row.kind === 'env' && _jsx(Text, { dimColor: true, children: "   (Enter to copy KEY=value)" })] })] }, `${row.kind}-${row.label}`));
-            }), envEmpty && (_jsxs(Box, { marginTop: 1, flexDirection: "column", children: [_jsx(Text, { bold: true, children: "env" }), _jsx(Text, { dimColor: true, children: "  (none)" })] })), hookEmpty && (_jsxs(Box, { marginTop: 1, flexDirection: "column", children: [_jsx(Text, { bold: true, children: "hooks" }), _jsx(Text, { dimColor: true, children: "  (none)" })] }))] }));
+                return (_jsxs(Box, { flexDirection: "column", children: [needsHeader && (_jsx(Box, { marginTop: needsTopMargin ? 1 : 0, children: _jsx(Text, { bold: true, children: row.kind }) })), _jsxs(Box, { children: [_jsx(Text, { children: isSelected ? '▶ ' : '  ' }), _jsx(Text, { children: row.label.padEnd(LABEL_W) }), row.kind !== 'hook' && _jsx(Text, { children: row.value }), row.kind === 'model' && _jsxs(Text, { dimColor: true, children: ["   ", t('config.settings.model_cycle_hint')] }), row.kind === 'env' && _jsxs(Text, { dimColor: true, children: ["   ", t('config.settings.env_copy_hint')] })] })] }, `${row.kind}-${row.label}`));
+            }), envEmpty && (_jsxs(Box, { marginTop: 1, flexDirection: "column", children: [_jsx(Text, { bold: true, children: "env" }), _jsxs(Text, { dimColor: true, children: ["  ", t('common.none')] })] })), hookEmpty && (_jsxs(Box, { marginTop: 1, flexDirection: "column", children: [_jsx(Text, { bold: true, children: "hooks" }), _jsxs(Text, { dimColor: true, children: ["  ", t('common.none')] })] }))] }));
 }
 //# sourceMappingURL=Settings.js.map

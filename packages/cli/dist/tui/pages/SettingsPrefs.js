@@ -1,6 +1,7 @@
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 import { useState, useLayoutEffect } from 'react';
 import { Box, Text, useStdin } from 'ink';
+import { t } from '../i18n.js';
 const ROWS = ['language', 'theme', 'quit-confirm'];
 export function SettingsPrefs({ state, store }) {
     const [cursor, setCursor] = useState(0);
@@ -26,7 +27,7 @@ export function SettingsPrefs({ state, store }) {
                 if (row === 'theme' || row === 'quit-confirm') {
                     store.getState().pushToast({
                         kind: 'info',
-                        text: `${row}: TUI inherits terminal palette; coming in v2`,
+                        text: `${row}: ${t('settings_prefs.coming_soon')}`,
                     });
                 }
             }
@@ -35,6 +36,6 @@ export function SettingsPrefs({ state, store }) {
         return () => { stdin?.off('data', handler); };
     }, [stdin, cursor, lang, state.focused, store]);
     const ROW_LABEL_W = 14; // 'quit-confirm'.length (12) + 2 = 14
-    return (_jsxs(Box, { flexDirection: "column", padding: 1, children: [_jsx(Text, { bold: true, children: "TUI preferences" }), _jsxs(Box, { marginTop: 1, children: [_jsxs(Text, { children: [cursor === 0 ? '▶ ' : '  ', 'language'.padEnd(ROW_LABEL_W)] }), _jsx(Text, { children: lang }), _jsx(Text, { dimColor: true, children: "   (Enter to toggle en \u2194 zh)" })] }), _jsxs(Box, { children: [_jsxs(Text, { children: [cursor === 1 ? '▶ ' : '  ', 'theme'.padEnd(ROW_LABEL_W)] }), _jsx(Text, { dimColor: true, children: "auto (terminal palette)" })] }), _jsxs(Box, { children: [_jsxs(Text, { children: [cursor === 2 ? '▶ ' : '  ', 'quit-confirm'.padEnd(ROW_LABEL_W)] }), _jsx(Text, { dimColor: true, children: "off" })] })] }));
+    return (_jsxs(Box, { flexDirection: "column", padding: 1, children: [_jsx(Text, { bold: true, children: t('settings_prefs.title') }), _jsxs(Box, { marginTop: 1, children: [_jsxs(Text, { children: [cursor === 0 ? '▶ ' : '  ', t('settings_prefs.language').padEnd(ROW_LABEL_W)] }), _jsx(Text, { children: lang }), _jsxs(Text, { dimColor: true, children: ["   ", t('settings_prefs.toggle_hint')] })] }), _jsxs(Box, { children: [_jsxs(Text, { children: [cursor === 1 ? '▶ ' : '  ', t('settings_prefs.theme').padEnd(ROW_LABEL_W)] }), _jsx(Text, { dimColor: true, children: t('settings_prefs.theme_value') })] }), _jsxs(Box, { children: [_jsxs(Text, { children: [cursor === 2 ? '▶ ' : '  ', t('settings_prefs.quit_confirm').padEnd(ROW_LABEL_W)] }), _jsx(Text, { dimColor: true, children: t('settings_prefs.quit_value') })] })] }));
 }
 //# sourceMappingURL=SettingsPrefs.js.map

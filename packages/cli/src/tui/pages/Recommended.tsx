@@ -4,6 +4,7 @@ import { List } from '../components/List.js';
 import { EmptyState } from '../components/EmptyState.js';
 import { copyToClipboard } from '../util/clipboard.js';
 import type { CcmStore, StoreState } from '../store.js';
+import { t } from '../i18n.js';
 
 interface Reco {
   name: string;
@@ -35,7 +36,9 @@ export function Recommended({ state, store }: { state: StoreState; store: CcmSto
           const result = await copyToClipboard(r.installCommand);
           store.getState().pushToast({
             kind: result.ok ? 'success' : 'error',
-            text: result.ok ? `Install command copied: ${r.installCommand}` : 'Copy failed',
+            text: result.ok
+              ? t('toasts.install_cmd_copied', { cmd: r.installCommand })
+              : t('toasts.copy_failed'),
           });
         })();
       }
@@ -48,8 +51,8 @@ export function Recommended({ state, store }: { state: StoreState; store: CcmSto
   if (recs.length === 0) {
     return (
       <EmptyState
-        title="No recommendations yet"
-        hint="Run `/ccm-recommendations` in Claude Code to generate."
+        title={t('recommended.empty_title')}
+        hint={t('recommended.empty_hint')}
       />
     );
   }
@@ -58,7 +61,7 @@ export function Recommended({ state, store }: { state: StoreState; store: CcmSto
 
   return (
     <Box flexDirection="column" padding={1}>
-      <Text bold>Recommended ({sorted.length})</Text>
+      <Text bold>{t('recommended.count_title', { n: sorted.length })}</Text>
       <Box marginTop={1}>
         <List
           items={sorted}
@@ -72,7 +75,7 @@ export function Recommended({ state, store }: { state: StoreState; store: CcmSto
         />
       </Box>
       <Box marginTop={1}>
-        <Text dimColor>c/y:copy install cmd  /:filter</Text>
+        <Text dimColor>{t('recommended.copy_hint')}</Text>
       </Box>
     </Box>
   );

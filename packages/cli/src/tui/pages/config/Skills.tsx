@@ -2,6 +2,7 @@ import { useState, useLayoutEffect } from 'react';
 import { Box, Text, useStdin } from 'ink';
 import { List } from '../../components/List.js';
 import type { CcmStore, StoreState } from '../../store.js';
+import { t } from '../../i18n.js';
 
 export function Skills({ state, store }: { state: StoreState; store: CcmStore }) {
   const [cursor, setCursor] = useState(0);
@@ -22,7 +23,7 @@ export function Skills({ state, store }: { state: StoreState; store: CcmStore })
 
   return (
     <Box flexDirection="column">
-      <Text>Skills ({state.skills.length})</Text>
+      <Text>{t('config.skills.title', { n: state.skills.length })}</Text>
       <List
         items={state.skills}
         filterKey={(s) => s.name}
@@ -36,7 +37,7 @@ export function Skills({ state, store }: { state: StoreState; store: CcmStore })
         onSelect={(s) => store.getState().toggleSkill(s.name)}
       />
       <Box marginTop={1}>
-        <Text dimColor>space:toggle  enter:toggle  /:filter</Text>
+        <Text dimColor>{t('config.skills.hint')}</Text>
       </Box>
     </Box>
   );

@@ -1,7 +1,8 @@
 import { useLayoutEffect } from 'react';
 import { Box, Text, useStdin } from 'ink';
 import type { KeyHint } from '../keymap.js';
-import { GLOBAL_HINTS } from '../keymap.js';
+import { GLOBAL_HINT_DEFS } from '../keymap.js';
+import { t } from '../i18n.js';
 
 export function HelpOverlay({
   pageHints, onClose,
@@ -17,15 +18,20 @@ export function HelpOverlay({
     return () => { stdin?.off('data', handler); };
   }, [stdin, onClose]);
 
-  const all = [...GLOBAL_HINTS, ...(pageHints ?? [])];
   return (
     <Box
       borderStyle="round" borderColor="cyan"
       flexDirection="column" padding={1} marginX={4} marginY={2}
     >
-      <Text bold>Keymap (Esc to close)</Text>
-      {all.map((h, i) => (
+      <Text bold>{t('help.title')}</Text>
+      {GLOBAL_HINT_DEFS.map((h, i) => (
         <Box key={i}>
+          <Text color="cyan">{h.key.padEnd(10)}</Text>
+          <Text>{t(h.labelKey)}</Text>
+        </Box>
+      ))}
+      {(pageHints ?? []).map((h, i) => (
+        <Box key={`page-${i}`}>
           <Text color="cyan">{h.key.padEnd(10)}</Text>
           <Text>{h.label}</Text>
         </Box>

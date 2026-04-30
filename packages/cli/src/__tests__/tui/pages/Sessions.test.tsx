@@ -1,10 +1,15 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render } from 'ink-testing-library';
 import { Sessions } from '../../../tui/pages/Sessions.js';
+import { initI18n } from '../../../tui/i18n.js';
 
 vi.mock('../../../tui/util/clipboard.js', () => ({
   copyToClipboard: vi.fn().mockResolvedValue({ ok: true, via: 'pbcopy' }),
 }));
+
+beforeEach(() => {
+  initI18n('en');
+});
 
 const state: any = {
   sessions: [
@@ -134,5 +139,30 @@ describe('<Sessions/>', () => {
     const frame = lastFrame() ?? '';
     expect(frame).toContain('abcd1234');
     expect(frame).not.toContain('untitled');
+  });
+
+  it('detail pane shows full sessionId', () => {
+    const fullId = 'abcd1234-5678-90ab-cdef-ghij';
+    const stateWithFullId: any = {
+      sessions: [
+        {
+          sessionId: fullId,
+          projectDir: '/foo',
+          name: 'my-session',
+          cwd: '/foo',
+          startedAt: 1746000000000,
+          alive: true,
+          pid: 999,
+          historyFile: '/home/.claude/projects/foo/abcd1234.jsonl',
+        },
+      ],
+      focused: 'main',
+      sessionHistories: new Map(),
+    };
+    const store = { getState: () => ({ pushToast: vi.fn(), loadSessionHistory: vi.fn() }) };
+    const { lastFrame } = render(<Sessions state={stateWithFullId} store={store as any} />);
+    const frame = lastFrame() ?? '';
+    // Full session ID should appear in the detail pane
+    expect(frame).toContain(fullId);
   });
 });

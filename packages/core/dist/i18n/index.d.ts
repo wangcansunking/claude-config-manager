@@ -9,6 +9,21 @@ export declare const locales: {
             configuration: string;
             profiles: string;
             activity: string;
+            overview: string;
+            config: string;
+            sessions: string;
+            recommend: string;
+            settings: string;
+            profiles_wip: string;
+        };
+        footer: {
+            nav: string;
+            enter: string;
+            back: string;
+            switch_focus: string;
+            filter: string;
+            help: string;
+            quit: string;
         };
         theme: {
             auto: string;
@@ -37,6 +52,15 @@ export declare const locales: {
             active: string;
             configured: string;
             envSet: string;
+            active_profile: string;
+            plugins_count: string;
+            mcps_count: string;
+            skills_count: string;
+            commands_count: string;
+            recent_sessions: string;
+            dashboard: string;
+            running: string;
+            stopped: string;
         };
         recommended: {
             title: string;
@@ -58,6 +82,10 @@ export declare const locales: {
             findMoreBody: string;
             findMorePlaceholder: string;
             findMoreEmpty: string;
+            count_title: string;
+            copy_hint: string;
+            empty_title: string;
+            empty_hint: string;
         };
         config: {
             tabs: {
@@ -93,6 +121,7 @@ export declare const locales: {
                 copyCommand: string;
                 installNotice: string;
                 marketplaceStaleNotice: string;
+                hint: string;
             };
             mcp: {
                 title: string;
@@ -103,6 +132,7 @@ export declare const locales: {
                 install: string;
                 installCopyNotice: string;
                 noResults: string;
+                hint: string;
             };
             skills: {
                 title: string;
@@ -113,6 +143,7 @@ export declare const locales: {
                 edit: string;
                 preview: string;
                 noResults: string;
+                hint: string;
             };
             commands: {
                 title: string;
@@ -134,10 +165,13 @@ export declare const locales: {
                 envHide: string;
                 envRemove: string;
                 noEnv: string;
+                model_cycle_hint: string;
+                env_copy_hint: string;
             };
         };
         profiles: {
             title: string;
+            wip_note: string;
             tabs: {
                 profiles: string;
                 exportImport: string;
@@ -155,6 +189,50 @@ export declare const locales: {
             running: string;
             resume: string;
         };
+        sessions: {
+            title: string;
+            filter_hint: string;
+            no_matches: string;
+            no_selected: string;
+            no_history_file: string;
+            no_input_history: string;
+            recent_inputs: string;
+            hint: string;
+            status_live: string;
+            status_ended: string;
+            id_prefix: string;
+            copy_ok: string;
+            copy_fail: string;
+        };
+        settings_prefs: {
+            title: string;
+            language: string;
+            theme: string;
+            quit_confirm: string;
+            toggle_hint: string;
+            theme_value: string;
+            quit_value: string;
+            coming_soon: string;
+        };
+        modals: {
+            switch_profile_title: string;
+            switch_profile_body: string;
+            confirm: string;
+            cancel: string;
+        };
+        toasts: {
+            enabled: string;
+            disabled: string;
+            switched_profile: string;
+            model_set: string;
+            language_set: string;
+            copied: string;
+            copy_failed: string;
+            switch_failed: string;
+            failed_toggle: string;
+            failed_generic: string;
+            install_cmd_copied: string;
+        };
         common: {
             close: string;
             cancel: string;
@@ -166,6 +244,24 @@ export declare const locales: {
             copied: string;
             loading: string;
             search: string;
+            none: string;
+            unset: string;
+            no_matches: string;
+            loading_lower: string;
+            unknown: string;
+        };
+        errors: {
+            settings_unreadable: string;
+            non_tty: string;
+            too_small: string;
+        };
+        help: {
+            title: string;
+        };
+        header: {
+            dashboard: string;
+            running: string;
+            stopped: string;
         };
     };
     readonly zh: {
@@ -175,6 +271,21 @@ export declare const locales: {
             configuration: string;
             profiles: string;
             activity: string;
+            overview: string;
+            config: string;
+            sessions: string;
+            recommend: string;
+            settings: string;
+            profiles_wip: string;
+        };
+        footer: {
+            nav: string;
+            enter: string;
+            back: string;
+            switch_focus: string;
+            filter: string;
+            help: string;
+            quit: string;
         };
         theme: {
             auto: string;
@@ -203,6 +314,15 @@ export declare const locales: {
             active: string;
             configured: string;
             envSet: string;
+            active_profile: string;
+            plugins_count: string;
+            mcps_count: string;
+            skills_count: string;
+            commands_count: string;
+            recent_sessions: string;
+            dashboard: string;
+            running: string;
+            stopped: string;
         };
         recommended: {
             title: string;
@@ -224,6 +344,10 @@ export declare const locales: {
             findMoreBody: string;
             findMorePlaceholder: string;
             findMoreEmpty: string;
+            count_title: string;
+            copy_hint: string;
+            empty_title: string;
+            empty_hint: string;
         };
         config: {
             tabs: {
@@ -259,6 +383,7 @@ export declare const locales: {
                 copyCommand: string;
                 installNotice: string;
                 marketplaceStaleNotice: string;
+                hint: string;
             };
             mcp: {
                 title: string;
@@ -269,6 +394,7 @@ export declare const locales: {
                 install: string;
                 installCopyNotice: string;
                 noResults: string;
+                hint: string;
             };
             skills: {
                 title: string;
@@ -279,6 +405,7 @@ export declare const locales: {
                 edit: string;
                 preview: string;
                 noResults: string;
+                hint: string;
             };
             commands: {
                 title: string;
@@ -300,10 +427,13 @@ export declare const locales: {
                 envHide: string;
                 envRemove: string;
                 noEnv: string;
+                model_cycle_hint: string;
+                env_copy_hint: string;
             };
         };
         profiles: {
             title: string;
+            wip_note: string;
             tabs: {
                 profiles: string;
                 exportImport: string;
@@ -321,6 +451,50 @@ export declare const locales: {
             running: string;
             resume: string;
         };
+        sessions: {
+            title: string;
+            filter_hint: string;
+            no_matches: string;
+            no_selected: string;
+            no_history_file: string;
+            no_input_history: string;
+            recent_inputs: string;
+            hint: string;
+            status_live: string;
+            status_ended: string;
+            id_prefix: string;
+            copy_ok: string;
+            copy_fail: string;
+        };
+        settings_prefs: {
+            title: string;
+            language: string;
+            theme: string;
+            quit_confirm: string;
+            toggle_hint: string;
+            theme_value: string;
+            quit_value: string;
+            coming_soon: string;
+        };
+        modals: {
+            switch_profile_title: string;
+            switch_profile_body: string;
+            confirm: string;
+            cancel: string;
+        };
+        toasts: {
+            enabled: string;
+            disabled: string;
+            switched_profile: string;
+            model_set: string;
+            language_set: string;
+            copied: string;
+            copy_failed: string;
+            switch_failed: string;
+            failed_toggle: string;
+            failed_generic: string;
+            install_cmd_copied: string;
+        };
         common: {
             close: string;
             cancel: string;
@@ -332,6 +506,24 @@ export declare const locales: {
             copied: string;
             loading: string;
             search: string;
+            none: string;
+            unset: string;
+            no_matches: string;
+            loading_lower: string;
+            unknown: string;
+        };
+        errors: {
+            settings_unreadable: string;
+            non_tty: string;
+            too_small: string;
+        };
+        help: {
+            title: string;
+        };
+        header: {
+            dashboard: string;
+            running: string;
+            stopped: string;
         };
     };
 };

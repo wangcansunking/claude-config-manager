@@ -1,16 +1,17 @@
 import { useLayoutEffect } from 'react';
 import { Box, Text, useStdin } from 'ink';
 import type { PageId } from '../store.js';
+import { t } from '../i18n.js';
 
-interface Item { id: PageId; label: string; key: string }
+interface Item { id: PageId; labelKey: string; key: string }
 
 const ITEMS: Item[] = [
-  { id: 'overview',      label: 'Overview',  key: '1' },
-  { id: 'config',        label: 'Config',    key: '2' },
-  { id: 'sessions',      label: 'Sessions',  key: '3' },
-  { id: 'recommended',   label: 'Recommend', key: '4' },
-  { id: 'settingsPrefs', label: 'Settings',  key: '5' },
-  { id: 'profiles',      label: 'Profiles (WIP)', key: '6' },
+  { id: 'overview',      labelKey: 'nav.overview',      key: '1' },
+  { id: 'config',        labelKey: 'nav.config',        key: '2' },
+  { id: 'sessions',      labelKey: 'nav.sessions',      key: '3' },
+  { id: 'recommended',   labelKey: 'nav.recommend',     key: '4' },
+  { id: 'settingsPrefs', labelKey: 'nav.settings',      key: '5' },
+  { id: 'profiles',      labelKey: 'nav.profiles_wip',  key: '6' },
 ];
 
 export function Sidebar({
@@ -50,12 +51,12 @@ export function Sidebar({
     <Box
       flexDirection="column" borderStyle="single"
       borderColor={focused ? 'cyan' : 'gray'}
-      paddingX={1} width={16}
+      paddingX={1} width={16} flexShrink={0}
     >
       {ITEMS.map((it) => {
         const sel = it.id === active;
         return (
-          <Text key={it.id} bold={sel}>{sel ? '▶ ' : '  '}{it.label}</Text>
+          <Text key={it.id} bold={sel}>{sel ? '▶ ' : '  '}{t(it.labelKey)}</Text>
         );
       })}
     </Box>

@@ -4,7 +4,22 @@
         "recommended": "Recommended",
         "configuration": "Configuration",
         "profiles": "Profiles",
-        "activity": "Activity"
+        "activity": "Activity",
+        "overview": "Overview",
+        "config": "Config",
+        "sessions": "Sessions",
+        "recommend": "Recommend",
+        "settings": "Settings",
+        "profiles_wip": "Profiles (WIP)"
+    },
+    "footer": {
+        "nav": "nav",
+        "enter": "enter",
+        "back": "back",
+        "switch_focus": "switch focus",
+        "filter": "filter",
+        "help": "help",
+        "quit": "quit"
     },
     "theme": {
         "auto": "Auto",
@@ -32,7 +47,16 @@
         "hooksNone": "None",
         "active": "{{count}} active",
         "configured": "{{count}} configured",
-        "envSet": "{{count}} set"
+        "envSet": "{{count}} set",
+        "active_profile": "Active profile:",
+        "plugins_count": "Plugins: {{n}}",
+        "mcps_count": "MCPs: {{n}}",
+        "skills_count": "Skills: {{n}}",
+        "commands_count": "Commands: {{n}}",
+        "recent_sessions": "Recent sessions",
+        "dashboard": "Dashboard:",
+        "running": "● running",
+        "stopped": "○ stopped"
     },
     "recommended": {
         "title": "Recommended",
@@ -53,7 +77,11 @@
         "findMore": "Find More",
         "findMoreBody": "Search skills.sh and MCP registries to discover more tools.",
         "findMorePlaceholder": "Search skills and MCP servers…",
-        "findMoreEmpty": "No results. Try a different keyword."
+        "findMoreEmpty": "No results. Try a different keyword.",
+        "count_title": "Recommended ({{n}})",
+        "copy_hint": "c/y:copy install cmd  /:filter",
+        "empty_title": "No recommendations yet",
+        "empty_hint": "Run `/ccm-recommendations` in Claude Code to generate."
     },
     "config": {
         "tabs": {
@@ -77,7 +105,7 @@
             "clickToView": "— click to view"
         },
         "plugins": {
-            "title": "Plugins",
+            "title": "Plugins ({{n}} installed)",
             "installed": "Installed",
             "marketplace": "Marketplace",
             "manageMarketplaces": "Manage Marketplaces",
@@ -88,30 +116,33 @@
             "disabled": "Disabled",
             "copyCommand": "Click to copy",
             "installNotice": "Plugin install must be run inside Claude Code. The command is copied to your clipboard.",
-            "marketplaceStaleNotice": "Dashboard cannot fetch marketplace updates. Run `/plugin marketplace update` in Claude Code — command copied to clipboard."
+            "marketplaceStaleNotice": "Dashboard cannot fetch marketplace updates. Run `/plugin marketplace update` in Claude Code — command copied to clipboard.",
+            "hint": "space:toggle  enter:toggle  /:filter  ?:help"
         },
         "mcp": {
-            "title": "MCP Servers",
+            "title": "MCP servers ({{n}})",
             "installed": "Installed",
             "store": "Store",
             "searchInstalledPlaceholder": "Search MCP servers…",
             "searchStorePlaceholder": "Search the MCP store…",
             "install": "Install",
             "installCopyNotice": "Install command copied — paste it into your terminal.",
-            "noResults": "No MCP servers match your search."
+            "noResults": "No MCP servers match your search.",
+            "hint": "space:toggle  enter:toggle  /:filter"
         },
         "skills": {
-            "title": "Skills",
+            "title": "Skills ({{n}})",
             "searchPlaceholder": "Search skills…",
             "installed": "Installed",
             "store": "Store",
             "top": "Top",
             "edit": "Edit",
             "preview": "Preview",
-            "noResults": "No skills match your search."
+            "noResults": "No skills match your search.",
+            "hint": "space:toggle  enter:toggle  /:filter"
         },
         "commands": {
-            "title": "Commands",
+            "title": "Commands ({{n}}) — read-only in v1",
             "searchPlaceholder": "Search commands…",
             "noResults": "No commands match your search."
         },
@@ -129,11 +160,14 @@
             "envShow": "Show",
             "envHide": "Hide",
             "envRemove": "Remove",
-            "noEnv": "No environment variables set."
+            "noEnv": "No environment variables set.",
+            "model_cycle_hint": "(Enter to cycle)",
+            "env_copy_hint": "(Enter to copy KEY=value)"
         }
     },
     "profiles": {
         "title": "Profiles",
+        "wip_note": "(work in progress)",
         "tabs": {
             "profiles": "Profiles",
             "exportImport": "Export / Import"
@@ -151,6 +185,50 @@
         "running": "Running",
         "resume": "Resume"
     },
+    "sessions": {
+        "title": "Sessions ({{n}})",
+        "filter_hint": "(Enter to confirm, Esc to clear)",
+        "no_matches": "(no matches)",
+        "no_selected": "(no session selected)",
+        "no_history_file": "(no history file)",
+        "no_input_history": "(no input history found)",
+        "recent_inputs": "Recent inputs",
+        "hint": "y:copy resume id  /:filter  ?:help",
+        "status_live": "● live",
+        "status_ended": "○ ended",
+        "id_prefix": "id: ",
+        "copy_ok": "Resume id copied ({{via}})",
+        "copy_fail": "Copy failed; install pbcopy/xclip"
+    },
+    "settings_prefs": {
+        "title": "TUI preferences",
+        "language": "language",
+        "theme": "theme",
+        "quit_confirm": "quit-confirm",
+        "toggle_hint": "(Enter to toggle en ↔ zh)",
+        "theme_value": "auto (terminal palette)",
+        "quit_value": "off",
+        "coming_soon": "TUI inherits terminal palette; coming in v2"
+    },
+    "modals": {
+        "switch_profile_title": "Switch to {{name}}?",
+        "switch_profile_body": "Active profile becomes \"{{name}}\". This rewrites ~/.claude/settings.json.",
+        "confirm": "Confirm",
+        "cancel": "Cancel"
+    },
+    "toasts": {
+        "enabled": "Enabled {{name}}",
+        "disabled": "Disabled {{name}}",
+        "switched_profile": "Switched to {{name}}",
+        "model_set": "Model: {{model}}",
+        "language_set": "Language: {{lang}}",
+        "copied": "Copied: {{text}}",
+        "copy_failed": "Copy failed; install pbcopy/xclip",
+        "switch_failed": "Switch failed: {{err}}",
+        "failed_toggle": "Failed to toggle {{name}}: {{err}}",
+        "failed_generic": "Failed: {{err}}",
+        "install_cmd_copied": "Install command copied: {{cmd}}"
+    },
     "common": {
         "close": "Close",
         "cancel": "Cancel",
@@ -161,6 +239,24 @@
         "copy": "Copy",
         "copied": "Copied",
         "loading": "Loading…",
-        "search": "Search"
+        "search": "Search",
+        "none": "(none)",
+        "unset": "(unset)",
+        "no_matches": "(no matches)",
+        "loading_lower": "loading…",
+        "unknown": "(unknown)"
+    },
+    "errors": {
+        "settings_unreadable": "Settings unreadable: {{message}}",
+        "non_tty": "claude-config requires a TTY. Use subcommands for scripted workflows: claude-config --help",
+        "too_small": "claude-config TUI requires terminal ≥ {{cols}}×{{rows}}. Resize and retry."
+    },
+    "help": {
+        "title": "Keymap (Esc to close)"
+    },
+    "header": {
+        "dashboard": "dashboard",
+        "running": "running",
+        "stopped": "stopped"
     }
 }

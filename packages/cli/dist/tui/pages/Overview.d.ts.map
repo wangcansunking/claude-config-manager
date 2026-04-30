@@ -1,1 +1,1 @@
-{"version":3,"file":"Overview.d.ts","sourceRoot":"","sources":["../../../src/tui/pages/Overview.tsx"],"names":[],"mappings":"AAEA,OAAO,KAAK,EAAE,UAAU,EAAE,MAAM,aAAa,CAAC;AAE9C,wBAAgB,QAAQ,CAAC,EAAE,KAAK,EAAE,EAAE;IAAE,KAAK,EAAE,UAAU,CAAA;CAAE,2CA6BxD"}
+{"version":3,"file":"Overview.d.ts","sourceRoot":"","sources":["../../../src/tui/pages/Overview.tsx"],"names":[],"mappings":"AAEA,OAAO,KAAK,EAAE,UAAU,EAAE,MAAM,aAAa,CAAC;AAG9C,wBAAgB,QAAQ,CAAC,EAAE,KAAK,EAAE,EAAE;IAAE,KAAK,EAAE,UAAU,CAAA;CAAE,2CA6BxD"}

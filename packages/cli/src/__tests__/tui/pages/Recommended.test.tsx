@@ -1,10 +1,15 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render } from 'ink-testing-library';
 import { Recommended } from '../../../tui/pages/Recommended.js';
+import { initI18n } from '../../../tui/i18n.js';
 
 vi.mock('../../../tui/util/clipboard.js', () => ({
   copyToClipboard: vi.fn().mockResolvedValue({ ok: true, via: 'pbcopy' }),
 }));
+
+beforeEach(() => {
+  initI18n('en');
+});
 
 const state: any = {
   recommendations: [

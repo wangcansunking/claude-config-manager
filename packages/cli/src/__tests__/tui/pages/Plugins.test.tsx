@@ -1,6 +1,9 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render } from 'ink-testing-library';
 import { Plugins } from '../../../tui/pages/config/Plugins.js';
+import { initI18n } from '../../../tui/i18n.js';
+
+beforeEach(() => { initI18n('en'); });
 
 const fakeStore: any = {
   getState: () => ({

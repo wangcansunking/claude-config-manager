@@ -1,6 +1,7 @@
 import { useState, useLayoutEffect } from 'react';
 import { Box, Text, useStdin } from 'ink';
 import type { CcmStore, StoreState } from '../store.js';
+import { t } from '../i18n.js';
 
 const ROWS = ['language', 'theme', 'quit-confirm'] as const;
 type Row = typeof ROWS[number];
@@ -28,7 +29,7 @@ export function SettingsPrefs({ state, store }: { state: StoreState; store: CcmS
         if (row === 'theme' || row === 'quit-confirm') {
           store.getState().pushToast({
             kind: 'info',
-            text: `${row}: TUI inherits terminal palette; coming in v2`,
+            text: `${row}: ${t('settings_prefs.coming_soon')}`,
           });
         }
       }
@@ -42,22 +43,22 @@ export function SettingsPrefs({ state, store }: { state: StoreState; store: CcmS
 
   return (
     <Box flexDirection="column" padding={1}>
-      <Text bold>TUI preferences</Text>
+      <Text bold>{t('settings_prefs.title')}</Text>
 
       <Box marginTop={1}>
-        <Text>{cursor === 0 ? '▶ ' : '  '}{'language'.padEnd(ROW_LABEL_W)}</Text>
+        <Text>{cursor === 0 ? '▶ ' : '  '}{t('settings_prefs.language').padEnd(ROW_LABEL_W)}</Text>
         <Text>{lang}</Text>
-        <Text dimColor>   (Enter to toggle en ↔ zh)</Text>
+        <Text dimColor>   {t('settings_prefs.toggle_hint')}</Text>
       </Box>
 
       <Box>
-        <Text>{cursor === 1 ? '▶ ' : '  '}{'theme'.padEnd(ROW_LABEL_W)}</Text>
-        <Text dimColor>auto (terminal palette)</Text>
+        <Text>{cursor === 1 ? '▶ ' : '  '}{t('settings_prefs.theme').padEnd(ROW_LABEL_W)}</Text>
+        <Text dimColor>{t('settings_prefs.theme_value')}</Text>
       </Box>
 
       <Box>
-        <Text>{cursor === 2 ? '▶ ' : '  '}{'quit-confirm'.padEnd(ROW_LABEL_W)}</Text>
-        <Text dimColor>off</Text>
+        <Text>{cursor === 2 ? '▶ ' : '  '}{t('settings_prefs.quit_confirm').padEnd(ROW_LABEL_W)}</Text>
+        <Text dimColor>{t('settings_prefs.quit_value')}</Text>
       </Box>
     </Box>
   );

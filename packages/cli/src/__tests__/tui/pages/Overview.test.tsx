@@ -1,6 +1,11 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { render } from 'ink-testing-library';
 import { Overview } from '../../../tui/pages/Overview.js';
+import { initI18n } from '../../../tui/i18n.js';
+
+beforeEach(() => {
+  initI18n('en');
+});
 
 const baseState: any = {
   activeProfile: 'work',

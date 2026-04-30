@@ -3,6 +3,7 @@ import { homedir } from 'os';
 import { join } from 'path';
 import { readFile } from 'fs/promises';
 import { PluginManager, McpManager, SkillScanner, ConfigManager, ProfileManager, SessionManager, getClaudeHome, } from '@ccm/core';
+import { t } from './i18n.js';
 export function createStore() {
     const home = getClaudeHome();
     const pluginMgr = new PluginManager(home);
@@ -177,7 +178,7 @@ export function createStore() {
                 await pluginMgr.toggle(name, next);
                 _get().pushToast({
                     kind: 'success',
-                    text: `${next ? 'Enabled' : 'Disabled'} ${name}`,
+                    text: next ? t('toasts.enabled', { name }) : t('toasts.disabled', { name }),
                 });
             }
             catch (e) {
@@ -187,7 +188,7 @@ export function createStore() {
                 }));
                 _get().pushToast({
                     kind: 'error',
-                    text: `Failed to toggle ${name}: ${e.message}`,
+                    text: t('toasts.failed_toggle', { name, err: e.message }),
                 });
             }
             finally {
@@ -209,14 +210,14 @@ export function createStore() {
             }));
             try {
                 await mcpMgr.toggle(name, next);
-                _get().pushToast({ kind: 'success', text: `${next ? 'Enabled' : 'Disabled'} ${name}` });
+                _get().pushToast({ kind: 'success', text: next ? t('toasts.enabled', { name }) : t('toasts.disabled', { name }) });
             }
             catch (e) {
                 set((s) => ({
                     mcpServers: s.mcpServers.map((m) => m.name === name ? { ...m, enabled: cur.enabled } : m),
                     lastError: { section: 'mcpServers', err: e },
                 }));
-                _get().pushToast({ kind: 'error', text: `Failed: ${e.message}` });
+                _get().pushToast({ kind: 'error', text: t('toasts.failed_generic', { err: e.message }) });
             }
             finally {
                 set((s) => {
@@ -239,14 +240,14 @@ export function createStore() {
             }));
             try {
                 await skillScan.toggle(cur.name, next);
-                _get().pushToast({ kind: 'success', text: `${next ? 'Enabled' : 'Disabled'} ${cur.name}` });
+                _get().pushToast({ kind: 'success', text: next ? t('toasts.enabled', { name: cur.name }) : t('toasts.disabled', { name: cur.name }) });
             }
             catch (e) {
                 set((s) => ({
                     skills: s.skills.map((sk) => sk.name === id ? { ...sk, enabled: curEnabled } : sk),
                     lastError: { section: 'skills', err: e },
                 }));
-                _get().pushToast({ kind: 'error', text: `Failed: ${e.message}` });
+                _get().pushToast({ kind: 'error', text: t('toasts.failed_generic', { err: e.message }) });
             }
             finally {
                 set((s) => {
@@ -264,11 +265,11 @@ export function createStore() {
             }));
             try {
                 await profileMgr.activate(name);
-                _get().pushToast({ kind: 'success', text: `Switched to ${name}` });
+                _get().pushToast({ kind: 'success', text: t('toasts.switched_profile', { name }) });
             }
             catch (e) {
                 set({ activeProfile: prev, lastError: { section: 'profiles', err: e } });
-                _get().pushToast({ kind: 'error', text: `Switch failed: ${e.message}` });
+                _get().pushToast({ kind: 'error', text: t('toasts.switch_failed', { err: e.message }) });
             }
             finally {
                 set((s) => {
@@ -283,7 +284,7 @@ export function createStore() {
             set((s) => ({ settings: { ...s.settings, model } }));
             try {
                 await configMgr.setModel(model);
-                _get().pushToast({ kind: 'success', text: `Model: ${model}` });
+                _get().pushToast({ kind: 'success', text: t('toasts.model_set', { model }) });
             }
             catch (e) {
                 set((s) => ({ settings: { ...s.settings, model: prev }, lastError: { section: 'settings', err: e } }));
@@ -296,7 +297,7 @@ export function createStore() {
             set((s) => ({ settings: { ...s.settings, env: { ...env, CLAUDE_CONFIG_LANG: lang } } }));
             try {
                 await configMgr.setEnvVar('CLAUDE_CONFIG_LANG', lang);
-                _get().pushToast({ kind: 'success', text: `Language: ${lang}` });
+                _get().pushToast({ kind: 'success', text: t('toasts.language_set', { lang }) });
             }
             catch (e) {
                 set((s) => ({
