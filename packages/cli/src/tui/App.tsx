@@ -1,6 +1,7 @@
-import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useReducer, useState } from 'react';
 import { Box, useStdin } from 'ink';
 import { useStore } from 'zustand';
+import i18next from 'i18next';
 import { Header } from './components/Header.js';
 import { SettingsErrorBar } from './components/SettingsErrorBar.js';
 import { Sidebar } from './components/Sidebar.js';
@@ -22,6 +23,13 @@ export function App() {
   const [showHelp, setShowHelp] = useState(false);
 
   const lang = ((state.settings.env ?? {}) as Record<string, string>).CLAUDE_CONFIG_LANG ?? 'en';
+
+  const [, forceUpdate] = useReducer((x: number) => x + 1, 0);
+  useEffect(() => {
+    const onLangChange = () => forceUpdate();
+    i18next.on('languageChanged', onLangChange);
+    return () => { i18next.off('languageChanged', onLangChange); };
+  }, []);
 
   useEffect(() => {
     initI18n(lang as 'en' | 'zh');
@@ -78,12 +86,12 @@ export function App() {
         <SettingsErrorBar store={store} message={state.lastError.err.message} />
       )}
       <Box flexGrow={1}>
-        <Sidebar key={lang}
+        <Sidebar
                  active={state.activePage}
                  focused={state.focused === 'sidebar'}
                  onSelect={(id) => state.setPage(id)}
                  onEnter={() => state.setFocus('main')} />
-        <Box key={lang} flexGrow={1} flexDirection="column"
+        <Box flexGrow={1} flexDirection="column"
              borderStyle="single"
              borderColor={state.focused === 'main' ? 'cyan' : 'gray'}>
           {pageNode}

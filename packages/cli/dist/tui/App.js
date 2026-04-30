@@ -1,7 +1,8 @@
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
-import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useReducer, useState } from 'react';
 import { Box, useStdin } from 'ink';
 import { useStore } from 'zustand';
+import i18next from 'i18next';
 import { Header } from './components/Header.js';
 import { SettingsErrorBar } from './components/SettingsErrorBar.js';
 import { Sidebar } from './components/Sidebar.js';
@@ -20,6 +21,12 @@ export function App() {
     const { stdin } = useStdin();
     const [showHelp, setShowHelp] = useState(false);
     const lang = (state.settings.env ?? {}).CLAUDE_CONFIG_LANG ?? 'en';
+    const [, forceUpdate] = useReducer((x) => x + 1, 0);
+    useEffect(() => {
+        const onLangChange = () => forceUpdate();
+        i18next.on('languageChanged', onLangChange);
+        return () => { i18next.off('languageChanged', onLangChange); };
+    }, []);
     useEffect(() => {
         initI18n(lang);
     }, [lang]);
@@ -61,6 +68,6 @@ export function App() {
         return () => { stdin?.off('data', handler); };
     }, [stdin, state]);
     const pageNode = useMemo(() => renderPage(state, store), [state]);
-    return (_jsxs(Box, { flexDirection: "column", height: process.stdout.rows ?? 30, children: [_jsx(Header, { version: "1.1.4", language: lang, dashboard: state.dashboardStatus }), state.lastError?.section === 'settings' && (_jsx(SettingsErrorBar, { store: store, message: state.lastError.err.message })), _jsxs(Box, { flexGrow: 1, children: [_jsx(Sidebar, { active: state.activePage, focused: state.focused === 'sidebar', onSelect: (id) => state.setPage(id), onEnter: () => state.setFocus('main') }, lang), _jsx(Box, { flexGrow: 1, flexDirection: "column", borderStyle: "single", borderColor: state.focused === 'main' ? 'cyan' : 'gray', children: pageNode }, lang)] }), state.toasts.map((t) => _jsx(Toast, { ...t }, t.id)), state.modal ? (_jsx(ConfirmModal, { title: state.modal.title, body: state.modal.body, confirmLabel: state.modal.confirmLabel, cancelLabel: state.modal.cancelLabel, onConfirm: async () => { await state.modal.onConfirm(); state.closeModal(); }, onCancel: () => state.closeModal() })) : null, showHelp ? _jsx(HelpOverlay, { onClose: () => setShowHelp(false) }) : null, _jsx(Footer, {})] }));
+    return (_jsxs(Box, { flexDirection: "column", height: process.stdout.rows ?? 30, children: [_jsx(Header, { version: "1.1.4", language: lang, dashboard: state.dashboardStatus }), state.lastError?.section === 'settings' && (_jsx(SettingsErrorBar, { store: store, message: state.lastError.err.message })), _jsxs(Box, { flexGrow: 1, children: [_jsx(Sidebar, { active: state.activePage, focused: state.focused === 'sidebar', onSelect: (id) => state.setPage(id), onEnter: () => state.setFocus('main') }), _jsx(Box, { flexGrow: 1, flexDirection: "column", borderStyle: "single", borderColor: state.focused === 'main' ? 'cyan' : 'gray', children: pageNode })] }), state.toasts.map((t) => _jsx(Toast, { ...t }, t.id)), state.modal ? (_jsx(ConfirmModal, { title: state.modal.title, body: state.modal.body, confirmLabel: state.modal.confirmLabel, cancelLabel: state.modal.cancelLabel, onConfirm: async () => { await state.modal.onConfirm(); state.closeModal(); }, onCancel: () => state.closeModal() })) : null, showHelp ? _jsx(HelpOverlay, { onClose: () => setShowHelp(false) }) : null, _jsx(Footer, {})] }));
 }
 //# sourceMappingURL=App.js.map
