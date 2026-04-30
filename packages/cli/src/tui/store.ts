@@ -1,4 +1,7 @@
 import { create, type StoreApi, type UseBoundStore } from 'zustand';
+import { homedir } from 'os';
+import { join } from 'path';
+import { readFile } from 'fs/promises';
 import {
   PluginManager,
   McpManager,
@@ -79,6 +82,7 @@ export interface StoreState {
   // actions
   init():                                    Promise<void>;
   refresh(section?: Section):                Promise<void>;
+  loadRecommendations():                     Promise<void>;
   setPage(p: PageId):                        void;
   setInnerTab(t: ConfigInnerTab):            void;
   setFocus(f: 'sidebar' | 'main'):           void;
@@ -218,6 +222,17 @@ export function createStore(): CcmStore {
         for (const t of targets) delete loading[t];
         return { loading };
       });
+    },
+
+    async loadRecommendations() {
+      const path = join(homedir(), '.claude/plugins/ccm-cache/recommendations.json');
+      try {
+        const raw = await readFile(path, 'utf-8');
+        const json = JSON.parse(raw);
+        set({ recommendations: json.recommendations ?? [] });
+      } catch {
+        set({ recommendations: [] });
+      }
     },
 
     setPage(p)        { set({ activePage: p, focused: 'main' }); },
