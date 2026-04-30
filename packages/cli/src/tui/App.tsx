@@ -11,6 +11,7 @@ import { useWatcher } from './hooks/useWatcher.js';
 import { useAutoDismissToasts } from './hooks/useToast.js';
 import { createStore } from './store.js';
 import { renderPage } from './pages/router.js';
+import { initI18n } from './i18n.js';
 
 const store = createStore();
 
@@ -22,6 +23,12 @@ export function App() {
   useEffect(() => {
     void state.init();
   }, []);
+
+  useEffect(() => {
+    const env = (state.settings.env ?? {}) as Record<string, unknown>;
+    const lang = (env.CLAUDE_CONFIG_LANG === 'zh' ? 'zh' : 'en');
+    initI18n(lang);
+  }, [state.settings.env]);
   useWatcher(store);
   useAutoDismissToasts(store);
 
