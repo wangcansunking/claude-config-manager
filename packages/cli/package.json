@@ -9,6 +9,8 @@
   "scripts": {
     "build": "tsc",
     "test": "vitest run",
+    "test:e2e": "npm run build && vitest run --config vitest.e2e.config.ts",
+    "test:watch": "vitest",
     "type-check": "tsc --noEmit",
     "clean": "rm -rf dist"
   },
@@ -17,10 +19,20 @@
     "@ccm/core": "*",
     "commander": "^12.0.0",
     "chalk": "^5.3.0",
-    "ora": "^8.0.0"
+    "ora": "^8.0.0",
+    "ink": "^5.0.1",
+    "react": "^18.3.0",
+    "zustand": "^4.5.0",
+    "chokidar": "^3.6.0",
+    "i18next": "^23.0.0",
+    "lodash.debounce": "^4.0.8"
   },
   "devDependencies": {
+    "@types/lodash.debounce": "^4.0.9",
     "@types/node": "^20.0.0",
+    "@types/react": "^18.3.0",
+    "ink-testing-library": "^3.0.0",
+    "node-pty": "^1.0.0",
     "typescript": "^5.5.0",
     "vitest": "^2.0.0"
   }

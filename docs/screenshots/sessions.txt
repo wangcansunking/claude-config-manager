@@ -1,0 +1,19 @@
+
+ Sessions (3)
+
+ ▶  ● feature work                     ┌──────────────────────────────────────────────────────────┐
+   a3f9c2bd  /Users/me/repos/foo · 2h  │ Name:       feature work                                 │
+   ○ bug fix                           │ Project:    /Users/me/repos/foo                          │
+   b8e4f1a2  /Users/me/repos/bar · 1d  │ Session ID: a3f9c2bd-1111-2222-3333-444455556666         │
+   ○ experiment                        │ Started:    2h ago (2026-04-30 14:03)                    │
+   c1d9e3b4  /Users/me/repos/baz · 5d  │ Status:     ● live (pid 12345)                           │
+                                       │                                                          │
+                                       │ Recent inputs                                            │
+                                       │ ─────────────                                            │
+                                       │                                                          │
+                                       │ 1. how do I add jwt auth to express                      │
+                                       │ 2. fix the failing integration test                      │
+                                       │ 3. refactor the user module                              │
+                                       └──────────────────────────────────────────────────────────┘
+
+ y:copy resume id  /:filter  ?:help

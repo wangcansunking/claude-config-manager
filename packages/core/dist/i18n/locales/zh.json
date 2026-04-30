@@ -1,0 +1,269 @@
+{
+    "nav": {
+        "dashboard": "仪表盘",
+        "recommended": "推荐",
+        "configuration": "配置",
+        "profiles": "配置档案",
+        "activity": "活动",
+        "overview": "概览",
+        "config": "配置",
+        "sessions": "会话",
+        "recommend": "推荐",
+        "settings": "设置",
+        "profiles_wip": "配置档案 (WIP)"
+    },
+    "footer": {
+        "nav": "导航",
+        "enter": "确认",
+        "back": "返回",
+        "switch_focus": "切换焦点",
+        "filter": "过滤",
+        "help": "帮助",
+        "quit": "退出"
+    },
+    "theme": {
+        "auto": "自动",
+        "dark": "暗色",
+        "light": "亮色"
+    },
+    "language": {
+        "label": "语言",
+        "en": "English",
+        "zh": "中文"
+    },
+    "overview": {
+        "title": "概览",
+        "plugins": "插件",
+        "mcpServers": "MCP 服务器",
+        "skills": "技能",
+        "profiles": "配置档案",
+        "sessions": "会话",
+        "topSkills": "热门技能",
+        "topTools": "热门工具",
+        "recentSessions": "最近会话",
+        "environmentHealth": "环境状态",
+        "viewAll": "查看全部",
+        "noData": "暂无数据。",
+        "hooksNone": "无",
+        "active": "{{count}} 个已启用",
+        "configured": "{{count}} 个已配置",
+        "envSet": "{{count}} 个已设置",
+        "active_profile": "当前配置档案：",
+        "plugins_count": "插件：{{n}}",
+        "mcps_count": "MCP：{{n}}",
+        "skills_count": "技能：{{n}}",
+        "commands_count": "命令：{{n}}",
+        "recent_sessions": "最近会话",
+        "dashboard": "仪表盘：",
+        "running": "● 运行中",
+        "stopped": "○ 已停止"
+    },
+    "recommended": {
+        "title": "推荐",
+        "subtitle": "基于你的配置生成的 AI 推荐",
+        "emptyTitle": "暂无推荐",
+        "emptyBody": "点击「生成推荐」分析已安装的插件、MCP 服务器和技能，给出个性化建议。",
+        "generate": "生成推荐",
+        "generating": "生成中…",
+        "refresh": "刷新",
+        "lastUpdated": "最近更新 {{when}}",
+        "install": "安装",
+        "dismiss": "忽略",
+        "why": "推荐理由",
+        "filterAll": "全部",
+        "filterPlugins": "插件",
+        "filterMcps": "MCP 服务器",
+        "filterSkills": "技能",
+        "findMore": "发现更多",
+        "findMoreBody": "在 skills.sh 和 MCP 注册表里搜索更多工具。",
+        "findMorePlaceholder": "搜索技能和 MCP 服务器…",
+        "findMoreEmpty": "没有结果，换个关键词试试。",
+        "count_title": "推荐 ({{n}})",
+        "copy_hint": "c/y:复制安装命令  /:过滤",
+        "empty_title": "暂无推荐",
+        "empty_hint": "请在 Claude Code 中运行 `/ccm-recommendations` 以生成推荐。"
+    },
+    "config": {
+        "tabs": {
+            "plugins": "插件",
+            "mcp": "MCP 服务器",
+            "skills": "技能",
+            "commands": "命令",
+            "settings": "设置"
+        },
+        "saveToProfile": "保存为配置档案",
+        "saveDialog": {
+            "title": "保存当前配置为配置档案",
+            "body": "会为当前的插件、MCP 服务器、技能、命令和设置拍一个快照。",
+            "profileName": "档案名称",
+            "descriptionLabel": "描述（可选）",
+            "namePlaceholder": "例如：frontend-dev",
+            "descriptionPlaceholder": "简要说明…",
+            "nameRequired": "请填写档案名称",
+            "saveFailed": "保存失败",
+            "profileSaved": "已保存 \"{{name}}\"",
+            "clickToView": "— 点击查看"
+        },
+        "plugins": {
+            "title": "插件 (已安装 {{n}})",
+            "installed": "已安装",
+            "marketplace": "市场",
+            "manageMarketplaces": "管理市场",
+            "searchInstalledPlaceholder": "搜索已安装的插件…",
+            "searchAvailablePlaceholder": "搜索可用的插件…",
+            "marketplaceSelectPlaceholder": "选择市场…",
+            "enabled": "已启用",
+            "disabled": "已禁用",
+            "copyCommand": "点击复制",
+            "installNotice": "插件安装命令需要在 Claude Code 中执行，已复制到剪贴板。",
+            "marketplaceStaleNotice": "Dashboard 无法拉取市场更新。请在 Claude Code 中运行 `/plugin marketplace update`（命令已复制）。",
+            "hint": "space:切换  enter:切换  /:过滤  ?:帮助"
+        },
+        "mcp": {
+            "title": "MCP 服务器 ({{n}})",
+            "installed": "已安装",
+            "store": "市场",
+            "searchInstalledPlaceholder": "搜索 MCP 服务器…",
+            "searchStorePlaceholder": "在 MCP 市场中搜索…",
+            "install": "安装",
+            "installCopyNotice": "安装命令已复制 — 粘贴到终端执行。",
+            "noResults": "没有匹配的 MCP 服务器。",
+            "hint": "space:切换  enter:切换  /:过滤"
+        },
+        "skills": {
+            "title": "技能 ({{n}})",
+            "searchPlaceholder": "搜索技能…",
+            "installed": "已安装",
+            "store": "市场",
+            "top": "Top",
+            "edit": "编辑",
+            "preview": "预览",
+            "noResults": "没有匹配的技能。",
+            "hint": "space:切换  enter:切换  /:过滤"
+        },
+        "commands": {
+            "title": "命令 ({{n}}) — v1 只读",
+            "searchPlaceholder": "搜索命令…",
+            "noResults": "没有匹配的命令。"
+        },
+        "settings": {
+            "title": "设置",
+            "model": "模型",
+            "modelHelp": "Claude Code 在本项目默认使用的模型。",
+            "modelSelectPlaceholder": "-- 选择模型 --",
+            "modelCustomPlaceholder": "或输入自定义模型 ID…",
+            "hooks": "Hooks",
+            "envVars": "环境变量",
+            "envKeyPlaceholder": "键名",
+            "envValuePlaceholder": "值",
+            "envAdd": "添加",
+            "envShow": "显示",
+            "envHide": "隐藏",
+            "envRemove": "删除",
+            "noEnv": "尚未设置环境变量。",
+            "model_cycle_hint": "（Enter 循环切换）",
+            "env_copy_hint": "（Enter 复制 KEY=value）"
+        }
+    },
+    "profiles": {
+        "title": "配置档案",
+        "wip_note": "（开发中）",
+        "tabs": {
+            "profiles": "配置档案",
+            "exportImport": "导出 / 导入"
+        },
+        "emptyTitle": "还没有保存的配置档案",
+        "emptyBody": "当前配置就是默认状态。保存为配置档案后即可在不同环境间切换。",
+        "saveCurrent": "保存当前配置"
+    },
+    "activity": {
+        "title": "会话",
+        "subtitle": "{{running}} 个运行中，共 {{total}} 个",
+        "recent": "最近 ({{count}})",
+        "allSessions": "全部会话",
+        "searchPlaceholder": "搜索会话…",
+        "running": "运行中",
+        "resume": "恢复"
+    },
+    "sessions": {
+        "title": "会话 ({{n}})",
+        "filter_hint": "（Enter 确认，Esc 清除）",
+        "no_matches": "（无匹配）",
+        "no_selected": "（未选择会话）",
+        "no_history_file": "（无历史文件）",
+        "no_input_history": "（没有输入历史）",
+        "recent_inputs": "最近输入",
+        "hint": "y:复制恢复 ID  /:过滤  ?:帮助",
+        "status_live": "● 运行中",
+        "status_ended": "○ 已结束",
+        "id_prefix": "id：",
+        "copy_ok": "恢复 ID 已复制 ({{via}})",
+        "copy_fail": "复制失败；请安装 pbcopy/xclip",
+        "detail": {
+            "name": "名称",
+            "project": "项目",
+            "session_id": "会话 ID",
+            "started": "启动时间",
+            "status": "状态"
+        }
+    },
+    "settings_prefs": {
+        "title": "TUI 偏好设置",
+        "language": "语言",
+        "theme": "主题",
+        "quit_confirm": "退出确认",
+        "toggle_hint": "（Enter 切换 en ↔ zh）",
+        "theme_value": "自动（终端调色板）",
+        "quit_value": "关",
+        "coming_soon": "TUI 继承终端配色；v2 支持"
+    },
+    "modals": {
+        "switch_profile_title": "切换到 {{name}}？",
+        "switch_profile_body": "当前配置档案将变为「{{name}}」，这会重写 ~/.claude/settings.json。",
+        "confirm": "确认",
+        "cancel": "取消"
+    },
+    "toasts": {
+        "enabled": "已启用 {{name}}",
+        "disabled": "已禁用 {{name}}",
+        "switched_profile": "已切换到 {{name}}",
+        "model_set": "模型：{{model}}",
+        "language_set": "语言：{{lang}}",
+        "copied": "已复制：{{text}}",
+        "copy_failed": "复制失败；请安装 pbcopy/xclip",
+        "switch_failed": "切换失败：{{err}}",
+        "failed_toggle": "切换 {{name}} 失败：{{err}}",
+        "failed_generic": "失败：{{err}}",
+        "install_cmd_copied": "安装命令已复制：{{cmd}}"
+    },
+    "common": {
+        "close": "关闭",
+        "cancel": "取消",
+        "save": "保存",
+        "saving": "保存中…",
+        "delete": "删除",
+        "confirm": "确认",
+        "copy": "复制",
+        "copied": "已复制",
+        "loading": "加载中…",
+        "search": "搜索",
+        "none": "（无）",
+        "unset": "（未设置）",
+        "no_matches": "（无匹配）",
+        "loading_lower": "加载中…",
+        "unknown": "（未知）"
+    },
+    "errors": {
+        "settings_unreadable": "设置不可读：{{message}}",
+        "non_tty": "claude-config 需要 TTY。请使用子命令进行脚本化工作流：claude-config --help",
+        "too_small": "claude-config TUI 需要终端 ≥ {{cols}}×{{rows}}，请调整窗口大小后重试。"
+    },
+    "help": {
+        "title": "快捷键（Esc 关闭）"
+    },
+    "header": {
+        "dashboard": "仪表盘",
+        "running": "运行中",
+        "stopped": "已停止"
+    }
+}

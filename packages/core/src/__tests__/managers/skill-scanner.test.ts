@@ -4,6 +4,7 @@ import { tmpdir } from 'os';
 import { join } from 'path';
 import { SkillScanner } from '../../managers/skill-scanner';
 import { FileNotFoundError } from '@ccm/types';
+import { readJsonFile } from '../../utils/file-ops';
 
 const BRAINSTORMING_SKILL = `---
 name: brainstorming
@@ -187,6 +188,73 @@ describe('SkillScanner', () => {
       expect(commands[0]?.name).toBe('my-command');
       expect(commands[0]?.description).toBe('A custom command');
       expect(commands[0]?.source).toBe('user');
+    });
+  });
+
+  describe('toggle', () => {
+    async function writeInstalledPlugins(plugin1Path: string): Promise<void> {
+      await mkdir(join(tempDir, 'plugins'), { recursive: true });
+      await writeFile(
+        join(tempDir, 'plugins', 'installed_plugins.json'),
+        JSON.stringify({
+          version: 2,
+          plugins: {
+            'superpowers@official': [
+              {
+                installPath: plugin1Path,
+                version: '1.0.0',
+                installedAt: '2026-01-01T00:00:00Z',
+                lastUpdated: '2026-01-01T00:00:00Z',
+              },
+            ],
+          },
+        }),
+      );
+    }
+
+    it('writes enabledSkills[name] = false in settings.json', async () => {
+      await scanner.toggle('brainstorming', false);
+      const settings = await readJsonFile(join(tempDir, 'settings.json'));
+      expect(settings).toMatchObject({ enabledSkills: { brainstorming: false } });
+    });
+
+    it('writes enabledSkills[name] = true in settings.json', async () => {
+      await scanner.toggle('planning', true);
+      const settings = await readJsonFile(join(tempDir, 'settings.json'));
+      expect(settings).toMatchObject({ enabledSkills: { planning: true } });
+    });
+
+    it('scan() reflects the disabled state', async () => {
+      const pluginPath = join(tempDir, 'my-plugin');
+      await mkdir(join(pluginPath, 'skills', 'brainstorming'), { recursive: true });
+      await writeSkillFile(join(pluginPath, 'skills', 'brainstorming'), BRAINSTORMING_SKILL);
+      await writeInstalledPlugins(pluginPath);
+
+      await scanner.toggle('brainstorming', false);
+      const skills = await scanner.scan();
+      const skill = skills.find((s) => s.name === 'brainstorming');
+      expect(skill?.enabled).toBe(false);
+    });
+
+    it('re-enabling a skill writes enabled=true to settings.json', async () => {
+      // Disable then re-enable — settings should reflect the latest state
+      await scanner.toggle('brainstorming', false);
+      await scanner.toggle('brainstorming', true);
+      const settings = await readJsonFile(join(tempDir, 'settings.json'));
+      expect(settings).toMatchObject({ enabledSkills: { brainstorming: true } });
+    });
+
+    it('preserves existing settings when toggling', async () => {
+      await writeFile(
+        join(tempDir, 'settings.json'),
+        JSON.stringify({ model: 'claude-opus-4-5' }),
+      );
+      await scanner.toggle('brainstorming', false);
+      const settings = await readJsonFile(join(tempDir, 'settings.json'));
+      expect(settings).toMatchObject({
+        model: 'claude-opus-4-5',
+        enabledSkills: { brainstorming: false },
+      });
     });
   });
 });

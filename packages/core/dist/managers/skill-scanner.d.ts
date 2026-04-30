@@ -3,7 +3,16 @@ export declare class SkillScanner {
     private readonly pluginsJsonPath;
     private readonly userSkillsPath;
     private readonly userCommandsPath;
+    private readonly settingsPath;
     constructor(claudeHome: string);
+    private readEnabledMap;
+    /**
+     * Toggle a skill's enabled state by name.
+     * NOTE: For v1, skill name is used as the key. In the rare case that skills from
+     * different plugins share the same name, they will share the same toggle state
+     * (matches the pattern of PluginManager.toggle using plugin names as keys).
+     */
+    toggle(name: string, enabled: boolean): Promise<void>;
     private readInstalledPlugins;
     scanPlugin(pluginPath: string): Promise<SkillDefinition[]>;
     /**

@@ -2,8 +2,6 @@
 
 All notable changes to claude-config-manager are documented here.
 
-
-
 ## [1.1.4] — 2026-04-28
 
 ### Fixed

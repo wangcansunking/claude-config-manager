@@ -1,0 +1,7 @@
+MCP servers (4)
+▶ [✓] serena                         uvx serena
+  [✓] context7                       npx context7
+  [✓] chrome-devtools                npx chrome-devtools
+  [ ] playwright                     npx playwright
+
+space:toggle  enter:toggle  /:filter

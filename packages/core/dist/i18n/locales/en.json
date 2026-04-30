@@ -1,0 +1,269 @@
+{
+    "nav": {
+        "dashboard": "Dashboard",
+        "recommended": "Recommended",
+        "configuration": "Configuration",
+        "profiles": "Profiles",
+        "activity": "Activity",
+        "overview": "Overview",
+        "config": "Config",
+        "sessions": "Sessions",
+        "recommend": "Recommend",
+        "settings": "Settings",
+        "profiles_wip": "Profiles (WIP)"
+    },
+    "footer": {
+        "nav": "nav",
+        "enter": "enter",
+        "back": "back",
+        "switch_focus": "switch focus",
+        "filter": "filter",
+        "help": "help",
+        "quit": "quit"
+    },
+    "theme": {
+        "auto": "Auto",
+        "dark": "Dark",
+        "light": "Light"
+    },
+    "language": {
+        "label": "Language",
+        "en": "English",
+        "zh": "中文"
+    },
+    "overview": {
+        "title": "Overview",
+        "plugins": "Plugins",
+        "mcpServers": "MCP Servers",
+        "skills": "Skills",
+        "profiles": "Profiles",
+        "sessions": "Sessions",
+        "topSkills": "Top Skills",
+        "topTools": "Top Tools",
+        "recentSessions": "Recent Sessions",
+        "environmentHealth": "Environment Health",
+        "viewAll": "View all",
+        "noData": "No data yet.",
+        "hooksNone": "None",
+        "active": "{{count}} active",
+        "configured": "{{count}} configured",
+        "envSet": "{{count}} set",
+        "active_profile": "Active profile:",
+        "plugins_count": "Plugins: {{n}}",
+        "mcps_count": "MCPs: {{n}}",
+        "skills_count": "Skills: {{n}}",
+        "commands_count": "Commands: {{n}}",
+        "recent_sessions": "Recent sessions",
+        "dashboard": "Dashboard:",
+        "running": "● running",
+        "stopped": "○ stopped"
+    },
+    "recommended": {
+        "title": "Recommended",
+        "subtitle": "AI-powered recommendations based on your setup",
+        "emptyTitle": "No recommendations yet",
+        "emptyBody": "Click Generate to analyze your installed plugins, MCP servers, and skills and produce personalized suggestions.",
+        "generate": "Generate Recommendations",
+        "generating": "Generating…",
+        "refresh": "Refresh",
+        "lastUpdated": "Last updated {{when}}",
+        "install": "Install",
+        "dismiss": "Dismiss",
+        "why": "Why we recommend this",
+        "filterAll": "All",
+        "filterPlugins": "Plugins",
+        "filterMcps": "MCP Servers",
+        "filterSkills": "Skills",
+        "findMore": "Find More",
+        "findMoreBody": "Search skills.sh and MCP registries to discover more tools.",
+        "findMorePlaceholder": "Search skills and MCP servers…",
+        "findMoreEmpty": "No results. Try a different keyword.",
+        "count_title": "Recommended ({{n}})",
+        "copy_hint": "c/y:copy install cmd  /:filter",
+        "empty_title": "No recommendations yet",
+        "empty_hint": "Run `/ccm-recommendations` in Claude Code to generate."
+    },
+    "config": {
+        "tabs": {
+            "plugins": "Plugins",
+            "mcp": "MCP Servers",
+            "skills": "Skills",
+            "commands": "Commands",
+            "settings": "Settings"
+        },
+        "saveToProfile": "Save to Profile",
+        "saveDialog": {
+            "title": "Save current configuration as profile",
+            "body": "Captures a snapshot of your current plugins, MCP servers, skills, commands, and settings.",
+            "profileName": "Profile name",
+            "descriptionLabel": "Description (optional)",
+            "namePlaceholder": "e.g. frontend-dev",
+            "descriptionPlaceholder": "Short description…",
+            "nameRequired": "Profile name is required",
+            "saveFailed": "Failed to save profile",
+            "profileSaved": "Profile \"{{name}}\" saved",
+            "clickToView": "— click to view"
+        },
+        "plugins": {
+            "title": "Plugins ({{n}} installed)",
+            "installed": "Installed",
+            "marketplace": "Marketplace",
+            "manageMarketplaces": "Manage Marketplaces",
+            "searchInstalledPlaceholder": "Search installed plugins…",
+            "searchAvailablePlaceholder": "Search available plugins…",
+            "marketplaceSelectPlaceholder": "Select marketplace…",
+            "enabled": "Enabled",
+            "disabled": "Disabled",
+            "copyCommand": "Click to copy",
+            "installNotice": "Plugin install must be run inside Claude Code. The command is copied to your clipboard.",
+            "marketplaceStaleNotice": "Dashboard cannot fetch marketplace updates. Run `/plugin marketplace update` in Claude Code — command copied to clipboard.",
+            "hint": "space:toggle  enter:toggle  /:filter  ?:help"
+        },
+        "mcp": {
+            "title": "MCP servers ({{n}})",
+            "installed": "Installed",
+            "store": "Store",
+            "searchInstalledPlaceholder": "Search MCP servers…",
+            "searchStorePlaceholder": "Search the MCP store…",
+            "install": "Install",
+            "installCopyNotice": "Install command copied — paste it into your terminal.",
+            "noResults": "No MCP servers match your search.",
+            "hint": "space:toggle  enter:toggle  /:filter"
+        },
+        "skills": {
+            "title": "Skills ({{n}})",
+            "searchPlaceholder": "Search skills…",
+            "installed": "Installed",
+            "store": "Store",
+            "top": "Top",
+            "edit": "Edit",
+            "preview": "Preview",
+            "noResults": "No skills match your search.",
+            "hint": "space:toggle  enter:toggle  /:filter"
+        },
+        "commands": {
+            "title": "Commands ({{n}}) — read-only in v1",
+            "searchPlaceholder": "Search commands…",
+            "noResults": "No commands match your search."
+        },
+        "settings": {
+            "title": "Settings",
+            "model": "Model",
+            "modelHelp": "Default model used by Claude Code in this project.",
+            "modelSelectPlaceholder": "-- Select a model --",
+            "modelCustomPlaceholder": "Or type a custom model ID…",
+            "hooks": "Hooks",
+            "envVars": "Environment Variables",
+            "envKeyPlaceholder": "KEY",
+            "envValuePlaceholder": "value",
+            "envAdd": "Add",
+            "envShow": "Show",
+            "envHide": "Hide",
+            "envRemove": "Remove",
+            "noEnv": "No environment variables set.",
+            "model_cycle_hint": "(Enter to cycle)",
+            "env_copy_hint": "(Enter to copy KEY=value)"
+        }
+    },
+    "profiles": {
+        "title": "Profiles",
+        "wip_note": "(work in progress)",
+        "tabs": {
+            "profiles": "Profiles",
+            "exportImport": "Export / Import"
+        },
+        "emptyTitle": "No saved profiles yet",
+        "emptyBody": "Your current configuration is the default. Save it as a profile to switch between setups later.",
+        "saveCurrent": "Save Current Configuration"
+    },
+    "activity": {
+        "title": "Sessions",
+        "subtitle": "{{running}} running, {{total}} total",
+        "recent": "Recent ({{count}})",
+        "allSessions": "All Sessions",
+        "searchPlaceholder": "Search sessions…",
+        "running": "Running",
+        "resume": "Resume"
+    },
+    "sessions": {
+        "title": "Sessions ({{n}})",
+        "filter_hint": "(Enter to confirm, Esc to clear)",
+        "no_matches": "(no matches)",
+        "no_selected": "(no session selected)",
+        "no_history_file": "(no history file)",
+        "no_input_history": "(no input history found)",
+        "recent_inputs": "Recent inputs",
+        "hint": "y:copy resume id  /:filter  ?:help",
+        "status_live": "● live",
+        "status_ended": "○ ended",
+        "id_prefix": "id: ",
+        "copy_ok": "Resume id copied ({{via}})",
+        "copy_fail": "Copy failed; install pbcopy/xclip",
+        "detail": {
+            "name": "Name",
+            "project": "Project",
+            "session_id": "Session ID",
+            "started": "Started",
+            "status": "Status"
+        }
+    },
+    "settings_prefs": {
+        "title": "TUI preferences",
+        "language": "language",
+        "theme": "theme",
+        "quit_confirm": "quit-confirm",
+        "toggle_hint": "(Enter to toggle en ↔ zh)",
+        "theme_value": "auto (terminal palette)",
+        "quit_value": "off",
+        "coming_soon": "TUI inherits terminal palette; coming in v2"
+    },
+    "modals": {
+        "switch_profile_title": "Switch to {{name}}?",
+        "switch_profile_body": "Active profile becomes \"{{name}}\". This rewrites ~/.claude/settings.json.",
+        "confirm": "Confirm",
+        "cancel": "Cancel"
+    },
+    "toasts": {
+        "enabled": "Enabled {{name}}",
+        "disabled": "Disabled {{name}}",
+        "switched_profile": "Switched to {{name}}",
+        "model_set": "Model: {{model}}",
+        "language_set": "Language: {{lang}}",
+        "copied": "Copied: {{text}}",
+        "copy_failed": "Copy failed; install pbcopy/xclip",
+        "switch_failed": "Switch failed: {{err}}",
+        "failed_toggle": "Failed to toggle {{name}}: {{err}}",
+        "failed_generic": "Failed: {{err}}",
+        "install_cmd_copied": "Install command copied: {{cmd}}"
+    },
+    "common": {
+        "close": "Close",
+        "cancel": "Cancel",
+        "save": "Save",
+        "saving": "Saving…",
+        "delete": "Delete",
+        "confirm": "Confirm",
+        "copy": "Copy",
+        "copied": "Copied",
+        "loading": "Loading…",
+        "search": "Search",
+        "none": "(none)",
+        "unset": "(unset)",
+        "no_matches": "(no matches)",
+        "loading_lower": "loading…",
+        "unknown": "(unknown)"
+    },
+    "errors": {
+        "settings_unreadable": "Settings unreadable: {{message}}",
+        "non_tty": "claude-config requires a TTY. Use subcommands for scripted workflows: claude-config --help",
+        "too_small": "claude-config TUI requires terminal ≥ {{cols}}×{{rows}}. Resize and retry."
+    },
+    "help": {
+        "title": "Keymap (Esc to close)"
+    },
+    "header": {
+        "dashboard": "dashboard",
+        "running": "running",
+        "stopped": "stopped"
+    }
+}

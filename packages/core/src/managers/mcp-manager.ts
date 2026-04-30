@@ -7,10 +7,12 @@ import type { McpServerConfig, McpServerEntry } from '@ccm/types';
 export class McpManager {
   private readonly claudeHome: string;
   private readonly mcpJsonPath: string;
+  private readonly settingsPath: string;
 
   constructor(claudeHome: string) {
     this.claudeHome = claudeHome;
     this.mcpJsonPath = join(claudeHome, '.mcp.json');
+    this.settingsPath = join(claudeHome, 'settings.json');
   }
 
   /**
@@ -110,12 +112,42 @@ export class McpManager {
     return merged;
   }
 
+  private async readEnabledMap(): Promise<Record<string, boolean>> {
+    try {
+      if (!(await fileExists(this.settingsPath))) return {};
+      const settings = (await readJsonFile(this.settingsPath)) as Record<string, unknown>;
+      const map = settings.enabledMcpServers as Record<string, boolean> | undefined;
+      return map ?? {};
+    } catch {
+      return {};
+    }
+  }
+
+  async toggle(name: string, enabled: boolean): Promise<void> {
+    let settings: Record<string, unknown> = {};
+    try {
+      if (await fileExists(this.settingsPath)) {
+        settings = (await readJsonFile(this.settingsPath)) as Record<string, unknown>;
+      }
+    } catch { /* fresh start */ }
+    const map = (settings.enabledMcpServers as Record<string, boolean> | undefined) ?? {};
+    map[name] = enabled;
+    await writeJsonFile(this.settingsPath, { ...settings, enabledMcpServers: map });
+    invalidateCache('mcp');
+  }
+
   async list(): Promise<McpServerEntry[]> {
     const cached = getCached<McpServerEntry[]>('mcp-list');
     if (cached) return cached;
 
     const servers = await this.readAllMcpServers();
-    const entries = Object.entries(servers).map(([name, { config, source }]) => ({ name, config, source }));
+    const enabledMap = await this.readEnabledMap();
+    const entries = Object.entries(servers).map(([name, { config, source }]) => ({
+      name,
+      config,
+      source,
+      enabled: enabledMap[name] ?? true,
+    }));
 
     setCache('mcp-list', entries);
     return entries;
@@ -152,6 +184,7 @@ export class McpManager {
     const servers = await this.readAllMcpServers();
     const entry = servers[name];
     if (entry === undefined) return null;
-    return { name, config: entry.config, source: entry.source };
+    const enabledMap = await this.readEnabledMap();
+    return { name, config: entry.config, source: entry.source, enabled: enabledMap[name] ?? true };
   }
 }

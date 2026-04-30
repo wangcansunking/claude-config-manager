@@ -88,6 +88,168 @@ Browse past and live Claude Code sessions across all your projects. Click any se
 ![Dark mode](docs/migration/screenshots/10-dark-mode.png)
 ![Light mode](docs/migration/screenshots/10b-light-mode.png)
 
+## TUI (interactive terminal UI)
+
+Run `claude-config` with no arguments to launch the in-terminal UI:
+
+```bash
+claude-config
+```
+
+The TUI mirrors the dashboard's browse + high-frequency actions — toggle plugins / MCPs / skills, switch profiles, copy session resume IDs, copy recommended install commands — without needing a browser or HTTP server.
+
+### Layout
+
+```
+┌─ ccm 1.1.4 · en · dashboard ○  (stopped) ──────────────────────────────┐
+│                                                                         │
+│  ┌─────────────┐  ┌───────────────────────────────────────────────────┐ │
+│  │  Overview   │  │                                                   │ │
+│  │  Config     │  │             (active page content)                 │ │
+│  │▶ Sessions   │  │                                                   │ │
+│  │  Recommend  │  │                                                   │ │
+│  │  Settings   │  │                                                   │ │
+│  │  Profiles   │  │                                                   │ │
+│  └─────────────┘  └───────────────────────────────────────────────────┘ │
+│                                                                         │
+│ ↑↓/jk:nav  Enter:enter  Esc:back  Tab:switch focus  /:filter  ?:help   │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+### Pages
+
+#### Overview
+
+```
+ Active profile:
+ work
+
+ Plugins: 29
+ MCPs: 13
+ Skills: 86
+ Commands: 0
+
+ Recent sessions
+ · /Users/me/repos/foo
+ · /Users/me/repos/bar
+ · /Users/me/repos/baz
+
+ Dashboard: ○ stopped
+```
+
+Shows current profile, installed counts (plugins / MCPs / skills / commands), recent sessions, and dashboard status.
+
+#### Config — Plugins
+
+```
+Plugins (6 installed)
+▶ [✓] vercel@claude-plugins-official           0.40.0
+  [✓] remember@claude-plugins-official         0.6.0
+  [✓] superpowers@claude-plugins-official      5.0.7
+  [✓] feature-dev@claude-plugins-official      1.0.0
+  [✓] serena@claude-plugins-official           0.9.1
+  [ ] experiment-plugin                        0.1.0
+
+space:toggle  enter:toggle  /:filter  ?:help
+```
+
+Press `space` (or `Enter`) on the cursor row to toggle `enabledPlugins` in `~/.claude/settings.json`.
+
+#### Config — MCP servers
+
+```
+MCP servers (4)
+▶ [✓] serena                         uvx serena
+  [✓] context7                       npx context7
+  [✓] chrome-devtools                npx chrome-devtools
+  [ ] playwright                     npx playwright
+
+space:toggle  enter:toggle  /:filter
+```
+
+Toggle `enabledMcpServers` map in `~/.claude/settings.json`.
+
+#### Sessions
+
+```
+ Sessions (3)
+
+ ▶  ● feature work                     ┌──────────────────────────────────────────────────────────┐
+   a3f9c2bd  /Users/me/repos/foo · 2h  │ Name:       feature work                                 │
+   ○ bug fix                           │ Project:    /Users/me/repos/foo                          │
+   b8e4f1a2  /Users/me/repos/bar · 1d  │ Session ID: a3f9c2bd-1111-2222-3333-444455556666         │
+   ○ experiment                        │ Started:    2h ago (2026-04-30 14:03)                    │
+   c1d9e3b4  /Users/me/repos/baz · 5d  │ Status:     ● live (pid 12345)                           │
+                                       │                                                          │
+                                       │ Recent inputs                                            │
+                                       │ ─────────────                                            │
+                                       │                                                          │
+                                       │ 1. how do I add jwt auth to express                      │
+                                       │ 2. fix the failing integration test                      │
+                                       │ 3. refactor the user module                              │
+                                       └──────────────────────────────────────────────────────────┘
+
+ y:copy resume id  /:filter  ?:help
+```
+
+`y` copies the resume ID to clipboard. The detail pane shows recent user inputs from that session — fast confirmation that you're picking the right one.
+
+#### Recommended
+
+```
+ Recommended (4)
+
+ ▶ [MCP/Top] @modelcontextprotocol/server-postgres Postgres MCP server
+   [MCP/Trending] kubernetes-mcp-server        Kubernetes MCP server
+   [PLUGIN/Top] devtools-cli                 Suite of devtools
+   [SKILL/Top] database-design              Schema design helper
+
+ c/y:copy install cmd  /:filter
+```
+
+Read from the cache populated by the `/ccm-recommendations` skill. `c` or `y` copies the install command.
+
+#### Settings
+
+```
+ TUI preferences
+
+ ▶ language       en   (Enter to toggle en ↔ zh)
+   theme         auto (terminal palette)
+   quit-confirm  off
+```
+
+TUI preferences. Language toggle (en ↔ zh) takes effect immediately on the next render.
+
+### Keymap
+
+| Key | Action |
+|-----|--------|
+| `1`–`6` | Jump sidebar to area N |
+| `↑`/`↓` or `j`/`k` | Navigate the focused list |
+| `g` / `G` or `Home` / `End` | Jump to top / bottom |
+| `h`/`l` or `←`/`→` | Cycle inner tabs (Configuration page) |
+| `Tab` / `Shift+Tab` | Toggle focus between sidebar and main pane |
+| `Enter` | Activate / drill in / move focus from sidebar to main |
+| `Esc` | Back; from main pane returns focus to sidebar |
+| `space` | Toggle (on enable/disable rows) |
+| `/` | Filter the current list |
+| `r` | Force refresh |
+| `?` | Help overlay |
+| `q` / `Ctrl+C` | Quit |
+
+### Auto-launch from Claude Code
+
+If you have the `/ccm` slash command available (via the plugin marketplace), running `/ccm` in your Claude Code chat tries to auto-launch the TUI in a fresh terminal window:
+
+- macOS — opens a new Terminal.app window
+- Linux — tries gnome-terminal / konsole / alacritty / wezterm / kitty / xterm in order
+- Windows — tries Windows Terminal (`wt`) → PowerShell → cmd.exe
+
+If no suitable terminal is found, the skill falls back to either telling you to run `claude-config` yourself, or starting the web dashboard at http://localhost:3399 — your choice.
+
+For demos and rich detail views (charts, screenshots), the dashboard remains the better choice: `claude-config start` launches it on http://localhost:3399.
+
 ## Slash Commands
 
 | Command | Description |

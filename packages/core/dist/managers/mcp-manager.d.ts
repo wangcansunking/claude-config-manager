@@ -2,6 +2,7 @@ import type { McpServerConfig, McpServerEntry } from '@ccm/types';
 export declare class McpManager {
     private readonly claudeHome;
     private readonly mcpJsonPath;
+    private readonly settingsPath;
     constructor(claudeHome: string);
     /**
      * Parse a .mcp.json file — supports both formats:
@@ -22,6 +23,8 @@ export declare class McpManager {
     private collectAllMcpPaths;
     private getPluginMcpPaths;
     private readAllMcpServers;
+    private readEnabledMap;
+    toggle(name: string, enabled: boolean): Promise<void>;
     list(): Promise<McpServerEntry[]>;
     add(name: string, config: McpServerConfig): Promise<void>;
     remove(name: string): Promise<void>;

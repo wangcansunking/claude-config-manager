@@ -5,7 +5,8 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
-    ".": { "import": "./dist/index.js", "types": "./dist/index.d.ts" }
+    ".": { "import": "./dist/index.js", "types": "./dist/index.d.ts" },
+    "./i18n": { "import": "./dist/i18n/index.js", "types": "./dist/i18n/index.d.ts" }
   },
   "scripts": {
     "build": "tsc",

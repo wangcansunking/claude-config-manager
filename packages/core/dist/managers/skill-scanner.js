@@ -1,7 +1,7 @@
 import { join } from 'path';
 import { readdir, readFile } from 'fs/promises';
-import { readJsonFile, fileExists } from '../utils/file-ops.js';
-import { getCached, setCache } from '../utils/cache.js';
+import { readJsonFile, writeJsonFile, fileExists } from '../utils/file-ops.js';
+import { getCached, setCache, invalidateCache } from '../utils/cache.js';
 import { FileNotFoundError } from '@ccm/types';
 function parseFrontmatter(content) {
     // Support CRLF and LF line endings
@@ -43,10 +43,43 @@ export class SkillScanner {
     pluginsJsonPath;
     userSkillsPath;
     userCommandsPath;
+    settingsPath;
     constructor(claudeHome) {
         this.pluginsJsonPath = join(claudeHome, 'plugins', 'installed_plugins.json');
         this.userSkillsPath = join(claudeHome, 'skills');
         this.userCommandsPath = join(claudeHome, 'commands');
+        this.settingsPath = join(claudeHome, 'settings.json');
+    }
+    async readEnabledMap() {
+        try {
+            if (!(await fileExists(this.settingsPath)))
+                return {};
+            const settings = (await readJsonFile(this.settingsPath));
+            const map = settings.enabledSkills;
+            return map ?? {};
+        }
+        catch {
+            return {};
+        }
+    }
+    /**
+     * Toggle a skill's enabled state by name.
+     * NOTE: For v1, skill name is used as the key. In the rare case that skills from
+     * different plugins share the same name, they will share the same toggle state
+     * (matches the pattern of PluginManager.toggle using plugin names as keys).
+     */
+    async toggle(name, enabled) {
+        let settings = {};
+        try {
+            if (await fileExists(this.settingsPath)) {
+                settings = (await readJsonFile(this.settingsPath));
+            }
+        }
+        catch { /* fresh start */ }
+        const map = settings.enabledSkills ?? {};
+        map[name] = enabled;
+        await writeJsonFile(this.settingsPath, { ...settings, enabledSkills: map });
+        invalidateCache('skill-scan');
     }
     async readInstalledPlugins() {
         try {
@@ -119,6 +152,7 @@ export class SkillScanner {
         if (cached)
             return cached;
         const { plugins } = await this.readInstalledPlugins();
+        const enabledMap = await this.readEnabledMap();
         const allSkills = [];
         // 1. User skills from ~/.claude/skills/
         const userSkills = await this.scanUserSkills();
@@ -133,8 +167,13 @@ export class SkillScanner {
                 allSkills.push({ ...skill, pluginName, source: 'system' });
             }
         }
-        setCache('skill-scan', allSkills);
-        return allSkills;
+        // Hydrate enabled field from settings (default: true)
+        const hydrated = allSkills.map((skill) => ({
+            ...skill,
+            enabled: enabledMap[skill.name] ?? true,
+        }));
+        setCache('skill-scan', hydrated);
+        return hydrated;
     }
     async getSkillContent(skillPath) {
         try {

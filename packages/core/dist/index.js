@@ -10,4 +10,5 @@ export * from './managers/session-manager.js';
 export * from './managers/marketplace-manager.js';
 export * from './managers/metrics-manager.js';
 export * from './managers/recommendation-manager.js';
+export * from './i18n/index.js';
 //# sourceMappingURL=index.js.map

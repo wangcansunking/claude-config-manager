@@ -3,10 +3,12 @@
   "compilerOptions": {
     "outDir": "./dist",
     "rootDir": "./src",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "jsx": "react-jsx",
     "lib": ["ES2022"],
-    "types": ["node"],
-    "skipLibCheck": true
+    "types": ["node", "react"]
   },
-  "include": ["src"],
-  "exclude": ["src/__tests__", "node_modules"]
+  "include": ["src/**/*"],
+  "exclude": ["dist", "node_modules", "src/__tests__/**"]
 }

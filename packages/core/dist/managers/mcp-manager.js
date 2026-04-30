@@ -5,9 +5,11 @@ import { ConflictError, NotFoundError } from '@ccm/types';
 export class McpManager {
     claudeHome;
     mcpJsonPath;
+    settingsPath;
     constructor(claudeHome) {
         this.claudeHome = claudeHome;
         this.mcpJsonPath = join(claudeHome, '.mcp.json');
+        this.settingsPath = join(claudeHome, 'settings.json');
     }
     /**
      * Parse a .mcp.json file — supports both formats:
@@ -99,12 +101,43 @@ export class McpManager {
         }
         return merged;
     }
+    async readEnabledMap() {
+        try {
+            if (!(await fileExists(this.settingsPath)))
+                return {};
+            const settings = (await readJsonFile(this.settingsPath));
+            const map = settings.enabledMcpServers;
+            return map ?? {};
+        }
+        catch {
+            return {};
+        }
+    }
+    async toggle(name, enabled) {
+        let settings = {};
+        try {
+            if (await fileExists(this.settingsPath)) {
+                settings = (await readJsonFile(this.settingsPath));
+            }
+        }
+        catch { /* fresh start */ }
+        const map = settings.enabledMcpServers ?? {};
+        map[name] = enabled;
+        await writeJsonFile(this.settingsPath, { ...settings, enabledMcpServers: map });
+        invalidateCache('mcp');
+    }
     async list() {
         const cached = getCached('mcp-list');
         if (cached)
             return cached;
         const servers = await this.readAllMcpServers();
-        const entries = Object.entries(servers).map(([name, { config, source }]) => ({ name, config, source }));
+        const enabledMap = await this.readEnabledMap();
+        const entries = Object.entries(servers).map(([name, { config, source }]) => ({
+            name,
+            config,
+            source,
+            enabled: enabledMap[name] ?? true,
+        }));
         setCache('mcp-list', entries);
         return entries;
     }
@@ -138,7 +171,8 @@ export class McpManager {
         const entry = servers[name];
         if (entry === undefined)
             return null;
-        return { name, config: entry.config, source: entry.source };
+        const enabledMap = await this.readEnabledMap();
+        return { name, config: entry.config, source: entry.source, enabled: enabledMap[name] ?? true };
     }
 }
 //# sourceMappingURL=mcp-manager.js.map

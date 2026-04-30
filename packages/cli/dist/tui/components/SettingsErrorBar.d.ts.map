@@ -1,0 +1,1 @@
+{"version":3,"file":"SettingsErrorBar.d.ts","sourceRoot":"","sources":["../../../src/tui/components/SettingsErrorBar.tsx"],"names":[],"mappings":"AAKA,OAAO,KAAK,EAAE,QAAQ,EAAE,MAAM,aAAa,CAAC;AAE5C,wBAAgB,gBAAgB,CAAC,EAAE,KAAK,EAAE,OAAO,EAAE,EAAE;IAAE,KAAK,EAAE,QAAQ,CAAC;IAAC,OAAO,EAAE,MAAM,CAAA;CAAE,2CA2BxF"}

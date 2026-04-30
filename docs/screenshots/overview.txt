@@ -1,0 +1,15 @@
+
+ Active profile:
+ work
+
+ Plugins: 29
+ MCPs: 13
+ Skills: 86
+ Commands: 0
+
+ Recent sessions
+ · /Users/me/repos/foo
+ · /Users/me/repos/bar
+ · /Users/me/repos/baz
+
+ Dashboard: ○ stopped
