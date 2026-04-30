@@ -2,6 +2,25 @@
 
 All notable changes to claude-config-manager are documented here.
 
+
+## [1.2.0] — 2026-04-30
+
+### Added
+- **In-CLI Ink TUI.** `claude-config` (no args) launches a full-terminal UI mirroring the dashboard's browse + high-frequency actions: toggle plugin/MCP/skill enable, switch profile, copy session resume id, copy recommended install command. No browser or HTTP server required. Dashboard remains supported via `claude-config start` for demos and rich detail views. v2 adds heavy mutations + `:` command palette.
+- **i18n shared between TUI and dashboard.** Locales relocated from `@ccm/dashboard/client/i18n` into `@ccm/core/i18n`; the dashboard re-exports via the new `@ccm/core/i18n` subpath export so its Vite browser bundle stays clean of Node-only managers.
+- **`McpManager.toggle()` and `SkillScanner.toggle()` in `@ccm/core`** — mirror `PluginManager.toggle()` pattern by writing `enabledMcpServers` / `enabledSkills` maps to `~/.claude/settings.json`. Adds `enabled?: boolean` field to `SkillDefinition`.
+- **Full keyboard navigation in the TUI:** `1`–`6` jumps top-level areas, `j/k` or `↑/↓` navigates lists, `g/G` or `Home/End` jumps to top/bottom, `h/l` or `←/→` cycles inner tabs (Configuration), `Tab` toggles focus between sidebar and main pane, `Esc` from any page returns focus to the sidebar, `/` filters the current list, `?` opens the help overlay, `r` force-refreshes, `q` quits.
+- **node-pty E2E smoke tests** — verifies launch, page navigation, clean exit, and non-TTY refusal.
+
+### Fixed
+- **Stale @ccm/types/@ccm/core dist** caused TUI build failures because the `enabled` field on `SkillDefinition` and the new `toggle()` methods on `McpManager`/`SkillScanner` weren't reflected in published artifacts. dist files now match source.
+- **`stdin.setRawMode(true) + resume()` on TUI mount** — required for input to flow in PTY contexts (caught by E2E). Without this, the TUI was unresponsive to keystrokes for many real users.
+
+### Changed
+- Dashboard build pulls locales from the new `@ccm/core/i18n` subpath export rather than its own local files.
+
+([#12](https://github.com/wangcansunking/claude-config-manager/pull/12))
+
 ## [1.1.4] — 2026-04-28
 
 ### Fixed
