@@ -25,6 +25,13 @@ type SettingsRecord = Record<string, unknown>;
 // SessionInfo is the real return type from SessionManager.listAllSessions()
 type SessionInfo = Awaited<ReturnType<SessionManager['listAllSessions']>>[number];
 
+// Matches SessionHistoryEntry from @ccm/core but uses the actual field names
+export interface SessionHistoryEntry {
+  role: string;
+  text: string;        // content of the message (field name from core is `text`)
+  timestamp: string;
+}
+
 export type Section =
   | 'plugins' | 'mcpServers' | 'skills' | 'commands'
   | 'settings' | 'profiles' | 'sessions' | 'recommendations'
@@ -79,10 +86,14 @@ export interface StoreState {
   loading:         Partial<Record<Section, boolean>>;
   lastError:       { section: Section; err: Error } | null;
 
+  // session history cache — keyed by historyFile path
+  sessionHistories: Map<string, SessionHistoryEntry[]>;
+
   // actions
   init():                                    Promise<void>;
   refresh(section?: Section):                Promise<void>;
   loadRecommendations():                     Promise<void>;
+  loadSessionHistory(historyFile: string):   Promise<void>;
   setPage(p: PageId):                        void;
   setInnerTab(t: ConfigInnerTab):            void;
   setFocus(f: 'sidebar' | 'main'):           void;
@@ -128,6 +139,7 @@ export function createStore(): CcmStore {
     settings: {} as SettingsRecord, profiles: [], activeProfile: null,
     sessions: [], recommendations: [],
     dashboardStatus: { running: false },
+    sessionHistories: new Map(),
 
     activePage: 'overview',
     configInnerTab: 'plugins',
@@ -232,6 +244,30 @@ export function createStore(): CcmStore {
         set({ recommendations: json.recommendations ?? [] });
       } catch {
         set({ recommendations: [] });
+      }
+    },
+
+    async loadSessionHistory(historyFile: string) {
+      // Cache hit — skip
+      if (_get().sessionHistories.has(historyFile)) return;
+      try {
+        const history = await sessionMgr.getSessionHistory(historyFile, 20);
+        const truncated = history.map((h) => ({
+          ...h,
+          text: h.text.length > 200 ? h.text.slice(0, 200) + '…' : h.text,
+        }));
+        set((s) => {
+          const next = new Map(s.sessionHistories);
+          next.set(historyFile, truncated);
+          return { sessionHistories: next };
+        });
+      } catch (e) {
+        // On error store empty array so we don't retry on every cursor move
+        set((s) => {
+          const next = new Map(s.sessionHistories);
+          next.set(historyFile, []);
+          return { sessionHistories: next, lastError: { section: 'sessions', err: e as Error } };
+        });
       }
     },
 
