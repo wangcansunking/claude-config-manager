@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { Box, useStdin } from 'ink';
 import { useStore } from 'zustand';
 import { Header } from './components/Header.js';
+import { SettingsErrorBar } from './components/SettingsErrorBar.js';
 import { Sidebar } from './components/Sidebar.js';
 import { Footer } from './components/Footer.js';
 import { ConfirmModal } from './components/ConfirmModal.js';
@@ -58,6 +59,9 @@ export function App() {
         language={((state.settings.env ?? {}) as Record<string, string>).CLAUDE_CONFIG_LANG ?? 'en'}
         dashboard={state.dashboardStatus}
       />
+      {state.lastError?.section === 'settings' && (
+        <SettingsErrorBar store={store} message={state.lastError.err.message} />
+      )}
       <Box flexGrow={1}>
         <Sidebar active={state.activePage}
                  focused={state.focused === 'sidebar'}
