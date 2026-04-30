@@ -1,9 +1,9 @@
 export const GLOBAL_HINTS = [
-    { key: 'j/k', label: 'nav' },
-    { key: 'Enter', label: 'open' },
-    { key: 'Tab', label: 'focus' },
+    { key: '↑↓/jk', label: 'nav' },
+    { key: 'Enter', label: 'enter' },
+    { key: 'Esc', label: 'back' },
+    { key: 'Tab', label: 'switch focus' },
     { key: '/', label: 'filter' },
-    { key: 'r', label: 'refresh' },
     { key: '?', label: 'help' },
     { key: 'q', label: 'quit' },
 ];

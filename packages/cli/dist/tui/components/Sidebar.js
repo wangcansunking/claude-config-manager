@@ -9,7 +9,7 @@ const ITEMS = [
     { id: 'recommended', label: 'Recommend', key: '5' },
     { id: 'settingsPrefs', label: 'Settings', key: '6' },
 ];
-export function Sidebar({ active, focused, onSelect, }) {
+export function Sidebar({ active, focused, onSelect, onEnter, }) {
     const { stdin } = useStdin();
     useLayoutEffect(() => {
         const handler = (data) => {
@@ -29,11 +29,14 @@ export function Sidebar({ active, focused, onSelect, }) {
                 else if ((str === 'k' || str === '\x1b[A') && idx > 0) {
                     onSelect(ITEMS[idx - 1].id);
                 }
+                else if (str === '\r' && onEnter) {
+                    onEnter();
+                }
             }
         };
         stdin?.on('data', handler);
         return () => { stdin?.off('data', handler); };
-    }, [stdin, active, focused, onSelect]);
+    }, [stdin, active, focused, onSelect, onEnter]);
     return (_jsx(Box, { flexDirection: "column", borderStyle: "single", borderColor: focused ? 'cyan' : 'gray', paddingX: 1, width: 16, children: ITEMS.map((it) => {
             const sel = it.id === active;
             return (_jsxs(Text, { bold: sel, children: [sel ? '▶ ' : '  ', it.label] }, it.id));
