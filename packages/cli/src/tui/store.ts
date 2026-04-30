@@ -78,6 +78,7 @@ export interface StoreState {
 
   // actions
   init():                                    Promise<void>;
+  refresh(section?: Section):                Promise<void>;
   setPage(p: PageId):                        void;
   setInnerTab(t: ConfigInnerTab):            void;
   setFocus(f: 'sidebar' | 'main'):           void;
@@ -165,6 +166,49 @@ export function createStore(): CcmStore {
         activeProfile:  activeProfile.value,
         loading:        {},
         lastError:      firstError,
+      });
+    },
+
+    async refresh(section?: Section) {
+      const targets: Section[] = section ? [section] : [
+        'plugins', 'mcpServers', 'skills', 'commands', 'settings', 'profiles', 'sessions',
+      ];
+      set((s) => ({
+        loading: targets.reduce((acc, t) => ({ ...acc, [t]: true }), s.loading),
+      }));
+
+      for (const t of targets) {
+        try {
+          switch (t) {
+            case 'plugins':
+              set({ plugins: await pluginMgr.list() });   break;
+            case 'mcpServers':
+              set({ mcpServers: await mcpMgr.list() });   break;
+            case 'skills':
+              set({ skills: await skillScan.scan() }); break;
+            case 'commands':
+              set({ commands: await skillScan.scanCommands() }); break;
+            case 'settings':
+              set({ settings: await configMgr.getSettings() }); break;
+            case 'profiles':
+              set({
+                profiles: await profileMgr.list(),
+                activeProfile: await profileMgr.getActive(),
+              }); break;
+            case 'sessions': {
+              const all = await sessionMgr.listAllSessions();
+              set({ sessions: all.slice(0, 50) }); break;
+            }
+          }
+        } catch (e) {
+          set({ lastError: { section: t, err: e as Error } });
+        }
+      }
+
+      set((s) => {
+        const loading = { ...s.loading };
+        for (const t of targets) delete loading[t];
+        return { loading };
       });
     },
 
