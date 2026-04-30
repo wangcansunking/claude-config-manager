@@ -198,7 +198,14 @@
         "status_ended": "○ ended",
         "id_prefix": "id: ",
         "copy_ok": "Resume id copied ({{via}})",
-        "copy_fail": "Copy failed; install pbcopy/xclip"
+        "copy_fail": "Copy failed; install pbcopy/xclip",
+        "detail": {
+            "name": "Name",
+            "project": "Project",
+            "session_id": "Session ID",
+            "started": "Started",
+            "status": "Status"
+        }
     },
     "settings_prefs": {
         "title": "TUI preferences",

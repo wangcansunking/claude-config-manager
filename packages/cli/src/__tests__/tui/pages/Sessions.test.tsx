@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render } from 'ink-testing-library';
+import { homedir } from 'os';
 import { Sessions } from '../../../tui/pages/Sessions.js';
 import { initI18n } from '../../../tui/i18n.js';
 
@@ -164,5 +165,82 @@ describe('<Sessions/>', () => {
     const frame = lastFrame() ?? '';
     // Full session ID should appear in the detail pane
     expect(frame).toContain(fullId);
+  });
+
+  it('detail pane shows labels separated from values', () => {
+    initI18n('en');
+    // Construct an input path under the real home dir so tildify produces ~/...
+    const home = homedir();
+    const projectDir = `${home}/repos/foo`;
+    const historyFile = `${home}/.claude/projects/s.jsonl`;
+    const stateWithSession: any = {
+      sessions: [{
+        sessionId: 'a3f9c2bd-1234-5678-9abc-def012345678',
+        projectDir,
+        name: 'my-feature',
+        alive: true,
+        pid: 12345,
+        historyFile,
+        startedAt: Date.now(),
+      }],
+      sessionHistories: new Map([[historyFile, [
+        { role: 'user', text: 'how do I add jwt auth', timestamp: '' },
+      ]]]),
+      focused: 'main',
+    };
+    const store = { getState: () => ({ pushToast: vi.fn(), loadSessionHistory: vi.fn() }) };
+    const { lastFrame } = render(<Sessions state={stateWithSession} store={store as any} />);
+    const frame = lastFrame()!;
+    // Labels should appear visibly separated from values (label followed by space(s) then value)
+    expect(frame).toMatch(/Project:[\s]+~\/repos\/foo/);
+    expect(frame).toMatch(/Status:[\s]+(●|live|alive)/);
+    // Full session ID in detail pane
+    expect(frame).toContain('a3f9c2bd-1234-5678-9abc-def012345678');
+    // Recent user input visible
+    expect(frame).toContain('how do I add jwt auth');
+    // Hint should appear exactly once
+    const hintCount = (frame.match(/y:copy resume id/g) ?? []).length;
+    expect(hintCount).toBe(1);
+  });
+
+  it('detail pane labels switch to zh when locale is zh', () => {
+    initI18n('zh');
+    const home = homedir();
+    const projectDir = `${home}/repos/bar`;
+    const historyFile = `${home}/.claude/projects/bar.jsonl`;
+    const stateZh: any = {
+      sessions: [{
+        sessionId: 'b5e1f3ad-9876-5432-abcd-ef0123456789',
+        projectDir,
+        name: 'zh-session',
+        alive: false,
+        pid: 0,
+        historyFile,
+        startedAt: Date.now() - 3600000,
+      }],
+      sessionHistories: new Map([[historyFile, [
+        { role: 'user', text: '有几个问题', timestamp: '' },
+      ]]]),
+      focused: 'main',
+    };
+    const store = { getState: () => ({ pushToast: vi.fn(), loadSessionHistory: vi.fn() }) };
+    const { lastFrame } = render(<Sessions state={stateZh} store={store as any} />);
+    const frame = lastFrame()!;
+    // zh labels should be present
+    expect(frame).toContain('项目:');
+    expect(frame).toContain('状态:');
+    // zh status value for ended session
+    expect(frame).toContain('已结束');
+    // List row should be 2 lines (not 3) — no orphaned time digit on a separate line
+    const lines = frame.split('\n');
+    const nameLineIdx = lines.findIndex((l) => l.includes('zh-session'));
+    expect(nameLineIdx).toBeGreaterThan(-1);
+    // The path+time line immediately follows the name line
+    const pathTimeLine = lines[nameLineIdx + 1] ?? '';
+    expect(pathTimeLine).toMatch(/~/); // tildified path present
+    expect(pathTimeLine).toMatch(/·/); // separator present
+    // No standalone time token on a third line (e.g. "1h" alone)
+    const thirdLine = lines[nameLineIdx + 2] ?? '';
+    expect(thirdLine).not.toMatch(/^\s+\d+[smhd]\s*$/);
   });
 });

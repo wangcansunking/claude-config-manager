@@ -27,6 +27,30 @@ function absoluteTime(startedAt) {
     const pad = (n) => String(n).padStart(2, '0');
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
+/** Visual display width: CJK / full-width chars count as 2 columns. */
+function displayWidth(s) {
+    let w = 0;
+    for (const ch of s) {
+        const cp = ch.codePointAt(0) ?? 0;
+        // CJK Unified Ideographs and common full-width ranges
+        const wide = (cp >= 0x1100 && cp <= 0x115f) || // Hangul Jamo
+            (cp >= 0x2e80 && cp <= 0x303e) || // CJK Radicals / punctuation
+            (cp >= 0x3041 && cp <= 0x33ff) || // Japanese kana / CJK compat
+            (cp >= 0x3400 && cp <= 0x9fff) || // CJK Unified Ideographs
+            (cp >= 0xac00 && cp <= 0xd7af) || // Hangul Syllables
+            (cp >= 0xf900 && cp <= 0xfaff) || // CJK Compatibility Ideographs
+            (cp >= 0xfe30 && cp <= 0xfe4f) || // CJK Compatibility Forms
+            (cp >= 0xff01 && cp <= 0xff60) || // Fullwidth / Halfwidth forms
+            (cp >= 0xffe0 && cp <= 0xffe6); // Currency symbols
+        w += wide ? 2 : 1;
+    }
+    return w;
+}
+/** Pad a label string to targetWidth display columns using trailing spaces. */
+function padLabel(label, targetWidth) {
+    const current = displayWidth(label);
+    return current >= targetWidth ? label : label + ' '.repeat(targetWidth - current);
+}
 function truncatePath(p, maxLen) {
     if (p.length <= maxLen)
         return p;
@@ -115,6 +139,16 @@ export function Sessions({ state, store }) {
     const userInputs = historyEntries
         ? historyEntries.filter((e) => e.role === 'user').slice(-10)
         : null;
+    // Compute a consistent label column width across all detail-pane labels
+    // so values are all left-aligned at the same column. Add 2 for ": " separator.
+    const labelNames = [
+        t('sessions.detail.name'),
+        t('sessions.detail.project'),
+        t('sessions.detail.session_id'),
+        t('sessions.detail.started'),
+        t('sessions.detail.status'),
+    ];
+    const LABEL_W = Math.max(...labelNames.map(displayWidth)) + 2; // +2 for ": "
     return (_jsxs(Box, { flexDirection: "column", padding: 1, children: [_jsx(Text, { bold: true, children: t('sessions.title', { n: state.sessions.length }) }), filterMode && (_jsxs(Box, { children: [_jsxs(Text, { color: "cyan", children: ["/", query] }), _jsxs(Text, { dimColor: true, children: [" ", t('sessions.filter_hint')] })] })), _jsxs(Box, { marginTop: 1, flexDirection: "row", flexGrow: 1, children: [_jsx(Box, { flexDirection: "column", width: 36, flexShrink: 0, marginRight: 2, children: visible.length === 0 ? (_jsx(Text, { dimColor: true, children: t('sessions.no_matches') })) : (visible.map((s, idx) => {
                             const sel = idx === clampedCursor;
                             const displayName = s.name || s.sessionId.slice(0, 8);
@@ -122,14 +156,14 @@ export function Sessions({ state, store }) {
                             const prefix = sel ? '▶' : ' ';
                             const project = tildify(s.projectDir || s.cwd || t('common.unknown'));
                             const when = relativeTime(s.startedAt);
-                            // path budget: 36 - 4 (prefix+status+spaces) - 4 (" · Xh") = ~28
-                            const truncPath = truncatePath(project, 28);
+                            // path budget: 36 col box − 5 (indent spaces) − 6 (max " · 99d") = 25
+                            const truncPath = truncatePath(project, 25);
                             const timeStr = when ? ` · ${when}` : '';
                             return (_jsxs(Box, { flexDirection: "column", marginBottom: 0, children: [_jsxs(Box, { children: [_jsxs(Text, { color: sel ? 'cyan' : undefined, children: [prefix, ' ', status, ' '] }), _jsx(Text, { bold: sel, children: displayName })] }), _jsxs(Text, { dimColor: true, children: ["     ", truncPath, timeStr] })] }, s.sessionId));
-                        })) }), _jsx(Box, { flexDirection: "column", flexGrow: 1, borderStyle: "single", paddingX: 1, children: !selectedSession ? (_jsx(Text, { dimColor: true, children: t('sessions.no_selected') })) : (_jsxs(Box, { flexDirection: "column", children: [_jsxs(Box, { flexDirection: "column", marginBottom: 1, children: [_jsxs(Box, { children: [_jsx(Text, { dimColor: true, children: "Name:       " }), _jsx(Text, { bold: true, children: selectedSession.name || selectedSession.sessionId.slice(0, 8) })] }), _jsxs(Box, { children: [_jsx(Text, { dimColor: true, children: "Project:    " }), _jsx(Text, { children: tildify(selectedSession.projectDir || selectedSession.cwd || t('common.unknown')) })] }), _jsxs(Box, { children: [_jsx(Text, { dimColor: true, children: "Session ID: " }), _jsx(Text, { children: selectedSession.sessionId })] }), _jsxs(Box, { children: [_jsx(Text, { dimColor: true, children: "Started:    " }), _jsxs(Text, { children: [relativeTime(selectedSession.startedAt), " ago (", absoluteTime(selectedSession.startedAt), ")"] })] }), _jsxs(Box, { children: [_jsx(Text, { dimColor: true, children: "Status:     " }), selectedSession.alive
+                        })) }), _jsx(Box, { flexDirection: "column", flexGrow: 1, borderStyle: "single", paddingX: 1, children: !selectedSession ? (_jsx(Text, { dimColor: true, children: t('sessions.no_selected') })) : (_jsxs(Box, { flexDirection: "column", children: [_jsxs(Box, { flexDirection: "column", marginBottom: 1, children: [_jsxs(Box, { children: [_jsx(Text, { dimColor: true, children: padLabel(`${t('sessions.detail.name')}:`, LABEL_W) }), _jsx(Text, { bold: true, children: selectedSession.name || selectedSession.sessionId.slice(0, 8) })] }), _jsxs(Box, { children: [_jsx(Text, { dimColor: true, children: padLabel(`${t('sessions.detail.project')}:`, LABEL_W) }), _jsx(Text, { children: tildify(selectedSession.projectDir || selectedSession.cwd || t('common.unknown')) })] }), _jsxs(Box, { children: [_jsx(Text, { dimColor: true, children: padLabel(`${t('sessions.detail.session_id')}:`, LABEL_W) }), _jsx(Text, { children: selectedSession.sessionId })] }), _jsxs(Box, { children: [_jsx(Text, { dimColor: true, children: padLabel(`${t('sessions.detail.started')}:`, LABEL_W) }), _jsxs(Text, { children: [relativeTime(selectedSession.startedAt), " ago (", absoluteTime(selectedSession.startedAt), ")"] })] }), _jsxs(Box, { children: [_jsx(Text, { dimColor: true, children: padLabel(`${t('sessions.detail.status')}:`, LABEL_W) }), selectedSession.alive
                                                     ? _jsx(Text, { color: "green", children: t('sessions.status_live') })
                                                     : _jsx(Text, { dimColor: true, children: t('sessions.status_ended') }), selectedSession.alive && selectedSession.pid
                                                     ? _jsxs(Text, { dimColor: true, children: [" (pid ", selectedSession.pid, ")"] })
-                                                    : null] })] }), _jsx(Text, { bold: true, underline: true, children: t('sessions.recent_inputs') }), _jsx(Text, { dimColor: true, children: "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500" }), !historyFile ? (_jsx(Text, { dimColor: true, children: t('sessions.no_history_file') })) : !historyLoaded ? (_jsx(Text, { dimColor: true, children: t('common.loading_lower') })) : !userInputs || userInputs.length === 0 ? (_jsx(Text, { dimColor: true, children: t('sessions.no_input_history') })) : (_jsx(Box, { flexDirection: "column", marginTop: 1, children: userInputs.map((entry, i) => (_jsxs(Box, { children: [_jsxs(Text, { dimColor: true, children: [i + 1, ". "] }), _jsx(Text, { wrap: "wrap", children: entry.text })] }, i))) })), _jsx(Box, { marginTop: 1, children: _jsx(Text, { dimColor: true, children: t('sessions.hint') }) })] })) })] }), _jsx(Box, { marginTop: 1, children: _jsx(Text, { dimColor: true, children: t('sessions.hint') }) })] }));
+                                                    : null] })] }), _jsx(Text, { bold: true, underline: true, children: t('sessions.recent_inputs') }), _jsx(Text, { dimColor: true, children: "\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500" }), !historyFile ? (_jsx(Text, { dimColor: true, children: t('sessions.no_history_file') })) : !historyLoaded ? (_jsx(Text, { dimColor: true, children: t('common.loading_lower') })) : !userInputs || userInputs.length === 0 ? (_jsx(Text, { dimColor: true, children: t('sessions.no_input_history') })) : (_jsx(Box, { flexDirection: "column", marginTop: 1, children: userInputs.map((entry, i) => (_jsxs(Box, { children: [_jsxs(Text, { dimColor: true, children: [i + 1, ". "] }), _jsx(Text, { wrap: "wrap", children: entry.text })] }, i))) }))] })) })] }), _jsx(Box, { marginTop: 1, children: _jsx(Text, { dimColor: true, children: t('sessions.hint') }) })] }));
 }
 //# sourceMappingURL=Sessions.js.map

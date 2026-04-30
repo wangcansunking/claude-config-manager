@@ -25,6 +25,33 @@ function absoluteTime(startedAt: number): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
+/** Visual display width: CJK / full-width chars count as 2 columns. */
+function displayWidth(s: string): number {
+  let w = 0;
+  for (const ch of s) {
+    const cp = ch.codePointAt(0) ?? 0;
+    // CJK Unified Ideographs and common full-width ranges
+    const wide =
+      (cp >= 0x1100 && cp <= 0x115f) ||   // Hangul Jamo
+      (cp >= 0x2e80 && cp <= 0x303e) ||   // CJK Radicals / punctuation
+      (cp >= 0x3041 && cp <= 0x33ff) ||   // Japanese kana / CJK compat
+      (cp >= 0x3400 && cp <= 0x9fff) ||   // CJK Unified Ideographs
+      (cp >= 0xac00 && cp <= 0xd7af) ||   // Hangul Syllables
+      (cp >= 0xf900 && cp <= 0xfaff) ||   // CJK Compatibility Ideographs
+      (cp >= 0xfe30 && cp <= 0xfe4f) ||   // CJK Compatibility Forms
+      (cp >= 0xff01 && cp <= 0xff60) ||   // Fullwidth / Halfwidth forms
+      (cp >= 0xffe0 && cp <= 0xffe6);     // Currency symbols
+    w += wide ? 2 : 1;
+  }
+  return w;
+}
+
+/** Pad a label string to targetWidth display columns using trailing spaces. */
+function padLabel(label: string, targetWidth: number): string {
+  const current = displayWidth(label);
+  return current >= targetWidth ? label : label + ' '.repeat(targetWidth - current);
+}
+
 function truncatePath(p: string, maxLen: number): string {
   if (p.length <= maxLen) return p;
   // try to keep the last segment
@@ -120,6 +147,17 @@ export function Sessions({ state, store }: { state: StoreState; store: CcmStore 
     ? historyEntries.filter((e) => e.role === 'user').slice(-10)
     : null;
 
+  // Compute a consistent label column width across all detail-pane labels
+  // so values are all left-aligned at the same column. Add 2 for ": " separator.
+  const labelNames = [
+    t('sessions.detail.name'),
+    t('sessions.detail.project'),
+    t('sessions.detail.session_id'),
+    t('sessions.detail.started'),
+    t('sessions.detail.status'),
+  ];
+  const LABEL_W = Math.max(...labelNames.map(displayWidth)) + 2; // +2 for ": "
+
   return (
     <Box flexDirection="column" padding={1}>
       <Text bold>{t('sessions.title', { n: state.sessions.length })}</Text>
@@ -142,8 +180,8 @@ export function Sessions({ state, store }: { state: StoreState; store: CcmStore 
               const prefix = sel ? '▶' : ' ';
               const project = tildify(s.projectDir || s.cwd || t('common.unknown'));
               const when = relativeTime(s.startedAt);
-              // path budget: 36 - 4 (prefix+status+spaces) - 4 (" · Xh") = ~28
-              const truncPath = truncatePath(project, 28);
+              // path budget: 36 col box − 5 (indent spaces) − 6 (max " · 99d") = 25
+              const truncPath = truncatePath(project, 25);
               const timeStr = when ? ` · ${when}` : '';
               return (
                 <Box key={s.sessionId} flexDirection="column" marginBottom={0}>
@@ -166,26 +204,26 @@ export function Sessions({ state, store }: { state: StoreState; store: CcmStore 
             <Text dimColor>{t('sessions.no_selected')}</Text>
           ) : (
             <Box flexDirection="column">
-              {/* Session header */}
+              {/* Session header — label column uses padLabel() for consistent alignment */}
               <Box flexDirection="column" marginBottom={1}>
                 <Box>
-                  <Text dimColor>Name:       </Text>
+                  <Text dimColor>{padLabel(`${t('sessions.detail.name')}:`, LABEL_W)}</Text>
                   <Text bold>{selectedSession.name || selectedSession.sessionId.slice(0, 8)}</Text>
                 </Box>
                 <Box>
-                  <Text dimColor>Project:    </Text>
+                  <Text dimColor>{padLabel(`${t('sessions.detail.project')}:`, LABEL_W)}</Text>
                   <Text>{tildify(selectedSession.projectDir || selectedSession.cwd || t('common.unknown'))}</Text>
                 </Box>
                 <Box>
-                  <Text dimColor>Session ID: </Text>
+                  <Text dimColor>{padLabel(`${t('sessions.detail.session_id')}:`, LABEL_W)}</Text>
                   <Text>{selectedSession.sessionId}</Text>
                 </Box>
                 <Box>
-                  <Text dimColor>Started:    </Text>
+                  <Text dimColor>{padLabel(`${t('sessions.detail.started')}:`, LABEL_W)}</Text>
                   <Text>{relativeTime(selectedSession.startedAt)} ago ({absoluteTime(selectedSession.startedAt)})</Text>
                 </Box>
                 <Box>
-                  <Text dimColor>Status:     </Text>
+                  <Text dimColor>{padLabel(`${t('sessions.detail.status')}:`, LABEL_W)}</Text>
                   {selectedSession.alive
                     ? <Text color="green">{t('sessions.status_live')}</Text>
                     : <Text dimColor>{t('sessions.status_ended')}</Text>}
@@ -214,10 +252,6 @@ export function Sessions({ state, store }: { state: StoreState; store: CcmStore 
                   ))}
                 </Box>
               )}
-
-              <Box marginTop={1}>
-                <Text dimColor>{t('sessions.hint')}</Text>
-              </Box>
             </Box>
           )}
         </Box>
