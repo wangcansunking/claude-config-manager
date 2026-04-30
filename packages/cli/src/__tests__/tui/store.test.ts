@@ -62,3 +62,42 @@ describe('store.init', () => {
     expect(s.profiles).toBeDefined();
   });
 });
+
+describe('store.togglePlugin', () => {
+  const togglePlugin = vi.fn();
+
+  beforeEach(() => {
+    togglePlugin.mockReset();
+    listPlugins.mockResolvedValue([{ name: 'vercel', enabled: true }]);
+  });
+
+  it('optimistic: flips immediately, then completes on success', async () => {
+    togglePlugin.mockResolvedValueOnce(undefined);
+    vi.mocked(await import('@ccm/core')).PluginManager = class {
+      list = listPlugins; toggle = togglePlugin;
+    } as never;
+
+    const store = createStore();
+    await store.getState().init();
+    const p = store.getState().togglePlugin('vercel');
+    // Optimistic state visible BEFORE await resolves:
+    expect(store.getState().plugins[0].enabled).toBe(false);
+    await p;
+    expect(togglePlugin).toHaveBeenCalledWith('vercel', false);
+    expect(store.getState().plugins[0].enabled).toBe(false);
+    expect(store.getState().pendingActions.has('plugin:vercel')).toBe(false);
+  });
+
+  it('on failure: reverts and records lastError', async () => {
+    togglePlugin.mockRejectedValueOnce(new Error('write failed'));
+    vi.mocked(await import('@ccm/core')).PluginManager = class {
+      list = listPlugins; toggle = togglePlugin;
+    } as never;
+
+    const store = createStore();
+    await store.getState().init();
+    await store.getState().togglePlugin('vercel');
+    expect(store.getState().plugins[0].enabled).toBe(true);   // reverted
+    expect(store.getState().lastError?.err.message).toBe('write failed');
+  });
+});

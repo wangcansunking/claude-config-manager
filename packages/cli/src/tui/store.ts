@@ -86,6 +86,14 @@ export interface StoreState {
   dismissToast(id: string):                  void;
   openModal(m: ModalDescriptor):             void;
   closeModal():                              void;
+
+  // mutations
+  togglePlugin(name: string):                Promise<void>;
+  toggleMcp(name: string):                   Promise<void>;
+  toggleSkill(id: string):                   Promise<void>;
+  switchProfile(name: string):               Promise<void>;
+  setModel(model: string):                   Promise<void>;
+  setLanguage(lang: 'en' | 'zh'):            Promise<void>;
 }
 
 export type CcmStore = UseBoundStore<StoreApi<StoreState>>;
@@ -222,5 +230,154 @@ export function createStore(): CcmStore {
     dismissToast(id)  { set((s) => ({ toasts: s.toasts.filter(t => t.id !== id) })); },
     openModal(m)      { set({ modal: m }); },
     closeModal()      { set({ modal: null }); },
+
+    async togglePlugin(name: string) {
+      const cur = _get().plugins.find((p) => p.name === name);
+      if (!cur) return;
+      const next = !cur.enabled;
+      // optimistic
+      set((s) => ({
+        plugins: s.plugins.map((p) =>
+          p.name === name ? { ...p, enabled: next } : p),
+        pendingActions: new Set(s.pendingActions).add(`plugin:${name}`),
+      }));
+      try {
+        await pluginMgr.toggle(name, next);
+        _get().pushToast({
+          kind: 'success',
+          text: `${next ? 'Enabled' : 'Disabled'} ${name}`,
+        });
+      } catch (e) {
+        set((s) => ({
+          plugins: s.plugins.map((p) =>
+            p.name === name ? { ...p, enabled: cur.enabled } : p),
+          lastError: { section: 'plugins', err: e as Error },
+        }));
+        _get().pushToast({
+          kind: 'error',
+          text: `Failed to toggle ${name}: ${(e as Error).message}`,
+        });
+      } finally {
+        set((s) => {
+          const n = new Set(s.pendingActions);
+          n.delete(`plugin:${name}`);
+          return { pendingActions: n };
+        });
+      }
+    },
+
+    async toggleMcp(name: string) {
+      const cur = _get().mcpServers.find((m) => m.name === name);
+      if (!cur) return;
+      const next = !cur.enabled;
+      set((s) => ({
+        mcpServers: s.mcpServers.map((m) => m.name === name ? { ...m, enabled: next } : m),
+        pendingActions: new Set(s.pendingActions).add(`mcp:${name}`),
+      }));
+      try {
+        // FIXME(task-6): @ccm/core lacks McpManager.toggle — surface in v2 plan
+        await (mcpMgr as unknown as { toggle(name: string, enabled: boolean): Promise<void> })
+          .toggle(name, next);
+        _get().pushToast({ kind: 'success', text: `${next ? 'Enabled' : 'Disabled'} ${name}` });
+      } catch (e) {
+        set((s) => ({
+          mcpServers: s.mcpServers.map((m) => m.name === name ? { ...m, enabled: cur.enabled } : m),
+          lastError: { section: 'mcpServers', err: e as Error },
+        }));
+        _get().pushToast({ kind: 'error', text: `Failed: ${(e as Error).message}` });
+      } finally {
+        set((s) => {
+          const n = new Set(s.pendingActions); n.delete(`mcp:${name}`);
+          return { pendingActions: n };
+        });
+      }
+    },
+
+    async toggleSkill(id: string) {
+      // NOTE: SkillDefinition uses `name` as identifier; `id` param maps to `name`
+      const cur = _get().skills.find((s) => s.name === id);
+      if (!cur) return;
+      // SkillDefinition has no `enabled` field — cast via unknown to allow optimistic update
+      const curEnabled = (cur as unknown as { enabled?: boolean }).enabled ?? false;
+      const next = !curEnabled;
+      set((s) => ({
+        skills: s.skills.map((sk) =>
+          sk.name === id
+            ? ({ ...sk, enabled: next } as unknown as typeof sk)
+            : sk),
+        pendingActions: new Set(s.pendingActions).add(`skill:${id}`),
+      }));
+      try {
+        // FIXME(task-6): @ccm/core lacks SkillScanner.toggle — surface in v2 plan
+        await (skillScan as unknown as { toggle(id: string, enabled: boolean): Promise<void> })
+          .toggle(id, next);
+        _get().pushToast({ kind: 'success', text: `${next ? 'Enabled' : 'Disabled'} ${cur.name}` });
+      } catch (e) {
+        set((s) => ({
+          skills: s.skills.map((sk) =>
+            sk.name === id
+              ? ({ ...sk, enabled: curEnabled } as unknown as typeof sk)
+              : sk),
+          lastError: { section: 'skills', err: e as Error },
+        }));
+        _get().pushToast({ kind: 'error', text: `Failed: ${(e as Error).message}` });
+      } finally {
+        set((s) => {
+          const n = new Set(s.pendingActions); n.delete(`skill:${id}`);
+          return { pendingActions: n };
+        });
+      }
+    },
+
+    async switchProfile(name: string) {
+      const prev = _get().activeProfile;
+      set((s) => ({
+        activeProfile: name,
+        pendingActions: new Set(s.pendingActions).add(`profile:switch:${name}`),
+      }));
+      try {
+        await profileMgr.activate(name);
+        _get().pushToast({ kind: 'success', text: `Switched to ${name}` });
+      } catch (e) {
+        set({ activeProfile: prev, lastError: { section: 'profiles', err: e as Error } });
+        _get().pushToast({ kind: 'error', text: `Switch failed: ${(e as Error).message}` });
+      } finally {
+        set((s) => {
+          const n = new Set(s.pendingActions); n.delete(`profile:switch:${name}`);
+          return { pendingActions: n };
+        });
+      }
+    },
+
+    async setModel(model: string) {
+      const prev = _get().settings.model;
+      set((s) => ({ settings: { ...s.settings, model } }));
+      try {
+        await configMgr.setModel(model);
+        _get().pushToast({ kind: 'success', text: `Model: ${model}` });
+      } catch (e) {
+        set((s) => ({ settings: { ...s.settings, model: prev }, lastError: { section: 'settings', err: e as Error } }));
+        _get().pushToast({ kind: 'error', text: (e as Error).message });
+      }
+    },
+
+    async setLanguage(lang: 'en' | 'zh') {
+      const env = (_get().settings.env ?? {}) as Record<string, string>;
+      const prev = env.CLAUDE_CONFIG_LANG;
+      set((s) => ({ settings: { ...s.settings, env: { ...env, CLAUDE_CONFIG_LANG: lang } } }));
+      try {
+        await configMgr.setEnvVar('CLAUDE_CONFIG_LANG', lang);
+        _get().pushToast({ kind: 'success', text: `Language: ${lang}` });
+      } catch (e) {
+        set((s) => ({
+          settings: {
+            ...s.settings,
+            env: { ...env, CLAUDE_CONFIG_LANG: prev ?? 'en' },
+          },
+          lastError: { section: 'settings', err: e as Error },
+        }));
+        _get().pushToast({ kind: 'error', text: (e as Error).message });
+      }
+    },
   }));
 }
