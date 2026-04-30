@@ -34,6 +34,14 @@ export function App() {
   useAutoDismissToasts(store);
 
   useLayoutEffect(() => {
+    // Ensure stdin is in flowing mode so 'data' events fire in a PTY context.
+    // Calling setRawMode(true) disables line buffering; resume() starts the
+    // stream so data events are delivered immediately.
+    if (stdin && (stdin as NodeJS.ReadStream).isTTY) {
+      (stdin as NodeJS.ReadStream).setRawMode?.(true);
+      stdin.resume();
+    }
+
     const handler = (data: Buffer | string) => {
       if (state.modal) return;          // modal owns input
 
