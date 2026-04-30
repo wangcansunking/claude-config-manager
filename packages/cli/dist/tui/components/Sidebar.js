@@ -4,10 +4,10 @@ import { Box, Text, useStdin } from 'ink';
 const ITEMS = [
     { id: 'overview', label: 'Overview', key: '1' },
     { id: 'config', label: 'Config', key: '2' },
-    { id: 'profiles', label: 'Profiles', key: '3' },
-    { id: 'sessions', label: 'Sessions', key: '4' },
-    { id: 'recommended', label: 'Recommend', key: '5' },
-    { id: 'settingsPrefs', label: 'Settings', key: '6' },
+    { id: 'sessions', label: 'Sessions', key: '3' },
+    { id: 'recommended', label: 'Recommend', key: '4' },
+    { id: 'settingsPrefs', label: 'Settings', key: '5' },
+    { id: 'profiles', label: 'Profiles (WIP)', key: '6' },
 ];
 export function Sidebar({ active, focused, onSelect, onEnter, }) {
     const { stdin } = useStdin();
