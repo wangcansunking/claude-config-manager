@@ -88,6 +88,18 @@ Browse past and live Claude Code sessions across all your projects. Click any se
 ![Dark mode](docs/migration/screenshots/10-dark-mode.png)
 ![Light mode](docs/migration/screenshots/10b-light-mode.png)
 
+## TUI (interactive terminal UI)
+
+Run `claude-config` with no arguments to launch the in-terminal UI:
+
+```bash
+claude-config
+```
+
+The TUI mirrors the dashboard's browse + high-frequency actions (toggle plugins / MCPs / skills, switch profiles, copy session resume IDs, copy recommended install commands) without needing a browser or HTTP server. Press `?` for the keymap, `q` to quit.
+
+For demos and rich detail views (charts, screenshots), the dashboard remains the better choice: `claude-config start` launches it on http://localhost:3399.
+
 ## Slash Commands
 
 | Command | Description |

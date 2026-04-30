@@ -5,6 +5,8 @@ description: Claude Config Manager — quick status, dashboard, and profile disp
 
 Claude Config Manager quick access. Dispatch to the right sub-skill or run a `claude-config` CLI command based on what the user asks.
 
+> Looking for an interactive view? Run `claude-config` in your terminal — `/ccm` continues to work as a conversational dispatcher inside Claude Code.
+
 ```bash
 CCM="node ${CLAUDE_PLUGIN_ROOT}/packages/cli/dist/index.js"
 ```
