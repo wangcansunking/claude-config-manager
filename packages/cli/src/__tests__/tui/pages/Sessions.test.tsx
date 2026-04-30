@@ -290,4 +290,21 @@ describe('<Sessions/>', () => {
     const secondIdx = lines.findIndex((l) => l.includes('second'));
     expect(secondIdx - firstIdx).toBeLessThanOrEqual(2);
   });
+
+  it('always shows truncated sessionId on every row, not just during filter', () => {
+    initI18n('en');
+    const state: any = {
+      sessions: [
+        { sessionId: 'aaaa1234-rest', projectDir: '/h/foo', name: 'first', alive: true, pid: 1, historyFile: '/x/a.jsonl', startedAt: Date.now() },
+      ],
+      sessionHistories: new Map(),
+      focused: 'main',
+    };
+    const store = { getState: () => ({ pushToast: vi.fn(), loadSessionHistory: vi.fn() }) };
+    const { lastFrame } = render(<Sessions state={state} store={store as any} />);
+    const frame = lastFrame()!;
+    expect(frame).toContain('first');         // name visible
+    expect(frame).toContain('aaaa1234');      // truncated id visible
+    expect(frame).toMatch(/foo/);             // path visible
+  });
 });

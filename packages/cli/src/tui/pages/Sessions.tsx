@@ -176,6 +176,7 @@ export function Sessions({ state, store }: { state: StoreState; store: CcmStore 
             visible.map((s, idx) => {
               const sel = idx === clampedCursor;
               const displayName = s.name || s.sessionId.slice(0, 8);
+              const truncId = s.sessionId.slice(0, 8);
               const status = s.alive ? '●' : '○';
               const project = tildify(s.projectDir || s.cwd || t('common.unknown'));
               const when = relativeTime(s.startedAt);
@@ -191,7 +192,7 @@ export function Sessions({ state, store }: { state: StoreState; store: CcmStore 
                     <Text bold={sel}>{displayName}</Text>
                   </Box>
                   <Box>
-                    <Text dimColor>{'  '}{truncPath}{timeStr}</Text>
+                    <Text dimColor>{'  '}{truncId}  {truncPath}{timeStr}</Text>
                   </Box>
                 </Box>
               );
