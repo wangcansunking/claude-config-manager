@@ -11,8 +11,9 @@ name: Auto bump on merged PR
 #      the PR body, or synthesized from the PR title when that section is
 #      absent).
 #   3. Commits + tags the version bump on master.
-#   4. If GH_PAT_MARKETPLACE secret exists, opens a companion PR in the
-#      can-claude-plugins marketplace repo to mirror the new version there.
+#   4. If GH_PAT_MARKETPLACE secret exists, pushes the matching bump straight
+#      to main of the can-claude-plugins marketplace repo (no PR — the bump is
+#      mechanical and mirror PRs were sitting unmerged for days).
 
 on:
   pull_request:
@@ -99,6 +100,5 @@ jobs:
           MARKETPLACE_REPO: wangcansunking/can-claude-plugins
           NEW_VERSION: ${{ steps.bump.outputs.version }}
           PLUGIN_NAME: ${{ steps.bump.outputs.plugin_name }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
           PR_URL: ${{ github.event.pull_request.html_url }}
         run: node .github/scripts/bump-marketplace.mjs
