@@ -177,21 +177,22 @@ export function Sessions({ state, store }: { state: StoreState; store: CcmStore 
               const sel = idx === clampedCursor;
               const displayName = s.name || s.sessionId.slice(0, 8);
               const status = s.alive ? '●' : '○';
-              const prefix = sel ? '▶' : ' ';
               const project = tildify(s.projectDir || s.cwd || t('common.unknown'));
               const when = relativeTime(s.startedAt);
               // path budget: 36 col box − 5 (indent spaces) − 6 (max " · 99d") = 25
               const truncPath = truncatePath(project, 25);
               const timeStr = when ? ` · ${when}` : '';
               return (
-                <Box key={s.sessionId} flexDirection="column" marginBottom={0}>
+                <Box key={s.sessionId} flexDirection="column">
                   <Box>
-                    <Text color={sel ? 'cyan' : undefined}>
-                      {prefix}{' '}{status}{' '}
-                    </Text>
+                    <Text bold color={sel ? 'cyan' : undefined}>{sel ? '▶' : ' '} </Text>
+                    <Text color={s.alive ? 'green' : undefined}>{status}</Text>
+                    <Text>{' '}</Text>
                     <Text bold={sel}>{displayName}</Text>
                   </Box>
-                  <Text dimColor>     {truncPath}{timeStr}</Text>
+                  <Box>
+                    <Text dimColor>{'  '}{truncPath}{timeStr}</Text>
+                  </Box>
                 </Box>
               );
             })

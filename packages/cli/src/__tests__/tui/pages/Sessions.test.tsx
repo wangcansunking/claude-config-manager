@@ -243,4 +243,51 @@ describe('<Sessions/>', () => {
     const thirdLine = lines[nameLineIdx + 2] ?? '';
     expect(thirdLine).not.toMatch(/^\s+\d+[smhd]\s*$/);
   });
+
+  it('renders ▶ cursor marker on the selected (first) row', () => {
+    initI18n('en');
+    const stateWith3: any = {
+      sessions: [
+        { sessionId: 'aaaa1234-0000-0000-0000-000000000000', projectDir: '/h/foo', name: 'first',  alive: true,  pid: 1, historyFile: '/x/a.jsonl', startedAt: Date.now() },
+        { sessionId: 'bbbb5678-0000-0000-0000-000000000000', projectDir: '/h/bar', name: 'second', alive: false, pid: 2, historyFile: '/x/b.jsonl', startedAt: Date.now() },
+        { sessionId: 'cccc9abc-0000-0000-0000-000000000000', projectDir: '/h/baz', name: 'third',  alive: true,  pid: 3, historyFile: '/x/c.jsonl', startedAt: Date.now() },
+      ],
+      sessionHistories: new Map(),
+      focused: 'main',
+    };
+    const store = { getState: () => ({ pushToast: vi.fn(), loadSessionHistory: vi.fn() }) };
+    const { lastFrame } = render(<Sessions state={stateWith3} store={store as any} />);
+    const lines = lastFrame()!.split('\n');
+    // Find the line containing 'first' — it must also contain '▶'
+    const firstLine = lines.find((l) => l.includes('first'));
+    expect(firstLine).toBeDefined();
+    expect(firstLine).toMatch(/▶.*first|first.*▶/);
+    // 'second' line must NOT have ▶
+    const secondLine = lines.find((l) => l.includes('second'));
+    expect(secondLine).toBeDefined();
+    expect(secondLine).not.toContain('▶');
+  });
+
+  it('does not insert blank lines between session rows', () => {
+    initI18n('en');
+    const stateWith3: any = {
+      sessions: [
+        { sessionId: 'aaaa1234-0000-0000-0000-000000000000', projectDir: '/h/foo', name: 'first',  alive: true,  pid: 1, historyFile: '/x/a.jsonl', startedAt: Date.now() },
+        { sessionId: 'bbbb5678-0000-0000-0000-000000000000', projectDir: '/h/bar', name: 'second', alive: false, pid: 2, historyFile: '/x/b.jsonl', startedAt: Date.now() },
+        { sessionId: 'cccc9abc-0000-0000-0000-000000000000', projectDir: '/h/baz', name: 'third',  alive: true,  pid: 3, historyFile: '/x/c.jsonl', startedAt: Date.now() },
+      ],
+      sessionHistories: new Map(),
+      focused: 'main',
+    };
+    const store = { getState: () => ({ pushToast: vi.fn(), loadSessionHistory: vi.fn() }) };
+    const { lastFrame } = render(<Sessions state={stateWith3} store={store as any} />);
+    const frame = lastFrame()!;
+    // Lines containing each name should be no more than 2 lines apart
+    // (a 2-line row layout means: name line, path line, name line, path line)
+    // No blank line between rows.
+    const lines = frame.split('\n');
+    const firstIdx  = lines.findIndex((l) => l.includes('first'));
+    const secondIdx = lines.findIndex((l) => l.includes('second'));
+    expect(secondIdx - firstIdx).toBeLessThanOrEqual(2);
+  });
 });
