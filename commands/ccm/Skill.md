@@ -5,15 +5,36 @@ description: Claude Config Manager — quick status, dashboard, and profile disp
 
 Claude Config Manager quick access. Dispatch to the right sub-skill or run a `claude-config` CLI command based on what the user asks.
 
-> Looking for an interactive view? Run `claude-config` in your terminal — `/ccm` continues to work as a conversational dispatcher inside Claude Code.
-
 ```bash
 CCM="node ${CLAUDE_PLUGIN_ROOT}/packages/cli/dist/index.js"
 ```
 
 ## Actions
 
-### "status" or no arguments
+### "tui", "open the TUI", "launch the interactive UI", or no arguments
+
+**Default path — try to launch the TUI in a fresh terminal window.**
+
+```bash
+bash "${CLAUDE_PLUGIN_ROOT}/scripts/launch-tui.sh"
+```
+
+(The script lives at `scripts/launch-tui.sh` in the plugin root and picks the right terminal emulator for the OS: Terminal.app on macOS, gnome-terminal/konsole/alacritty/wezterm/kitty/xterm on Linux, Windows Terminal/PowerShell/cmd on Windows.)
+
+**On exit 0** (success): tell the user "TUI launched in a new terminal window. Press `?` for the keymap, `q` to quit. This Claude Code session continues here."
+
+**On non-zero exit** (no suitable terminal / launch failed): the script prints a reason on stderr. Capture it and present the two fallbacks:
+
+> Auto-launch failed: `<reason>`. Two fallbacks:
+> 1. Open a terminal yourself and run `claude-config` (full TUI experience)
+> 2. Start the web dashboard at http://localhost:3399 instead (`/ccm-dashboard` will handle that automatically)
+>
+> Which do you want?
+
+If they pick (2), delegate to `/ccm-dashboard`.
+If they pick (1), confirm and stop — the user takes it from there.
+
+### "status"
 
 Show a compact state summary:
 
