@@ -1,0 +1,166 @@
+{
+    "nav": {
+        "dashboard": "仪表盘",
+        "recommended": "推荐",
+        "configuration": "配置",
+        "profiles": "配置档案",
+        "activity": "活动"
+    },
+    "theme": {
+        "auto": "自动",
+        "dark": "暗色",
+        "light": "亮色"
+    },
+    "language": {
+        "label": "语言",
+        "en": "English",
+        "zh": "中文"
+    },
+    "overview": {
+        "title": "概览",
+        "plugins": "插件",
+        "mcpServers": "MCP 服务器",
+        "skills": "技能",
+        "profiles": "配置档案",
+        "sessions": "会话",
+        "topSkills": "热门技能",
+        "topTools": "热门工具",
+        "recentSessions": "最近会话",
+        "environmentHealth": "环境状态",
+        "viewAll": "查看全部",
+        "noData": "暂无数据。",
+        "hooksNone": "无",
+        "active": "{{count}} 个已启用",
+        "configured": "{{count}} 个已配置",
+        "envSet": "{{count}} 个已设置"
+    },
+    "recommended": {
+        "title": "推荐",
+        "subtitle": "基于你的配置生成的 AI 推荐",
+        "emptyTitle": "暂无推荐",
+        "emptyBody": "点击「生成推荐」分析已安装的插件、MCP 服务器和技能，给出个性化建议。",
+        "generate": "生成推荐",
+        "generating": "生成中…",
+        "refresh": "刷新",
+        "lastUpdated": "最近更新 {{when}}",
+        "install": "安装",
+        "dismiss": "忽略",
+        "why": "推荐理由",
+        "filterAll": "全部",
+        "filterPlugins": "插件",
+        "filterMcps": "MCP 服务器",
+        "filterSkills": "技能",
+        "findMore": "发现更多",
+        "findMoreBody": "在 skills.sh 和 MCP 注册表里搜索更多工具。",
+        "findMorePlaceholder": "搜索技能和 MCP 服务器…",
+        "findMoreEmpty": "没有结果，换个关键词试试。"
+    },
+    "config": {
+        "tabs": {
+            "plugins": "插件",
+            "mcp": "MCP 服务器",
+            "skills": "技能",
+            "commands": "命令",
+            "settings": "设置"
+        },
+        "saveToProfile": "保存为配置档案",
+        "saveDialog": {
+            "title": "保存当前配置为配置档案",
+            "body": "会为当前的插件、MCP 服务器、技能、命令和设置拍一个快照。",
+            "profileName": "档案名称",
+            "descriptionLabel": "描述（可选）",
+            "namePlaceholder": "例如：frontend-dev",
+            "descriptionPlaceholder": "简要说明…",
+            "nameRequired": "请填写档案名称",
+            "saveFailed": "保存失败",
+            "profileSaved": "已保存 \"{{name}}\"",
+            "clickToView": "— 点击查看"
+        },
+        "plugins": {
+            "title": "插件",
+            "installed": "已安装",
+            "marketplace": "市场",
+            "manageMarketplaces": "管理市场",
+            "searchInstalledPlaceholder": "搜索已安装的插件…",
+            "searchAvailablePlaceholder": "搜索可用的插件…",
+            "marketplaceSelectPlaceholder": "选择市场…",
+            "enabled": "已启用",
+            "disabled": "已禁用",
+            "copyCommand": "点击复制",
+            "installNotice": "插件安装命令需要在 Claude Code 中执行，已复制到剪贴板。",
+            "marketplaceStaleNotice": "Dashboard 无法拉取市场更新。请在 Claude Code 中运行 `/plugin marketplace update`（命令已复制）。"
+        },
+        "mcp": {
+            "title": "MCP 服务器",
+            "installed": "已安装",
+            "store": "市场",
+            "searchInstalledPlaceholder": "搜索 MCP 服务器…",
+            "searchStorePlaceholder": "在 MCP 市场中搜索…",
+            "install": "安装",
+            "installCopyNotice": "安装命令已复制 — 粘贴到终端执行。",
+            "noResults": "没有匹配的 MCP 服务器。"
+        },
+        "skills": {
+            "title": "技能",
+            "searchPlaceholder": "搜索技能…",
+            "installed": "已安装",
+            "store": "市场",
+            "top": "Top",
+            "edit": "编辑",
+            "preview": "预览",
+            "noResults": "没有匹配的技能。"
+        },
+        "commands": {
+            "title": "命令",
+            "searchPlaceholder": "搜索命令…",
+            "noResults": "没有匹配的命令。"
+        },
+        "settings": {
+            "title": "设置",
+            "model": "模型",
+            "modelHelp": "Claude Code 在本项目默认使用的模型。",
+            "modelSelectPlaceholder": "-- 选择模型 --",
+            "modelCustomPlaceholder": "或输入自定义模型 ID…",
+            "hooks": "Hooks",
+            "envVars": "环境变量",
+            "envKeyPlaceholder": "键名",
+            "envValuePlaceholder": "值",
+            "envAdd": "添加",
+            "envShow": "显示",
+            "envHide": "隐藏",
+            "envRemove": "删除",
+            "noEnv": "尚未设置环境变量。"
+        }
+    },
+    "profiles": {
+        "title": "配置档案",
+        "tabs": {
+            "profiles": "配置档案",
+            "exportImport": "导出 / 导入"
+        },
+        "emptyTitle": "还没有保存的配置档案",
+        "emptyBody": "当前配置就是默认状态。保存为配置档案后即可在不同环境间切换。",
+        "saveCurrent": "保存当前配置"
+    },
+    "activity": {
+        "title": "会话",
+        "subtitle": "{{running}} 个运行中，共 {{total}} 个",
+        "recent": "最近 ({{count}})",
+        "allSessions": "全部会话",
+        "searchPlaceholder": "搜索会话…",
+        "running": "运行中",
+        "resume": "恢复"
+    },
+    "common": {
+        "close": "关闭",
+        "cancel": "取消",
+        "save": "保存",
+        "saving": "保存中…",
+        "delete": "删除",
+        "confirm": "确认",
+        "copy": "复制",
+        "copied": "已复制",
+        "loading": "加载中…",
+        "search": "搜索"
+    }
+}

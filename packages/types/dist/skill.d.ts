@@ -15,5 +15,6 @@ export interface SkillDefinition {
     version?: string;
     pluginName?: string;
     source: 'user' | 'system';
+    enabled?: boolean;
 }
 //# sourceMappingURL=skill.d.ts.map

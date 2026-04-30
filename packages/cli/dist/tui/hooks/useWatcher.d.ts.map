@@ -1,0 +1,1 @@
+{"version":3,"file":"useWatcher.d.ts","sourceRoot":"","sources":["../../../src/tui/hooks/useWatcher.ts"],"names":[],"mappings":"AAKA,OAAO,KAAK,EAAE,QAAQ,EAAE,OAAO,EAAE,MAAM,aAAa,CAAC;AAErD,wBAAgB,eAAe,CAAC,CAAC,EAAE,MAAM,GAAG,OAAO,GAAG,IAAI,CAOzD;AAED,wBAAgB,UAAU,IAAI,MAAM,EAAE,CAYrC;AAED,wBAAgB,UAAU,CAAC,KAAK,EAAE,QAAQ,GAAG,IAAI,CAwBhD"}
