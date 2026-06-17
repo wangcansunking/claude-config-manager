@@ -3,6 +3,16 @@
 All notable changes to claude-config-manager are documented here.
 
 
+
+## [1.2.1] — 2026-06-17
+
+### Changed
+Aggregated from commits since v1.2.0 (no `release:*` label was applied):
+
+- feat: ship as standalone npm CLI (cc-config) + fix config page count titles
+
+([#scheduled](https://github.com/wangcansunking/claude-config-manager/actions/runs/27672975251))
+
 ## [1.2.0] — 2026-04-30
 
 ### Added
