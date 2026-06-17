@@ -121,7 +121,7 @@ export default function CommandsPage() {
 
   return (
     <div>
-      <Header title={t('config.commands.title')} />
+      <Header title={t('config.commands.title', { n: commands.length })} />
 
       {loading ? (
         <p style={{ color: 'var(--text-secondary)' }}>Loading...</p>

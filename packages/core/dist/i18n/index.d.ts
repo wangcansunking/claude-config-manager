@@ -203,6 +203,13 @@ export declare const locales: {
             id_prefix: string;
             copy_ok: string;
             copy_fail: string;
+            detail: {
+                name: string;
+                project: string;
+                session_id: string;
+                started: string;
+                status: string;
+            };
         };
         settings_prefs: {
             title: string;
@@ -465,6 +472,13 @@ export declare const locales: {
             id_prefix: string;
             copy_ok: string;
             copy_fail: string;
+            detail: {
+                name: string;
+                project: string;
+                session_id: string;
+                started: string;
+                status: string;
+            };
         };
         settings_prefs: {
             title: string;

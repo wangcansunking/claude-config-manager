@@ -20,7 +20,7 @@ async function main() {
   program
     .name('claude-config')
     .description('Claude configuration manager CLI')
-    .version('1.1.4');
+    .version('1.2.0');
 
   program.addCommand(makeStartCommand());
   program.addCommand(makeListCommand());

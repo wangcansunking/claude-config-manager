@@ -1,20 +1,20 @@
 import { Command } from 'commander';
 import { spawn } from 'child_process';
-import { resolve } from 'path';
-import { fileURLToPath } from 'url';
+import { resolveMcpServer } from '../lib/assets.js';
 
 export function makeMcpServerCommand(): Command {
   const cmd = new Command('mcp-server');
-  cmd
-    .description('Run as MCP server (stdio mode)')
-    .action(() => {
-      const __dirname = resolve(fileURLToPath(import.meta.url), '..');
-      const serverPath = resolve(__dirname, '..', '..', 'mcp', 'dist', 'bin.js');
-      const child = spawn('node', [serverPath], {
-        stdio: 'inherit',
-        shell: true,
-      });
-      child.on('close', (code) => process.exit(code ?? 0));
+  cmd.description('Run as MCP server (stdio mode)').action(() => {
+    const serverPath = resolveMcpServer(import.meta.url);
+    if (!serverPath) {
+      console.error('Could not locate the MCP server bundle. Try reinstalling the package.');
+      process.exit(1);
+      return;
+    }
+    const child = spawn(process.execPath, [serverPath], {
+      stdio: 'inherit',
     });
+    child.on('close', (code) => process.exit(code ?? 0));
+  });
   return cmd;
 }

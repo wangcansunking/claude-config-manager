@@ -9,6 +9,7 @@
   "scripts": {
     "build": "turbo build",
     "bundle": "npm run bundle --workspace=@ccm/mcp",
+    "build:standalone": "npm run build && npm run bundle && node scripts/build-standalone.mjs",
     "dev": "turbo dev",
     "start": "node packages/dashboard/dist/server.mjs",
     "build:dashboard": "turbo build --filter=@ccm/dashboard",

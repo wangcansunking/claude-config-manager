@@ -747,11 +747,13 @@ function ManageMarketplacesTab() {
 export default function PluginsPage() {
   const { t } = useTranslation();
   const [tab, setTab] = useState<TabId>('installed');
+  const { data: pluginsRaw } = usePlugins();
+  const installedCount = (pluginsRaw ?? []).length;
 
   return (
     <div>
       <div className="sticky top-0 z-10 bg-bg-primary">
-        <Header title={t('config.plugins.title')} />
+        <Header title={t('config.plugins.title', { n: installedCount })} />
 
         {/* Tabs */}
         <div className="flex items-center gap-1 mb-4">

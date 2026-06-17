@@ -8,6 +8,24 @@ A Claude Code plugin that gives you a web dashboard + CLI to manage your whole C
 
 ## Install
 
+### Option A — standalone CLI (npm)
+
+Use it straight from your terminal, no Claude Code session required:
+
+```bash
+# Run without installing
+npx cc-config            # interactive TUI
+npx cc-config start      # launch the dashboard on http://localhost:3399
+
+# …or install globally
+npm install -g cc-config
+claude-config            # interactive TUI  (alias: cc-config)
+claude-config start      # launch the dashboard
+claude-config list       # list plugins, MCP servers, skills, commands
+```
+
+### Option B — Claude Code plugin
+
 ```bash
 # 1. Add the marketplace
 claude plugin marketplace add https://github.com/wangcansunking/can-claude-plugins

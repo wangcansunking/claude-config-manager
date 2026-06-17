@@ -656,7 +656,7 @@ export default function McpServersPage() {
   return (
     <div>
       <div className="sticky top-0 z-10 bg-bg-primary">
-        <Header title={t('config.mcp.title')}>
+        <Header title={t('config.mcp.title', { n: servers.length })}>
           <Button
             variant="primary"
             size="md"

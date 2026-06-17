@@ -34159,9 +34159,11 @@ import { join as join4, dirname as dirname2 } from "path";
 var McpManager = class {
   claudeHome;
   mcpJsonPath;
+  settingsPath;
   constructor(claudeHome) {
     this.claudeHome = claudeHome;
     this.mcpJsonPath = join4(claudeHome, ".mcp.json");
+    this.settingsPath = join4(claudeHome, "settings.json");
   }
   /**
    * Parse a .mcp.json file — supports both formats:
@@ -34245,12 +34247,42 @@ var McpManager = class {
     }
     return merged;
   }
+  async readEnabledMap() {
+    try {
+      if (!await fileExists(this.settingsPath))
+        return {};
+      const settings = await readJsonFile(this.settingsPath);
+      const map = settings.enabledMcpServers;
+      return map ?? {};
+    } catch {
+      return {};
+    }
+  }
+  async toggle(name, enabled) {
+    let settings = {};
+    try {
+      if (await fileExists(this.settingsPath)) {
+        settings = await readJsonFile(this.settingsPath);
+      }
+    } catch {
+    }
+    const map = settings.enabledMcpServers ?? {};
+    map[name] = enabled;
+    await writeJsonFile(this.settingsPath, { ...settings, enabledMcpServers: map });
+    invalidateCache("mcp");
+  }
   async list() {
     const cached = getCached("mcp-list");
     if (cached)
       return cached;
     const servers = await this.readAllMcpServers();
-    const entries = Object.entries(servers).map(([name, { config, source }]) => ({ name, config, source }));
+    const enabledMap = await this.readEnabledMap();
+    const entries = Object.entries(servers).map(([name, { config, source }]) => ({
+      name,
+      config,
+      source,
+      enabled: enabledMap[name] ?? true
+    }));
     setCache("mcp-list", entries);
     return entries;
   }
@@ -34283,7 +34315,8 @@ var McpManager = class {
     const entry = servers[name];
     if (entry === void 0)
       return null;
-    return { name, config: entry.config, source: entry.source };
+    const enabledMap = await this.readEnabledMap();
+    return { name, config: entry.config, source: entry.source, enabled: enabledMap[name] ?? true };
   }
 };
 
@@ -34325,10 +34358,42 @@ var SkillScanner = class {
   pluginsJsonPath;
   userSkillsPath;
   userCommandsPath;
+  settingsPath;
   constructor(claudeHome) {
     this.pluginsJsonPath = join5(claudeHome, "plugins", "installed_plugins.json");
     this.userSkillsPath = join5(claudeHome, "skills");
     this.userCommandsPath = join5(claudeHome, "commands");
+    this.settingsPath = join5(claudeHome, "settings.json");
+  }
+  async readEnabledMap() {
+    try {
+      if (!await fileExists(this.settingsPath))
+        return {};
+      const settings = await readJsonFile(this.settingsPath);
+      const map = settings.enabledSkills;
+      return map ?? {};
+    } catch {
+      return {};
+    }
+  }
+  /**
+   * Toggle a skill's enabled state by name.
+   * NOTE: For v1, skill name is used as the key. In the rare case that skills from
+   * different plugins share the same name, they will share the same toggle state
+   * (matches the pattern of PluginManager.toggle using plugin names as keys).
+   */
+  async toggle(name, enabled) {
+    let settings = {};
+    try {
+      if (await fileExists(this.settingsPath)) {
+        settings = await readJsonFile(this.settingsPath);
+      }
+    } catch {
+    }
+    const map = settings.enabledSkills ?? {};
+    map[name] = enabled;
+    await writeJsonFile(this.settingsPath, { ...settings, enabledSkills: map });
+    invalidateCache("skill-scan");
   }
   async readInstalledPlugins() {
     try {
@@ -34396,6 +34461,7 @@ var SkillScanner = class {
     if (cached)
       return cached;
     const { plugins } = await this.readInstalledPlugins();
+    const enabledMap = await this.readEnabledMap();
     const allSkills = [];
     const userSkills = await this.scanUserSkills();
     allSkills.push(...userSkills);
@@ -34408,8 +34474,12 @@ var SkillScanner = class {
         allSkills.push({ ...skill, pluginName, source: "system" });
       }
     }
-    setCache("skill-scan", allSkills);
-    return allSkills;
+    const hydrated = allSkills.map((skill) => ({
+      ...skill,
+      enabled: enabledMap[skill.name] ?? true
+    }));
+    setCache("skill-scan", hydrated);
+    return hydrated;
   }
   async getSkillContent(skillPath) {
     try {

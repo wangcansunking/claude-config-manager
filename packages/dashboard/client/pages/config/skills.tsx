@@ -371,7 +371,7 @@ export default function SkillsPage() {
   return (
     <div>
       <div className="sticky top-0 z-10 bg-bg-primary">
-        <Header title={t('config.skills.title')} />
+        <Header title={t('config.skills.title', { n: skills.length })} />
 
         {/* Tabs */}
         <div className="flex items-center gap-1 mb-4">
