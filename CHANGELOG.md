@@ -4,6 +4,17 @@ All notable changes to claude-config-manager are documented here.
 
 
 
+
+## [1.2.2] — 2026-06-22
+
+### Changed
+Aggregated from commits since v1.2.1 (no `release:*` label was applied):
+
+- fix(npm): single cc-config bin + trigger publish via workflow_run
+- fix(npm): scope the standalone package as @wangcansun/cc-config
+
+([#scheduled](https://github.com/wangcansunking/claude-config-manager/actions/runs/27938560874))
+
 ## [1.2.1] — 2026-06-17
 
 ### Changed
