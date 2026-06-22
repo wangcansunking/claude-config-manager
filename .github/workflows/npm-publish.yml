@@ -1,0 +1,73 @@
+name: Publish cc-config to npm
+
+# Publishes the standalone `cc-config` CLI to the npm registry whenever a
+# release tag (vX.Y.Z) is pushed. Both auto-bump.yml and scheduled-bump.yml
+# create and push these tags, so every version bump triggers a publish with no
+# extra step. Can also be run manually via the Actions tab (workflow_dispatch).
+#
+# Requirements:
+#   - Repo secret NPM_TOKEN: an npm automation (or granular) token with publish
+#     rights to the `cc-config` package. Without it the job no-ops (green) so it
+#     doesn't spam red X's on every release before the token is configured.
+#
+# Idempotent: if cc-config@<version> is already on npm, the publish is skipped.
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: npm-publish-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check NPM_TOKEN presence
+        id: guard
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [ -z "$NPM_TOKEN" ]; then
+            echo "has_token=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::NPM_TOKEN secret not set — skipping npm publish. Add an npm token with publish rights to cc-config as the NPM_TOKEN repo secret."
+          else
+            echo "has_token=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v4
+        if: steps.guard.outputs.has_token == 'true'
+
+      - uses: actions/setup-node@v4
+        if: steps.guard.outputs.has_token == 'true'
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        if: steps.guard.outputs.has_token == 'true'
+        run: npm ci
+
+      - name: Build standalone package
+        if: steps.guard.outputs.has_token == 'true'
+        run: npm run build:standalone
+
+      - name: Publish to npm (skip if version already exists)
+        if: steps.guard.outputs.has_token == 'true'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          NAME=$(node -p "require('./dist-npm/package.json').name")
+          VERSION=$(node -p "require('./dist-npm/package.json').version")
+          if npm view "$NAME@$VERSION" version >/dev/null 2>&1; then
+            echo "$NAME@$VERSION is already published — nothing to do."
+            exit 0
+          fi
+          npm publish ./dist-npm --access public
+          echo "✓ Published $NAME@$VERSION"
