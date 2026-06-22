@@ -16,7 +16,7 @@ async function main() {
     }
     const program = new Command();
     program
-        .name('claude-config')
+        .name('cc-config')
         .description('Claude configuration manager CLI')
         .version('1.2.0');
     program.addCommand(makeStartCommand());

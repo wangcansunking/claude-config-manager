@@ -1,32 +1,43 @@
 name: Publish cc-config to npm
 
-# Publishes the standalone `cc-config` CLI to the npm registry whenever a
-# release tag (vX.Y.Z) is pushed. Both auto-bump.yml and scheduled-bump.yml
-# create and push these tags, so every version bump triggers a publish with no
-# extra step. Can also be run manually via the Actions tab (workflow_dispatch).
+# Publishes the standalone @wangcansun/cc-config CLI to npm.
+#
+# Trigger: runs AFTER either release-bump workflow completes (auto-bump on a
+# labelled PR, or the scheduled patch bump). We can't trigger on the `vX.Y.Z`
+# tag push directly: those tags are pushed with the repo GITHUB_TOKEN, and
+# GitHub deliberately does NOT start new workflow runs from GITHUB_TOKEN events.
+# `workflow_run` fires regardless of which token did the push.
+#
+# By the time a bump workflow finishes it has already committed the new version
+# to master, so we check out master (HEAD = the bump commit) and publish that.
 #
 # Requirements:
-#   - Repo secret NPM_TOKEN: an npm automation (or granular) token with publish
-#     rights to the `cc-config` package. Without it the job no-ops (green) so it
-#     doesn't spam red X's on every release before the token is configured.
+#   - Repo secret NPM_TOKEN: an npm token with publish rights to the package.
+#     Without it the job no-ops (green) instead of failing.
 #
-# Idempotent: if cc-config@<version> is already on npm, the publish is skipped.
+# Idempotent: if the version is already on npm, the publish is skipped — so a
+# re-run, or a bump that didn't change publishable files, is harmless.
 
 on:
-  push:
-    tags:
-      - 'v*'
+  workflow_run:
+    workflows:
+      - "Auto bump on merged PR"
+      - "Scheduled patch bump"
+    types:
+      - completed
   workflow_dispatch: {}
 
 permissions:
   contents: read
 
 concurrency:
-  group: npm-publish-${{ github.ref }}
+  group: npm-publish
   cancel-in-progress: false
 
 jobs:
   publish:
+    # Manual runs always proceed; workflow_run only when the bump succeeded.
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - name: Check NPM_TOKEN presence
@@ -36,13 +47,17 @@ jobs:
         run: |
           if [ -z "$NPM_TOKEN" ]; then
             echo "has_token=false" >> "$GITHUB_OUTPUT"
-            echo "::warning::NPM_TOKEN secret not set — skipping npm publish. Add an npm token with publish rights to cc-config as the NPM_TOKEN repo secret."
+            echo "::warning::NPM_TOKEN secret not set — skipping npm publish. Add an npm token with publish rights as the NPM_TOKEN repo secret."
           else
             echo "has_token=true" >> "$GITHUB_OUTPUT"
           fi
 
       - uses: actions/checkout@v4
         if: steps.guard.outputs.has_token == 'true'
+        with:
+          # Always publish the latest master — for workflow_run this is the
+          # release-bump commit the triggering workflow just pushed.
+          ref: master
 
       - uses: actions/setup-node@v4
         if: steps.guard.outputs.has_token == 'true'

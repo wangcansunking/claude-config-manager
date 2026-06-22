@@ -19,9 +19,9 @@ npx @wangcansun/cc-config start      # launch the dashboard on http://localhost:
 
 # …or install globally
 npm install -g @wangcansun/cc-config
-claude-config            # interactive TUI  (alias: cc-config)
-claude-config start      # launch the dashboard
-claude-config list       # list plugins, MCP servers, skills, commands
+cc-config            # interactive TUI
+cc-config start      # launch the dashboard
+cc-config list       # list plugins, MCP servers, skills, commands
 ```
 
 ### Option B — Claude Code plugin

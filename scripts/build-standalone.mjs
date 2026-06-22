@@ -20,8 +20,8 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = resolve(ROOT, 'dist-npm');
 
 // Scoped name: the unscoped `cc-config` is blocked by npm's name-similarity
-// guard (too close to the existing `ccconfig`). The bin names stay
-// `claude-config` / `cc-config`, so the installed command is unaffected.
+// guard (too close to the existing `ccconfig`). The installed command is
+// `cc-config` (single bin).
 const PKG_NAME = '@wangcansun/cc-config';
 
 function loadEsbuild() {
@@ -115,7 +115,6 @@ const outPkg = {
     'Standalone CLI + dashboard to manage your whole Claude Code setup: plugins, MCP servers, skills, commands, settings, profiles, sessions, and usage metrics.',
   type: 'module',
   bin: {
-    'claude-config': './cli.mjs',
     'cc-config': './cli.mjs',
   },
   files: ['cli.mjs', 'dashboard', 'mcp', 'README.md'],
@@ -144,5 +143,5 @@ if (existsSync(readme)) cpSync(readme, resolve(OUT, 'README.md'));
 
 console.log(`\n✓ Standalone package assembled at ${OUT}`);
 console.log(`  name:    ${PKG_NAME}@${version}`);
-console.log(`  bins:    claude-config, cc-config`);
+console.log(`  bin:     cc-config`);
 console.log(`  publish: npm publish ${OUT}\n`);
