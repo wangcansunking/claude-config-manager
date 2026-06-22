@@ -19,7 +19,10 @@ const require = createRequire(import.meta.url);
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = resolve(ROOT, 'dist-npm');
 
-const PKG_NAME = 'cc-config';
+// Scoped name: the unscoped `cc-config` is blocked by npm's name-similarity
+// guard (too close to the existing `ccconfig`). The bin names stay
+// `claude-config` / `cc-config`, so the installed command is unaffected.
+const PKG_NAME = '@wangcansun/cc-config';
 
 function loadEsbuild() {
   const candidates = [

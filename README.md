@@ -14,11 +14,11 @@ Use it straight from your terminal, no Claude Code session required:
 
 ```bash
 # Run without installing
-npx cc-config            # interactive TUI
-npx cc-config start      # launch the dashboard on http://localhost:3399
+npx @wangcansun/cc-config            # interactive TUI
+npx @wangcansun/cc-config start      # launch the dashboard on http://localhost:3399
 
 # …or install globally
-npm install -g cc-config
+npm install -g @wangcansun/cc-config
 claude-config            # interactive TUI  (alias: cc-config)
 claude-config start      # launch the dashboard
 claude-config list       # list plugins, MCP servers, skills, commands
