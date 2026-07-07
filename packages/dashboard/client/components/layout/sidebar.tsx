@@ -11,10 +11,10 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { labelKey: 'nav.dashboard', icon: '\u{1F4CA}', href: '/' },
+  { labelKey: 'nav.activity', icon: '\u{1F5A5}\uFE0F', href: '/activity' },
   { labelKey: 'nav.recommended', icon: '\u2728', href: '/recommended' },
   { labelKey: 'nav.configuration', icon: '\u2699\uFE0F', href: '/config' },
   { labelKey: 'nav.profiles', icon: '\u{1F464}', href: '/profiles' },
-  { labelKey: 'nav.activity', icon: '\u{1F5A5}\uFE0F', href: '/activity' },
 ];
 
 export function Sidebar() {
