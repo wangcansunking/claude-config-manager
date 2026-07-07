@@ -5,6 +5,14 @@ All notable changes to claude-config-manager are documented here.
 
 
 
+
+## [1.3.0] — 2026-07-07
+
+### Added
+- feat(activity): sort sessions by last active + newest-first messages
+
+([#13](https://github.com/wangcansunking/claude-config-manager/pull/13))
+
 ## [1.2.2] — 2026-06-22
 
 ### Changed
