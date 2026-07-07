@@ -6,6 +6,7 @@ interface SessionInfo {
   sessionId: string;
   cwd: string;
   startedAt: number;
+  lastActive?: number;
   alive: boolean;
   name?: string;
   lastMessage?: string;
@@ -49,7 +50,7 @@ export function RecentSessions() {
 
   const sessions = ((sessionsRaw ?? []) as SessionInfo[])
     .slice()
-    .sort((a, b) => b.startedAt - a.startedAt)
+    .sort((a, b) => (b.lastActive ?? b.startedAt) - (a.lastActive ?? a.startedAt))
     .slice(0, 5);
 
   return (
@@ -120,7 +121,7 @@ export function RecentSessions() {
                 {/* Relative time + last message */}
                 <div className="flex items-center gap-2 min-w-0">
                   <span className="text-xs shrink-0" style={{ color: 'var(--text-faint)' }}>
-                    {formatRelativeTime(session.startedAt)}
+                    {formatRelativeTime(session.lastActive ?? session.startedAt)}
                   </span>
                   {session.lastMessage && (
                     <span className="text-xs truncate" style={{ color: 'var(--text-faint)' }}>

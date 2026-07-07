@@ -22,6 +22,7 @@ interface SessionInfo {
   sessionId: string;
   cwd: string;
   startedAt: number;
+  lastActive?: number;
   alive: boolean;
   name?: string;
   lastMessage?: string;
@@ -57,6 +58,11 @@ function formatRelativeTime(timestamp: number): string {
 function truncatePath(path: string, maxLen = 60): string {
   if (path.length <= maxLen) return path;
   return '...' + path.slice(path.length - maxLen + 3);
+}
+
+/** Effective "last active" time for a session — falls back to startedAt. */
+function lastActiveOf(s: SessionInfo): number {
+  return s.lastActive ?? s.startedAt ?? 0;
 }
 
 function truncateMessage(msg: string, maxLen = 120): string {
@@ -268,7 +274,7 @@ function SessionRow({
         {/* Time + last message */}
         <div className="flex items-center gap-3 mt-1">
           <span className="text-xs shrink-0" style={{ color: 'var(--text-muted)' }}>
-            {formatRelativeTime(session.startedAt)}
+            {formatRelativeTime(session.lastActive ?? session.startedAt)}
           </span>
           {session.lastMessage && (
             <span
@@ -376,12 +382,18 @@ function SessionPanelContent({
 
   const filteredHistory = useMemo(() => {
     if (!history) return [];
-    if (!historySearch.trim()) return history;
-    const q = historySearch.toLowerCase();
-    return history.filter(
-      (entry: { text: string; timestamp?: string }) =>
-        entry.text.toLowerCase().includes(q),
-    );
+    const base = !historySearch.trim()
+      ? history
+      : history.filter((entry: { text: string; timestamp?: string }) =>
+          entry.text.toLowerCase().includes(historySearch.toLowerCase()),
+        );
+    // Newest first — sort by timestamp descending. Entries without a
+    // timestamp keep their original (chronological) relative order.
+    return [...base].sort((a, b) => {
+      const ta = a.timestamp ? Date.parse(a.timestamp) : 0;
+      const tb = b.timestamp ? Date.parse(b.timestamp) : 0;
+      return tb - ta;
+    });
   }, [history, historySearch]);
 
   return (
@@ -483,6 +495,13 @@ function SessionPanelContent({
                   : 'Unknown'}
               </span>
             </MetaRow>
+            {session.lastActive && session.lastActive !== session.startedAt && (
+              <MetaRow label="Last Active">
+                <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                  {`${new Date(session.lastActive).toLocaleString()} (${formatRelativeTime(session.lastActive)})`}
+                </span>
+              </MetaRow>
+            )}
             {session.ide && (
               <MetaRow label="IDE">
                 <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>
@@ -653,12 +672,12 @@ export default function SessionsPage() {
     );
   }, [sessions, search]);
 
-  // Running sessions (alive) sorted most recent first
+  // Running sessions (alive) sorted by most recent activity first
   const running = useMemo(
     () =>
       filtered
         .filter((s) => s.alive)
-        .sort((a, b) => b.startedAt - a.startedAt),
+        .sort((a, b) => lastActiveOf(b) - lastActiveOf(a)),
     [filtered],
   );
 
@@ -666,26 +685,26 @@ export default function SessionsPage() {
   const projectGroups = useMemo(() => {
     const terminated = filtered
       .filter((s) => !s.alive)
-      .sort((a, b) => b.startedAt - a.startedAt);
+      .sort((a, b) => lastActiveOf(b) - lastActiveOf(a));
     const groups: Record<string, SessionInfo[]> = {};
     for (const s of terminated) {
       const key = s.projectDir || s.cwd || 'Unknown';
       if (!groups[key]) groups[key] = [];
       groups[key].push(s);
     }
-    // Sort groups by most recent session in each
+    // Sort groups by most recent activity in each
     return Object.entries(groups).sort(([, a], [, b]) => {
-      const aMax = Math.max(...a.map((s) => s.startedAt || 0));
-      const bMax = Math.max(...b.map((s) => s.startedAt || 0));
+      const aMax = Math.max(...a.map((s) => lastActiveOf(s)));
+      const bMax = Math.max(...b.map((s) => lastActiveOf(s)));
       return bMax - aMax;
     });
   }, [filtered]);
 
-  // Last 10 active sessions (sorted by most recent startedAt)
+  // Last 10 active sessions (sorted by most recent activity)
   const recentSessions = useMemo(
     () =>
       [...filtered]
-        .sort((a, b) => b.startedAt - a.startedAt)
+        .sort((a, b) => lastActiveOf(b) - lastActiveOf(a))
         .slice(0, 10),
     [filtered],
   );

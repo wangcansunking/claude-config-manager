@@ -24,12 +24,12 @@ export class SessionManager {
         await this.enrichWithActiveSessions(sessionMap);
         // 3. Enrich with project dir info + history file paths
         await this.enrichWithProjectDirs(sessionMap);
-        // 4. Sort: alive first, then by startedAt descending
+        // 4. Sort: alive first, then by last activity descending
         const sessions = Array.from(sessionMap.values());
         sessions.sort((a, b) => {
             if (a.alive !== b.alive)
                 return a.alive ? -1 : 1;
-            return b.startedAt - a.startedAt;
+            return (b.lastActive ?? b.startedAt) - (a.lastActive ?? a.startedAt);
         });
         setCache('all-sessions', sessions);
         return sessions;
@@ -50,9 +50,9 @@ export class SessionManager {
                         continue;
                     const existing = sessionMap.get(entry.sessionId);
                     if (existing) {
-                        // Update with latest timestamp and message
-                        if (entry.timestamp && entry.timestamp > existing.startedAt) {
-                            // Keep startedAt as earliest, but track last activity
+                        // Track the most recent activity across all history entries.
+                        if (entry.timestamp && entry.timestamp > (existing.lastActive ?? existing.startedAt)) {
+                            existing.lastActive = entry.timestamp;
                         }
                         if (entry.display) {
                             existing.lastMessage = entry.display;
@@ -64,6 +64,7 @@ export class SessionManager {
                             sessionId: entry.sessionId,
                             cwd: entry.project ?? '',
                             startedAt: entry.timestamp ?? 0,
+                            lastActive: entry.timestamp ?? 0,
                             alive: false,
                             lastMessage: entry.display,
                             projectDir: entry.project,
@@ -166,6 +167,17 @@ export class SessionManager {
                     existing.historyFile = historyFile;
                     if (!existing.projectDir)
                         existing.projectDir = decodedPath;
+                    // The conversation log's mtime is the most accurate "last active"
+                    // signal — it's touched on every message (user and assistant).
+                    try {
+                        const fileStat = await stat(historyFile);
+                        if (fileStat.mtimeMs > (existing.lastActive ?? existing.startedAt)) {
+                            existing.lastActive = fileStat.mtimeMs;
+                        }
+                    }
+                    catch {
+                        // ignore stat failures
+                    }
                     // Load project config if not already loaded
                     if (!existing.projectConfig) {
                         existing.projectConfig = await this.getProjectConfig(existing.cwd || decodedPath);
@@ -195,6 +207,7 @@ export class SessionManager {
                         sessionId: entry,
                         cwd: decodedPath,
                         startedAt: entryStat.mtimeMs,
+                        lastActive: entryStat.mtimeMs,
                         alive: false,
                         projectDir: decodedPath,
                     });

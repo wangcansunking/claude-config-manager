@@ -3,6 +3,8 @@ export interface SessionInfo {
     sessionId: string;
     cwd: string;
     startedAt: number;
+    /** Timestamp (ms) of the most recent activity in this session. Falls back to startedAt. */
+    lastActive?: number;
     alive: boolean;
     name?: string;
     lastMessage?: string;

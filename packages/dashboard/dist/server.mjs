@@ -34939,7 +34939,7 @@ var SessionManager = class {
     sessions.sort((a, b) => {
       if (a.alive !== b.alive)
         return a.alive ? -1 : 1;
-      return b.startedAt - a.startedAt;
+      return (b.lastActive ?? b.startedAt) - (a.lastActive ?? a.startedAt);
     });
     setCache("all-sessions", sessions);
     return sessions;
@@ -34960,7 +34960,8 @@ var SessionManager = class {
             continue;
           const existing = sessionMap.get(entry.sessionId);
           if (existing) {
-            if (entry.timestamp && entry.timestamp > existing.startedAt) {
+            if (entry.timestamp && entry.timestamp > (existing.lastActive ?? existing.startedAt)) {
+              existing.lastActive = entry.timestamp;
             }
             if (entry.display) {
               existing.lastMessage = entry.display;
@@ -34971,6 +34972,7 @@ var SessionManager = class {
               sessionId: entry.sessionId,
               cwd: entry.project ?? "",
               startedAt: entry.timestamp ?? 0,
+              lastActive: entry.timestamp ?? 0,
               alive: false,
               lastMessage: entry.display,
               projectDir: entry.project
@@ -35061,6 +35063,13 @@ var SessionManager = class {
           existing.historyFile = historyFile;
           if (!existing.projectDir)
             existing.projectDir = decodedPath;
+          try {
+            const fileStat = await stat(historyFile);
+            if (fileStat.mtimeMs > (existing.lastActive ?? existing.startedAt)) {
+              existing.lastActive = fileStat.mtimeMs;
+            }
+          } catch {
+          }
           if (!existing.projectConfig) {
             existing.projectConfig = await this.getProjectConfig(existing.cwd || decodedPath);
           }
@@ -35086,6 +35095,7 @@ var SessionManager = class {
             sessionId: entry,
             cwd: decodedPath,
             startedAt: entryStat.mtimeMs,
+            lastActive: entryStat.mtimeMs,
             alive: false,
             projectDir: decodedPath
           });
