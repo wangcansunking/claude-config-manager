@@ -39,7 +39,7 @@ claude plugin install claude-config-manager@can-claude-plugins
 
 The dashboard launches on <http://localhost:3399> and opens in your browser.
 
-![Dashboard overview](docs/migration/screenshots/01-dashboard-overview.png)
+![Dashboard overview](https://raw.githubusercontent.com/wangcansunking/claude-config-manager/master/docs/migration/screenshots/01-dashboard-overview.png)
 
 ## Why
 
@@ -57,54 +57,54 @@ Claude Code ships a lot of surface area — `settings.json`, MCP configs, plugin
 
 Homepage shows your installed plugins, MCP servers, recent sessions, token-burn chart, and environment health at a glance.
 
-![MCP usage chart](docs/migration/screenshots/01b-dashboard-mcp-usage.png)
+![MCP usage chart](https://raw.githubusercontent.com/wangcansunking/claude-config-manager/master/docs/migration/screenshots/01b-dashboard-mcp-usage.png)
 
 ### Personalized Recommendations
 
 Runs `/ccm-recommendations` against your current setup to suggest plugins, MCP servers, and skills you haven't installed yet.
 
-![Recommended](docs/migration/screenshots/02-recommended.png)
+![Recommended](https://raw.githubusercontent.com/wangcansunking/claude-config-manager/master/docs/migration/screenshots/02-recommended.png)
 
 ### Plugin Management
 
 View installed plugins, browse marketplaces, drill into a plugin to see its commands, skills, and MCP servers.
 
-![Installed plugins](docs/migration/screenshots/03-config-plugins-installed.png)
-![Plugin detail panel](docs/migration/screenshots/03b-plugin-detail-panel.png)
-![Plugin marketplace](docs/migration/screenshots/03c-plugins-marketplace.png)
+![Installed plugins](https://raw.githubusercontent.com/wangcansunking/claude-config-manager/master/docs/migration/screenshots/03-config-plugins-installed.png)
+![Plugin detail panel](https://raw.githubusercontent.com/wangcansunking/claude-config-manager/master/docs/migration/screenshots/03b-plugin-detail-panel.png)
+![Plugin marketplace](https://raw.githubusercontent.com/wangcansunking/claude-config-manager/master/docs/migration/screenshots/03c-plugins-marketplace.png)
 
 ### MCP Server Management
 
 Add, remove, and inspect MCP servers. The MCP Store lets you install popular servers with one click.
 
-![Installed MCP servers](docs/migration/screenshots/04-config-mcp-installed.png)
-![MCP store](docs/migration/screenshots/04c-mcp-store.png)
+![Installed MCP servers](https://raw.githubusercontent.com/wangcansunking/claude-config-manager/master/docs/migration/screenshots/04-config-mcp-installed.png)
+![MCP store](https://raw.githubusercontent.com/wangcansunking/claude-config-manager/master/docs/migration/screenshots/04c-mcp-store.png)
 
 ### Skills, Commands, and Settings
 
 Edit skill markdown in a full-screen viewer, manage slash commands, and tweak `settings.json` fields (model, hooks, env vars) without opening a text editor.
 
-![Skills tab](docs/migration/screenshots/05-config-skills.png)
-![Settings tab](docs/migration/screenshots/07-config-settings.png)
+![Skills tab](https://raw.githubusercontent.com/wangcansunking/claude-config-manager/master/docs/migration/screenshots/05-config-skills.png)
+![Settings tab](https://raw.githubusercontent.com/wangcansunking/claude-config-manager/master/docs/migration/screenshots/07-config-settings.png)
 
 ### Profiles (Export / Import / Activate)
 
 Snapshot your full configuration — plugins, MCP servers, skills, commands, hooks, settings — into a named profile. Switch profiles to swap your whole setup, or export a `.json` and share it with a teammate.
 
-![Profiles](docs/migration/screenshots/08-profiles.png)
-![Export / import](docs/migration/screenshots/08b-profiles-export-import.png)
+![Profiles](https://raw.githubusercontent.com/wangcansunking/claude-config-manager/master/docs/migration/screenshots/08-profiles.png)
+![Export / import](https://raw.githubusercontent.com/wangcansunking/claude-config-manager/master/docs/migration/screenshots/08b-profiles-export-import.png)
 
 ### Session Activity
 
 Browse past and live Claude Code sessions across all your projects. Click any session to inspect history; copy `claude --resume <id>` to resume in one click.
 
-![Activity](docs/migration/screenshots/09-activity.png)
-![Session detail](docs/migration/screenshots/09b-activity-session-detail.png)
+![Activity](https://raw.githubusercontent.com/wangcansunking/claude-config-manager/master/docs/migration/screenshots/09-activity.png)
+![Session detail](https://raw.githubusercontent.com/wangcansunking/claude-config-manager/master/docs/migration/screenshots/09b-activity-session-detail.png)
 
 ### Dark / Light Theme
 
-![Dark mode](docs/migration/screenshots/10-dark-mode.png)
-![Light mode](docs/migration/screenshots/10b-light-mode.png)
+![Dark mode](https://raw.githubusercontent.com/wangcansunking/claude-config-manager/master/docs/migration/screenshots/10-dark-mode.png)
+![Light mode](https://raw.githubusercontent.com/wangcansunking/claude-config-manager/master/docs/migration/screenshots/10b-light-mode.png)
 
 ## TUI (interactive terminal UI)
 
