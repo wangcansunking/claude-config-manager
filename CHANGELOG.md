@@ -6,6 +6,14 @@ All notable changes to claude-config-manager are documented here.
 
 
 
+
+## [1.3.1] — 2026-07-15
+
+### Fixed
+- docs: use absolute image URLs so npm renders README screenshots
+
+([#14](https://github.com/wangcansunking/claude-config-manager/pull/14))
+
 ## [1.3.0] — 2026-07-07
 
 ### Added
